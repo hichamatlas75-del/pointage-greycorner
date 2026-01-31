@@ -47,7 +47,7 @@
         <div id="msg" class="mt-8 text-sm font-medium hidden leading-relaxed"></div>
 
         <footer class="mt-12 pt-6 border-t border-slate-50">
-            <p class="text-[9px] text-slate-400 uppercase font-bold tracking-[0.3em]">Famille Grey Corner • 2026</p>
+            <p class="text-[9px] text-slate-400 uppercase font-bold tracking-[0.3em]">Ouverture 06:30 • Famille Grey Corner</p>
         </footer>
     </div>
 
@@ -61,10 +61,10 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 📍 COORDONNÉES EXACTES DU CAFE
-        const CAFE_LAT = 34.0322; 
-        const CAFE_LON = -4.9972;
-        const RAYON_AUTORISE = 150; // 150 mètres pour plus de souplesse
+        // 📍 COORDONNÉES RÉELLES DU GREY CORNER FÈS
+        const CAFE_LAT = 34.0343959; 
+        const CAFE_LON = -5.0155941;
+        const RAYON_AUTORISE = 150; 
 
         const equipe = [
             "SALIL HOUDA", "BENKHADA ABDESLAM", "ENNHAIlI SOUMIA", "EL KOBBI MOSTAFA",
@@ -109,7 +109,7 @@
                     btn.disabled = false;
                     btn.innerHTML = "Valider mon arrivée";
                 } else {
-                    geoStatus.innerHTML = "📍 Trop loin du café";
+                    geoStatus.innerHTML = "📍 Hors du Café (Fès)";
                     geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-700 mb-8";
                     btn.innerHTML = "Approchez-vous du café";
                 }
@@ -134,6 +134,7 @@
             const snap = await database.ref('presences/' + dateStr + '/' + user).once('value');
             if (snap.exists() && snap.val().hA) {
                 msg.innerHTML = "⚠️ Déjà pointé aujourd'hui.";
+                msg.className = "mt-8 p-4 bg-amber-50 text-amber-700 rounded-2xl font-bold block border border-amber-100";
                 msg.style.display = "block";
                 return;
             }
@@ -142,8 +143,8 @@
                 on: true, hA: timeStr,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('zenSound').play();
-                msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>.`;
+                document.getElementById('zenSound').play().catch(e => console.log("Son bloqué"));
+                msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>. <br> Bon service !`;
                 msg.className = "mt-8 p-4 bg-green-50 text-green-700 rounded-2xl font-bold block border border-green-100";
                 msg.style.display = "block";
                 setTimeout(() => location.reload(), 4000);
