@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointage Certifié • Grey Corner</title>
+    <title>Pointage • Grey Corner Fès</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -11,6 +11,8 @@
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(197, 160, 89, 0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
         .btn-grey { background: #c5a059; transition: all 0.3s ease; }
         .btn-grey:disabled { background: #d1d5db; cursor: not-allowed; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
@@ -23,25 +25,32 @@
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-1">Grey Corner Fès</h1>
         
         <div id="geoStatus" class="inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-400 mb-8">
-            Vérification GPS...
+            Localisation requise
         </div>
 
         <div class="space-y-6">
             <div class="text-left">
-                <label class="text-[10px] font-bold text-slate-400 uppercase ml-3 mb-2 block tracking-wider">Identité de l'équipier</label>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-3 mb-2 block tracking-wider">Équipier</label>
                 <select id="staffSelect" class="w-full p-4 rounded-2xl border-2 border-slate-50 bg-white text-slate-700 font-semibold focus:border-amber-500 outline-none transition-all shadow-sm">
-                    <option value="">-- Choisir --</option>
+                    <option value="">-- Sélectionner --</option>
                 </select>
             </div>
-            <button onclick="validerPresence()" id="submitBtn" disabled class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm">
-                Patientez...
-            </button>
+
+            <div id="actionArea">
+                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl mb-2 text-sm uppercase tracking-widest">
+                    📍 Vérifier ma position
+                </button>
+                
+                <button onclick="validerPresence()" id="submitBtn" disabled class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm opacity-50">
+                    Valider mon arrivée
+                </button>
+            </div>
         </div>
 
         <div id="msg" class="mt-8 text-sm font-medium hidden leading-relaxed"></div>
 
         <footer class="mt-12 pt-6 border-t border-slate-50">
-            <p class="text-[9px] text-slate-400 uppercase font-bold tracking-[0.3em]">Ouverture 06:30 • Famille Grey Corner</p>
+            <p class="text-[9px] text-slate-400 uppercase font-bold tracking-[0.3em]">Ouverture 06:30 • Discipline & Bienveillance</p>
         </footer>
     </div>
 
@@ -65,19 +74,11 @@
             localStorage.setItem('grey_corner_device_id', deviceId);
         }
 
-        // 📋 LISTE DES EMPLOYÉS MISE À JOUR
-        const equipe = [
-            "SALIL HOUDA", "BENKHADA ABDESLAM", "ENNHAIlI SOUMIA", "EL KOBBI MOSTAFA", 
-            "CHKAIRI YOUSSEF", "KHALOUQ RACHID", "FILALI ABDERAFI", "SBAI HAKIMA", 
-            "ELGORRAMY SOUAD", "ELGORRAMY ANISSA", "ELMCHAOURI SOUAD", "ZAIR FATIMA", 
-            "BELQASSE KHAOULA", "MAJDOUB JIHANE", "LEMSSIEH JAWAD", "BOURAHMA ANAS", 
-            "MOUJAHID IMANE", "IDRISSI SAAD", "GUETIBI AMINE", 
-            "HIDARA YOUSSEF", "ALAOUI LAZIZ", "HATTAF MOHAMED", "MOHSINE YOUNESS",
-            "KAFOUNI ZAKARIAE"
-        ];
+        const equipe = ["ALAOUI LAZIZ", "BELQASSE KHAOULA", "BENKHADA ABDESLAM", "BOURAHMA ANAS", "CHKAIRI YOUSSEF", "EL KOBBI MOSTAFA", "ELGORRAMY ANISSA", "ELGORRAMY SOUAD", "ELMCHAOURI SOUAD", "ENNHAIlI SOUMIA", "FILALI ABDERAFI", "GUETIBI AMINE", "HATTAF MOHAMED", "HIDARA YOUSSEF", "IDRISSI SAAD", "KAFOUNI Zakariae", "KHALOUQ RACHID", "LEMSSIEH JAWAD", "MAJDOUB JIHANE", "MOUJAHID IMANE", "SALIL HOUDA", "SBAI HAKIMA", "ZAIR FATIMA"];
 
         const select = document.getElementById('staffSelect');
         const btn = document.getElementById('submitBtn');
+        const geoBtn = document.getElementById('geoBtn');
         const geoStatus = document.getElementById('geoStatus');
 
         equipe.sort().forEach(name => {
@@ -96,24 +97,27 @@
         }
 
         function verifierPosition() {
-            if (!navigator.geolocation) {
-                geoStatus.innerHTML = "❌ GPS Non supporté";
-                return;
-            }
-            navigator.geolocation.watchPosition((pos) => {
+            geoBtn.innerHTML = "Vérification...";
+            geoBtn.classList.add('pulse');
+            
+            navigator.geolocation.getCurrentPosition((pos) => {
                 const d = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
+                geoBtn.classList.remove('pulse');
+                
                 if (d <= RAYON_AUTORISE) {
-                    geoStatus.innerHTML = "✅ Bienvenue au Grey Corner";
+                    geoStatus.innerHTML = "✅ Zone Grey Corner";
                     geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 mb-8";
                     btn.disabled = false;
-                    btn.innerHTML = "Valider mon arrivée";
+                    btn.style.opacity = "1";
+                    geoBtn.style.display = "none";
                 } else {
-                    geoStatus.innerHTML = "📍 Hors du Café";
-                    geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-700 mb-8";
-                    btn.innerHTML = "Approchez-vous du café";
-                    btn.disabled = true;
+                    alert("📍 Trop loin. Rapprochez-vous du café.");
+                    geoBtn.innerHTML = "📍 Réessayer la position";
                 }
-            }, null, { enableHighAccuracy: true });
+            }, (err) => {
+                alert("⚠️ Activez le GPS de votre téléphone.");
+                geoBtn.innerHTML = "📍 Activer le GPS";
+            }, { enableHighAccuracy: true });
         }
 
         async function validerPresence() {
@@ -121,11 +125,14 @@
             if(!user) return alert("Sélectionnez votre nom");
 
             btn.disabled = true;
-            btn.innerHTML = "Vérification...";
+            btn.innerHTML = "Certification...";
 
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            
+            // Logique de retard (Limite 07:05)
+            const estEnRetard = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 5));
 
             const dailyDevicesRef = database.ref('security/' + dateStr);
             const devSnap = await dailyDevicesRef.once('value');
@@ -133,32 +140,29 @@
 
             for (let name in devicesUsedToday) {
                 if (devicesUsedToday[name] === deviceId && name !== user) {
-                    alert("❌ Sécurité : Votre téléphone a déjà servi aujourd'hui.");
+                    alert("❌ Un seul pointage par téléphone.");
                     btn.disabled = false;
-                    btn.innerHTML = "Accès refusé";
                     return;
                 }
             }
 
-            const snap = await database.ref('presences/' + dateStr + '/' + user).once('value');
-            if (snap.exists() && snap.val().hA) {
-                alert("Vous avez déjà validé votre arrivée !");
-                btn.innerHTML = "Déjà pointé";
-                return;
-            }
-
             database.ref('presences/' + dateStr + '/' + user).update({
-                on: true, hA: timeStr, device: deviceId, timestamp: firebase.database.ServerValue.TIMESTAMP
+                on: true, hA: timeStr, device: deviceId, retard: estEnRetard, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 dailyDevicesRef.update({ [user]: deviceId });
                 document.getElementById('zenSound').play();
-                msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>.`;
-                msg.className = "mt-8 p-4 bg-green-50 text-green-700 rounded-2xl font-bold block border border-green-100";
+                
+                if(estEnRetard) {
+                    msg.innerHTML = `⏳ Arrivée enregistrée à ${timeStr}. <br> <span class="text-orange-600">Note : Arrivée tardive.</span>`;
+                    msg.className = "mt-8 p-4 bg-orange-50 text-orange-700 rounded-2xl font-bold block border border-orange-100";
+                } else {
+                    msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>.`;
+                    msg.className = "mt-8 p-4 bg-green-50 text-green-700 rounded-2xl font-bold block border border-green-100";
+                }
                 msg.style.display = "block";
                 setTimeout(() => location.reload(), 4000);
             });
         }
-        window.onload = verifierPosition;
     </script>
 </body>
 </html>
