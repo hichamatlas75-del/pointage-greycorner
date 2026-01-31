@@ -23,7 +23,7 @@
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-1">Grey Corner Fès</h1>
         
         <div id="geoStatus" class="inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-400 mb-8">
-            Initialisation GPS...
+            Vérification GPS...
         </div>
 
         <div class="space-y-6">
@@ -34,7 +34,7 @@
                 </select>
             </div>
             <button onclick="validerPresence()" id="submitBtn" disabled class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm">
-                Vérification du lieu...
+                Patientez...
             </button>
         </div>
 
@@ -55,12 +55,12 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // 📍 COORDONNÉES ET TOLÉRANCE AJUSTÉES
         const CAFE_LAT = 34.0343959; 
         const CAFE_LON = -5.0155941;
-        const RAYON_AUTORISE = 150; 
+        const RAYON_AUTORISE = 300; // Marge augmentée pour pallier les erreurs GPS
 
-        // 🆔 GÉNÉRER UN ID UNIQUE POUR CE TÉLÉPHONE
-        const deviceId = btoa(navigator.userAgent + screen.width + navigator.hardwareConcurrency).substring(0, 20);
+        const deviceId = btoa(navigator.userAgent + screen.width + navigator.language).substring(0, 20);
 
         const equipe = ["SALIL HOUDA", "BENKHADA ABDESLAM", "ENNHAIlI SOUMIA", "EL KOBBI MOSTAFA", "CHKAIRI YOUSSEF", "KHALOUQ RACHID", "FILALI ABDERAFI", "SBAI HAKIMA", "ELGORRAMY SOUAD", "ELGORRAMY ANISSA", "ELMCHAOURI SOUAD", "ZAIR FATIMA", "BELQASSE KHAOULA", "MAJDOUB JIHANE", "LEMSSIEH JAWAD", "BOURAHMA ANAS", "MOUJAHID IMANE", "IDRISSI SAAD", "GUETIBI AMINE", "EL MOEDEN HASSAN", "HIDARA YOUSSEF", "ALAOUI LAZIZ", "HATTAF MOHAMED", "MOHSINE YOUNESS"];
 
@@ -84,7 +84,11 @@
         }
 
         function verifierPosition() {
-            navigator.geolocation.getCurrentPosition((pos) => {
+            if (!navigator.geolocation) {
+                geoStatus.innerHTML = "❌ GPS Non supporté";
+                return;
+            }
+            navigator.geolocation.watchPosition((pos) => {
                 const d = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
                 if (d <= RAYON_AUTORISE) {
                     geoStatus.innerHTML = "✅ Bienvenue au Grey Corner";
@@ -93,7 +97,9 @@
                     btn.innerHTML = "Valider mon arrivée";
                 } else {
                     geoStatus.innerHTML = "📍 Hors du Café";
+                    geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-700 mb-8";
                     btn.innerHTML = "Approchez-vous du café";
+                    btn.disabled = true;
                 }
             }, null, { enableHighAccuracy: true });
         }
@@ -107,16 +113,15 @@
             const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
             btn.disabled = true;
+            btn.innerHTML = "Vérification...";
 
-            // 🔒 SÉCURITÉ : VÉRIFIER SI LE TÉLÉPHONE A DÉJÀ POINTÉ QUELQU'UN
             const dailyDevicesRef = database.ref('security/' + dateStr);
             const devSnap = await dailyDevicesRef.once('value');
             const devicesUsedToday = devSnap.val() || {};
 
-            // Si cet identifiant de téléphone existe déjà pour une autre personne
             for (let name in devicesUsedToday) {
                 if (devicesUsedToday[name] === deviceId && name !== user) {
-                    alert("❌ Un seul pointage par téléphone autorisé. Merci d'utiliser votre propre appareil.");
+                    alert("❌ Sécurité : Ce téléphone a déjà été utilisé pour un autre pointage aujourd'hui.");
                     btn.disabled = false;
                     btn.innerHTML = "Accès refusé";
                     return;
@@ -125,15 +130,14 @@
 
             const snap = await database.ref('presences/' + dateStr + '/' + user).once('value');
             if (snap.exists() && snap.val().hA) {
-                alert("Vous avez déjà pointé !");
+                alert("Vous avez déjà validé votre arrivée !");
                 return;
             }
 
-            // Enregistrement
             database.ref('presences/' + dateStr + '/' + user).update({
-                on: true, hA: timeStr, device: deviceId
+                on: true, hA: timeStr, device: deviceId, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                dailyDevicesRef.update({ [user]: deviceId }); // Marquer ce téléphone comme utilisé par cet employé
+                dailyDevicesRef.update({ [user]: deviceId });
                 document.getElementById('zenSound').play();
                 msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>.`;
                 msg.className = "mt-8 p-4 bg-green-50 text-green-700 rounded-2xl font-bold block border border-green-100";
