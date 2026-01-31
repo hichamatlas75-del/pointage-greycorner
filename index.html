@@ -27,8 +27,8 @@
 
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-1">Grey Corner Fès</h1>
         
-        <div id="connectionStatus" class="inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-400 mb-8">
-            Vérification du réseau...
+        <div id="geoStatus" class="inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-400 mb-8">
+            Initialisation GPS...
         </div>
 
         <div class="space-y-6">
@@ -40,7 +40,7 @@
             </div>
 
             <button onclick="validerPresence()" id="submitBtn" disabled class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm">
-                Vérification Wi-Fi...
+                Vérification du lieu...
             </button>
         </div>
 
@@ -61,8 +61,10 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 🔒 IP FIXE DU CAFÉ
-        const IP_AUTORISEE = "41.142.196.249"; 
+        // 📍 COORDONNÉES EXACTES DU CAFE
+        const CAFE_LAT = 34.0322; 
+        const CAFE_LON = -4.9972;
+        const RAYON_AUTORISE = 150; // 150 mètres pour plus de souplesse
 
         const equipe = [
             "SALIL HOUDA", "BENKHADA ABDESLAM", "ENNHAIlI SOUMIA", "EL KOBBI MOSTAFA",
@@ -75,8 +77,7 @@
 
         const select = document.getElementById('staffSelect');
         const btn = document.getElementById('submitBtn');
-        const connectionStatus = document.getElementById('connectionStatus');
-        const zenSound = document.getElementById('zenSound');
+        const geoStatus = document.getElementById('geoStatus');
 
         equipe.sort().forEach(name => {
             let opt = document.createElement('option');
@@ -85,27 +86,38 @@
             select.appendChild(opt);
         });
 
-        async function verifierReseau() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                const userIP = data.ip;
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
 
-                if (userIP === IP_AUTORISEE) {
-                    connectionStatus.innerHTML = "✅ Réseau Grey Corner Validé";
-                    connectionStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 mb-8";
+        function verifierPosition() {
+            if (!navigator.geolocation) { 
+                geoStatus.innerHTML = "❌ GPS non supporté"; 
+                return; 
+            }
+            
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const distance = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
+                
+                if (distance <= RAYON_AUTORISE) {
+                    geoStatus.innerHTML = "✅ Bienvenue au Grey Corner";
+                    geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 mb-8";
                     btn.disabled = false;
                     btn.innerHTML = "Valider mon arrivée";
                 } else {
-                    connectionStatus.innerHTML = "❌ Réseau non autorisé (Fès)";
-                    connectionStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-700 mb-8";
-                    btn.innerHTML = "Connectez-vous au Wi-Fi";
-                    btn.disabled = true;
+                    geoStatus.innerHTML = "📍 Trop loin du café";
+                    geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-700 mb-8";
+                    btn.innerHTML = "Approchez-vous du café";
                 }
-            } catch (error) {
-                connectionStatus.innerHTML = "⚠️ Erreur vérification";
-                btn.innerHTML = "Vérifiez votre connexion";
-            }
+            }, (err) => {
+                geoStatus.innerHTML = "⚠️ Activez votre GPS";
+                geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700 mb-8";
+                btn.innerHTML = "GPS requis";
+            }, { enableHighAccuracy: true });
         }
 
         async function validerPresence() {
@@ -121,32 +133,24 @@
 
             const snap = await database.ref('presences/' + dateStr + '/' + user).once('value');
             if (snap.exists() && snap.val().hA) {
-                msg.innerHTML = "⚠️ Déjà pointé pour aujourd'hui.";
-                msg.className = "mt-8 p-4 bg-amber-50 text-amber-700 rounded-2xl font-bold block border border-amber-100";
+                msg.innerHTML = "⚠️ Déjà pointé aujourd'hui.";
                 msg.style.display = "block";
-                btn.innerHTML = "Déjà validé";
                 return;
             }
 
             database.ref('presences/' + dateStr + '/' + user).update({
-                on: true, 
-                hA: timeStr,
+                on: true, hA: timeStr,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                // Lecture du son Zen
-                zenSound.play().catch(e => console.log("Audio bloqué par le navigateur"));
-
-                msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>. <br> Bon service à toute la famille !`;
+                document.getElementById('zenSound').play();
+                msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>.`;
                 msg.className = "mt-8 p-4 bg-green-50 text-green-700 rounded-2xl font-bold block border border-green-100";
                 msg.style.display = "block";
                 setTimeout(() => location.reload(), 4000);
-            }).catch(err => {
-                alert("Erreur réseau. Réessayez.");
-                btn.disabled = false;
             });
         }
         
-        window.onload = verifierReseau;
+        window.onload = verifierPosition;
     </script>
 </body>
 </html>
