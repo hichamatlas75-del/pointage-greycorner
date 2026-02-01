@@ -13,6 +13,7 @@
         .btn-grey:disabled { background: #d1d5db; cursor: not-allowed; }
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #geoBtn, #submitBtn { display: none; } /* Cachés par défaut pour éviter le double bouton */
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
@@ -25,7 +26,7 @@
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-1">Grey Corner Fès</h1>
         
         <div id="geoStatus" class="inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-400 mb-8">
-            Vérification requise
+            Sélectionnez votre nom
         </div>
 
         <div class="space-y-6">
@@ -41,7 +42,7 @@
                     📍 Vérifier ma position
                 </button>
                 
-                <button onclick="validerPresence()" id="submitBtn" disabled class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm opacity-50">
+                <button onclick="validerPresence()" id="submitBtn" class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm">
                     Valider mon arrivée
                 </button>
             </div>
@@ -68,7 +69,7 @@
         const CAFE_LON = -5.0155941;
         const RAYON_AUTORISE = 300; 
 
-        // Liste des exceptions qui ne nécessitent pas de GPS (Anissa ajoutée)
+        // Liste des exceptions sans GPS (Anissa, Souad, Hakima, Rachid)
         const exceptionsGPS = ["ELGORRAMY_ANISSA", "ELMCHAOURI_SOUAD", "SBAI_HAKIMA", "KHALOUQ_RACHID"];
 
         let deviceId = localStorage.getItem('grey_corner_device_id');
@@ -80,14 +81,14 @@
         const equipe = [
             "ALAOUI LAZIZ", "BELQASSE KHAOULA", "BENKHADA ABDESLAM", "BOURAHMA ANAS", 
             "CHKAIRI YOUSSEF", "EL KOBBI MOSTAFA", "ELGORRAMY ANISSA", "ELGORRAMY SOUAD", 
-            "ELMCHAOURI SOUAD", "ENNHAILI SOUMIA", "FILALI ABDERAFI", "GUETIBI AMINE", 
-            "HATTAF MOHAMED", "HIDARA YOUSSEF", "IDRISSI SAAD", "KAFOUNI ZAKARIAE", 
+            "ELMCHAOURI SOUAD", "ENNHAIlI SOUMIA", "FILALI ABDERAFI", "GUETIBI AMINE", 
+            "HATTAF MOHAMED", "HIDARA YOUSSEF", "IDRISSI SAAD", "KAFOUNI Zakariae", 
             "KHALOUQ RACHID", "LEMSSIEH JAWAD", "MAJDOUB JIHANE", "MOUJAHID IMANE", 
             "MOHSINE YOUNESS", "SALIL HOUDA", "SBAI HAKIMA", "ZAIR FATIMA"
         ];
 
         const select = document.getElementById('staffSelect');
-        const btn = document.getElementById('submitBtn');
+        const submitBtn = document.getElementById('submitBtn');
         const geoBtn = document.getElementById('geoBtn');
         const geoStatus = document.getElementById('geoStatus');
 
@@ -99,18 +100,27 @@
         });
 
         function verifierException(val) {
+            if (!val) {
+                geoBtn.style.display = "none";
+                submitBtn.style.display = "none";
+                geoStatus.innerHTML = "Sélectionnez votre nom";
+                return;
+            }
+
             if (exceptionsGPS.includes(val)) {
                 geoStatus.innerHTML = "✨ Accès Libre 🌿";
                 geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700 mb-8";
-                btn.disabled = false;
-                btn.style.opacity = "1";
                 geoBtn.style.display = "none";
+                submitBtn.style.display = "block";
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = "1";
             } else {
                 geoStatus.innerHTML = "Localisation requise";
                 geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-400 mb-8";
-                btn.disabled = true;
-                btn.style.opacity = "0.5";
                 geoBtn.style.display = "block";
+                submitBtn.style.display = "block";
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = "0.5";
             }
         }
 
@@ -133,8 +143,8 @@
                 if (d <= RAYON_AUTORISE) {
                     geoStatus.innerHTML = "✅ Zone Grey Corner";
                     geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 mb-8";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = "1";
                     geoBtn.style.display = "none";
                 } else {
                     alert("📍 Trop loin. Rapprochez-vous du café.");
@@ -148,10 +158,8 @@
 
         async function validerPresence() {
             const user = select.value;
-            if(!user) return alert("Sélectionnez votre nom");
-
-            btn.disabled = true;
-            btn.innerHTML = "Certification...";
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = "Certification...";
 
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
@@ -165,7 +173,8 @@
             for (let name in devicesUsedToday) {
                 if (devicesUsedToday[name] === deviceId && name !== user) {
                     alert("❌ Un seul pointage par téléphone.");
-                    btn.disabled = false;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "Valider mon arrivée";
                     return;
                 }
             }
@@ -175,7 +184,6 @@
             }).then(() => {
                 dailyDevicesRef.update({ [user]: deviceId });
                 document.getElementById('zenSound').play();
-                
                 const msg = document.getElementById('msg');
                 if(estEnRetard) {
                     msg.innerHTML = `⏳ Arrivée enregistrée à ${timeStr}. <br> <span class="text-orange-600">Note : Arrivée tardive.</span>`;
