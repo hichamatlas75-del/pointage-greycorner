@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grey Corner • Pointage Certifié</title>
+    <title>Grey Corner • Pointage Sécurisé</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
@@ -15,44 +15,29 @@
             border-radius: 2.5rem; padding: 1.2rem;
             display: flex; flex-direction: column; position: relative;
         }
-
-        /* Liste défilante triée par fonction */
         .staff-grid { 
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
             overflow-y: auto; flex-grow: 1; padding: 5px; margin-bottom: 10px;
         }
-
         .btn-staff { 
-            border: 2px solid transparent; height: 60px;
-            font-size: 9px; font-weight: 800; border-radius: 12px; 
-            text-transform: uppercase; display: flex; align-items: center;
-            justify-content: center; text-align: center; padding: 4px;
+            border: 2px solid transparent; height: 60px; font-size: 9px; font-weight: 800; 
+            border-radius: 12px; text-transform: uppercase; display: flex; 
+            align-items: center; justify-content: center; text-align: center;
         }
-        
         .btn-staff.selected { border-color: #c5a059; background: #fffcf5; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.15); transform: scale(0.96); }
-        
         .type-service { background: #eff6ff; color: #1e40af; }
         .type-cuisine { background: #fef2f2; color: #991b1b; }
         .type-menage { background: #ecfdf5; color: #065f46; }
         .type-bar { background: #f5f3ff; color: #5b21b6; }
         .type-admin { background: #fdf2f8; color: #9d174d; }
 
-        /* BOUTON CENTRAL APPARENT */
-        .confirm-zone {
-            display: flex; flex-direction: column; gap: 10px;
-            padding: 15px 0; border-top: 1px solid #f1f5f9;
-        }
-
+        .confirm-zone { display: flex; flex-direction: column; gap: 10px; padding: 15px 0; border-top: 1px solid #f1f5f9; }
         .btn-main {
             background: linear-gradient(135deg, #c5a059 0%, #d4af37 100%);
             color: white; font-weight: 800; padding: 20px; border-radius: 20px;
-            text-transform: uppercase; letter-spacing: 1px; font-size: 13px;
-            box-shadow: 0 10px 25px rgba(197, 160, 89, 0.3);
-            transition: all 0.3s ease;
+            text-transform: uppercase; font-size: 13px; box-shadow: 0 10px 25px rgba(197, 160, 89, 0.3);
         }
-
         .btn-main:disabled { background: #e2e8f0; box-shadow: none; color: #94a3b8; opacity: 0.6; }
-
         .logo-img { height: 70px; width: auto; object-fit: contain; margin: 0 auto 10px auto; }
         .staff-grid::-webkit-scrollbar { width: 0px; }
     </style>
@@ -62,29 +47,21 @@
     <div class="main-container">
         <div class="glass-card">
             <img src="images/LOGO GREY CORNER.png" alt="Logo" class="logo-img">
-            
-            <div id="statusLabel" class="text-center px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 mb-2">
-                Sélectionnez votre nom
-            </div>
+            <div id="statusLabel" class="text-center px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 mb-2">Sélectionnez votre nom</div>
 
             <div id="staffGrid" class="staff-grid"></div>
 
             <div class="confirm-zone">
-                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase tracking-widest hidden">
-                    📍 Étape 1 : Localisation
-                </button>
-                
-                <button onclick="validerPresence()" id="submitBtn" class="btn-main w-full" disabled>
-                    Appuyer pour confirmer
-                </button>
+                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase tracking-widest hidden">📍 Étape 1 : Localisation</button>
+                <button onclick="validerPresence()" id="submitBtn" class="btn-main w-full" disabled>Appuyer pour confirmer</button>
             </div>
-
             <div id="msg" class="mt-2 text-[11px] font-bold hidden p-3 rounded-xl text-center"></div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/2.1.0/fingerprint2.min.js"></script>
 
     <script>
         const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
@@ -109,21 +86,18 @@
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
-        let selectedUser = null; let hpCache = null;
+        let selectedUser = null; let hpCache = null; let deviceID = null;
         const grid = document.getElementById('staffGrid');
         const submitBtn = document.getElementById('submitBtn');
         const geoBtn = document.getElementById('geoBtn');
-        const statusLabel = document.getElementById('statusLabel');
 
-        // LOGIQUE DE TRI PAR FONCTION (Admin -> Bar -> Cuisine -> Ménage -> Service)
+        // Génération ID Unique du téléphone
+        Fingerprint2.get((components) => {
+            deviceID = Fingerprint2.x64hash128(components.map(c => c.value).join(''), 31);
+        });
+
         const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
-        
-        equipeConfig.sort((a, b) => {
-            if (ordreFonctions[a.t] !== ordreFonctions[b.t]) {
-                return ordreFonctions[a.t] - ordreFonctions[b.t];
-            }
-            return a.n.localeCompare(b.n);
-        }).forEach(emp => {
+        equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach(emp => {
             const btn = document.createElement('button');
             btn.className = `btn-staff type-${emp.t}`;
             btn.innerHTML = emp.n;
@@ -140,29 +114,15 @@
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser + '/hP').once('value');
             hpCache = snap.val();
 
-            if (emp.ex) {
-                statusLabel.innerHTML = "✨ Accès Libre 🌿";
-                statusLabel.className = "text-center px-3 py-1.5 rounded-full text-[8px] font-black bg-amber-100 text-amber-600 mb-2";
-                geoBtn.style.display = "none";
-                submitBtn.disabled = false;
-            } else {
-                statusLabel.innerHTML = "📍 Localisation requise";
-                statusLabel.className = "text-center px-3 py-1.5 rounded-full text-[8px] font-black bg-blue-100 text-blue-600 mb-2";
-                geoBtn.style.display = "block";
-                submitBtn.disabled = true;
-            }
+            geoBtn.style.display = emp.ex ? "none" : "block";
+            submitBtn.disabled = !emp.ex;
         }
 
         function verifierPosition() {
-            geoBtn.innerHTML = "Vérification GPS...";
             navigator.geolocation.getCurrentPosition((pos) => {
-                const d = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
-                if (d <= RAYON_AUTORISE) {
-                    statusLabel.innerHTML = "✅ Zone Validée";
-                    statusLabel.className = "text-center px-3 py-1.5 rounded-full text-[8px] font-black bg-green-100 text-green-600 mb-2";
-                    submitBtn.disabled = false;
-                    geoBtn.style.display = "none";
-                } else { alert("Hors zone."); geoBtn.innerHTML = "📍 Réessayer"; }
+                if (getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON) <= RAYON_AUTORISE) {
+                    submitBtn.disabled = false; geoBtn.style.display = "none";
+                } else { alert("Hors zone."); }
             }, null, { enableHighAccuracy: true });
         }
 
@@ -175,8 +135,23 @@
         }
 
         async function validerPresence() {
+            if (!deviceID) return alert("Erreur ID Téléphone.");
             submitBtn.disabled = true;
-            submitBtn.innerHTML = "Certification...";
+
+            // VÉRIFICATION SÉCURITÉ : Est-ce le téléphone enregistré pour cet employé ?
+            const userRef = database.ref('users/' + selectedUser);
+            const userSnap = await userRef.once('value');
+            const storedID = userSnap.val() ? userSnap.val().deviceID : null;
+
+            if (storedID && storedID !== deviceID) {
+                alert("⚠️ Appareil non autorisé. Utilisez votre téléphone habituel.");
+                submitBtn.disabled = false;
+                return;
+            }
+
+            // Si c'est le premier pointage, on lie le téléphone au nom
+            if (!storedID) { await userRef.set({ deviceID: deviceID }); }
+
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -188,11 +163,11 @@
             }
 
             database.ref('presences/' + dateStr + '/' + selectedUser).update({
-                on: true, hA: timeStr, retard: retard, timestamp: firebase.database.ServerValue.TIMESTAMP
+                on: true, hA: timeStr, retard: retard, device: deviceID
             }).then(() => {
                 const msg = document.getElementById('msg');
-                msg.innerHTML = retard ? `⏳ Retard enregistré (${timeStr})` : `✨ Merci ! Pointage réussi à ${timeStr}`;
-                msg.className = "mt-2 p-3 font-bold block " + (retard ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700");
+                msg.innerHTML = `✨ Merci ! Pointage réussi (${timeStr})`;
+                msg.className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
                 msg.style.display = "block";
                 setTimeout(() => location.reload(), 3000);
             });
