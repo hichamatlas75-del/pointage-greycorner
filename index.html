@@ -3,69 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pointage • Grey Corner</title>
+    <title>Pointage Grey Corner</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        /* Empêcher tout défilement sur la page entière */
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            overflow: hidden; 
-            background: #fdfaf6; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .main-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-        }
-
+        html, body { height: 100%; margin: 0; overflow: hidden; background: #fdfaf6; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .main-container { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1rem; }
+        
         .glass-card { 
-            background: white; 
-            border: 2px solid #c5a059; 
-            box-shadow: 0 15px 35px rgba(197, 160, 89, 0.1);
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            max-width: 400px;
-            max-height: 95vh; /* Ajustement automatique à l'écran */
-            border-radius: 2.5rem;
-            padding: 1.5rem;
+            background: white; border: 2px solid #c5a059; 
+            width: 100%; max-width: 380px; height: 90vh; 
+            border-radius: 2.5rem; padding: 1.5rem;
+            display: flex; flex-direction: column;
         }
 
-        /* Grille adaptative qui prend l'espace disponible */
+        /* GRILLE FIXE : 3 lignes visibles (6 noms) avant de scroller */
         .staff-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 8px; 
-            overflow-y: auto; /* Seule la grille peut scroller si l'équipe s'agrandit trop */
-            flex-grow: 1;
-            padding: 5px;
-            margin: 1rem 0;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            overflow-y: auto; flex-grow: 1; padding: 5px; margin: 1rem 0;
+            max-height: 260px; /* Ajusté pour montrer exactement 3 lignes */
         }
 
-        /* Styles des boutons optimisés pour mobile */
         .btn-staff { 
-            border: 2px solid transparent; 
-            transition: all 0.2s; 
-            font-size: 10px; 
-            font-weight: 800; 
-            padding: 10px 4px; 
-            border-radius: 12px; 
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            line-height: 1.1;
+            border: 2px solid transparent; height: 70px;
+            font-size: 10px; font-weight: 800; border-radius: 15px; 
+            text-transform: uppercase; display: flex; align-items: center;
+            justify-content: center; text-align: center; padding: 5px;
         }
         
-        .btn-staff.selected { border-color: #c5a059; background: #fffcf5; transform: scale(0.97); }
+        .btn-staff.selected { border-color: #c5a059; background: #fffcf5; box-shadow: inset 0 0 10px rgba(197, 160, 89, 0.1); }
         
         .type-service { background: #eff6ff; color: #1e40af; }
         .type-cuisine { background: #fef2f2; color: #991b1b; }
@@ -73,10 +40,9 @@
         .type-bar { background: #f5f3ff; color: #5b21b6; }
         .type-admin { background: #fdf2f8; color: #9d174d; }
 
-        .logo-img { height: 60px; width: auto; object-fit: contain; margin: 0 auto; }
-        
-        /* Masquer la scrollbar pour l'esthétique */
-        .staff-grid::-webkit-scrollbar { width: 0px; }
+        .logo-img { height: 80px; width: auto; object-fit: contain; margin: 0 auto; }
+        .staff-grid::-webkit-scrollbar { width: 4px; }
+        .staff-grid::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -85,25 +51,18 @@
         <div class="glass-card">
             <img src="images/LOGO GREY CORNER.png" alt="Logo" class="logo-img">
             
-            <h1 class="text-xl font-black text-slate-800 tracking-tight mt-2 uppercase italic text-center">Pointage</h1>
-            
-            <div id="statusLabel" class="text-center mt-2 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-slate-100 text-slate-400">
-                Sélectionnez votre nom
+            <div id="statusLabel" class="text-center mt-4 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400">
+                Choisir un nom (Faire défiler)
             </div>
 
-            <div id="staffGrid" class="staff-grid">
-                </div>
+            <div id="staffGrid" class="staff-grid"></div>
 
-            <div id="actionArea" class="space-y-2">
-                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase tracking-widest hidden">
-                    📍 Vérifier ma position
-                </button>
-                <button onclick="validerPresence()" id="submitBtn" class="w-full bg-gradient-to-r from-[#c5a059] to-[#d4af37] text-white font-black py-4 rounded-xl shadow-lg uppercase tracking-widest text-[10px] hidden">
-                    Valider l'arrivée
-                </button>
+            <div id="actionArea" class="mt-auto space-y-3">
+                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hidden">📍 GPS Grey Corner</button>
+                <button onclick="validerPresence()" id="submitBtn" class="w-full bg-gradient-to-r from-[#c5a059] to-[#d4af37] text-white font-black py-5 rounded-2xl shadow-lg uppercase tracking-widest text-xs hidden">Confirmer l'arrivée</button>
             </div>
 
-            <div id="msg" class="mt-4 text-xs font-bold hidden p-3 rounded-xl text-center"></div>
+            <div id="msg" class="mt-4 text-xs font-bold hidden p-4 rounded-2xl text-center"></div>
         </div>
     </div>
 
@@ -133,8 +92,7 @@
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
-        let selectedUser = null;
-        let hpCache = null;
+        let selectedUser = null; let hpCache = null;
         const grid = document.getElementById('staffGrid');
         const submitBtn = document.getElementById('submitBtn');
         const geoBtn = document.getElementById('geoBtn');
@@ -159,16 +117,12 @@
 
             if (emp.ex) {
                 statusLabel.innerHTML = "✨ Accès Libre 🌿";
-                statusLabel.className = "text-center mt-2 px-3 py-1 rounded-full text-[8px] font-black bg-amber-100 text-amber-600";
-                geoBtn.style.display = "none";
-                submitBtn.style.display = "block";
-                submitBtn.disabled = false;
+                statusLabel.className = "text-center mt-4 px-3 py-1 rounded-full text-[9px] font-black bg-amber-100 text-amber-600";
+                geoBtn.style.display = "none"; submitBtn.style.display = "block"; submitBtn.disabled = false;
             } else {
-                statusLabel.innerHTML = "📍 Localisation Requise";
-                statusLabel.className = "text-center mt-2 px-3 py-1 rounded-full text-[8px] font-black bg-blue-100 text-blue-600";
-                geoBtn.style.display = "block";
-                submitBtn.style.display = "block";
-                submitBtn.disabled = true;
+                statusLabel.innerHTML = "📍 Localisation requise";
+                statusLabel.className = "text-center mt-4 px-3 py-1 rounded-full text-[9px] font-black bg-blue-100 text-blue-600";
+                geoBtn.style.display = "block"; submitBtn.style.display = "block"; submitBtn.disabled = true;
             }
         }
 
@@ -178,9 +132,8 @@
                 const d = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
                 if (d <= RAYON_AUTORISE) {
                     statusLabel.innerHTML = "✅ Zone Validée";
-                    statusLabel.className = "text-center mt-2 px-3 py-1 rounded-full text-[8px] font-black bg-green-100 text-green-600";
-                    submitBtn.disabled = false;
-                    geoBtn.style.display = "none";
+                    statusLabel.className = "text-center mt-4 px-3 py-1 rounded-full text-[9px] font-black bg-green-100 text-green-600";
+                    submitBtn.disabled = false; geoBtn.style.display = "none";
                 } else { alert("Hors zone."); geoBtn.innerHTML = "Réessayer"; }
             }, null, { enableHighAccuracy: true });
         }
@@ -207,8 +160,8 @@
                 on: true, hA: timeStr, retard: retard, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 const msg = document.getElementById('msg');
-                msg.innerHTML = retard ? `⏳ Retard enregistré (${timeStr})` : `✨ Merci ! À l'heure (${timeStr})`;
-                msg.className = "mt-4 p-3 font-bold block " + (retard ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700");
+                msg.innerHTML = retard ? `⏳ Retard noté (${timeStr})` : `✨ Merci ! À l'heure (${timeStr})`;
+                msg.className = "mt-4 p-4 font-bold block " + (retard ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700");
                 msg.style.display = "block";
                 setTimeout(() => location.reload(), 3000);
             });
