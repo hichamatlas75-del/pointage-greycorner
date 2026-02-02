@@ -13,7 +13,7 @@
         .btn-grey:disabled { background: #d1d5db; cursor: not-allowed; }
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        #geoBtn, #submitBtn { display: none; } /* Cachés par défaut pour éviter le double bouton */
+        #geoBtn, #submitBtn { display: none; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
@@ -32,7 +32,7 @@
         <div class="space-y-6">
             <div class="text-left">
                 <label class="text-[10px] font-bold text-slate-400 uppercase ml-3 mb-2 block tracking-wider">Équipier</label>
-                <select id="staffSelect" onchange="verifierException(this.value)" class="w-full p-4 rounded-2xl border-2 border-slate-50 bg-white text-slate-700 font-semibold focus:border-amber-500 outline-none transition-all shadow-sm">
+                <select id="staffSelect" onchange="chargerInfosPointage(this.value)" class="w-full p-4 rounded-2xl border-2 border-slate-50 bg-white text-slate-700 font-semibold focus:border-amber-500 outline-none transition-all shadow-sm">
                     <option value="">-- Sélectionner --</option>
                 </select>
             </div>
@@ -41,7 +41,6 @@
                 <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl mb-2 text-sm uppercase tracking-widest">
                     📍 Vérifier ma position
                 </button>
-                
                 <button onclick="validerPresence()" id="submitBtn" class="w-full btn-grey text-white font-bold py-5 rounded-2xl shadow-lg shadow-amber-100 uppercase tracking-widest text-sm">
                     Valider mon arrivée
                 </button>
@@ -49,10 +48,6 @@
         </div>
 
         <div id="msg" class="mt-8 text-sm font-medium hidden leading-relaxed"></div>
-
-        <footer class="mt-12 pt-6 border-t border-slate-50">
-            <p class="text-[9px] text-slate-400 uppercase font-bold tracking-[0.3em]">Ouverture 06:30 • Discipline & Bienveillance</p>
-        </footer>
     </div>
 
     <audio id="zenSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
@@ -65,28 +60,13 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const CAFE_LAT = 34.0343959; 
-        const CAFE_LON = -5.0155941;
+        const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941;
         const RAYON_AUTORISE = 300; 
 
-        // Liste des exceptions sans GPS (Anissa, Souad, Hakima, Rachid)
         const exceptionsGPS = ["ELGORRAMY_ANISSA", "ELMCHAOURI_SOUAD", "SBAI_HAKIMA", "KHALOUQ_RACHID"];
+        const equipe = ["ALAOUI LAZIZ", "BELQASSE KHAOULA", "BENKHADA ABDESLAM", "BOURAHMA ANAS", "CHKAIRI YOUSSEF", "ELKOBBI MOSTAFA", "ELGORRAMY ANISSA", "ELGORRAMY SOUAD", "ELMCHAOURI SOUAD", "ENNHAIlI SOUMIA", "FILALI ABDERAFI", "GUETIBI AMINE", "HATTAF MOHAMED", "HIDARA YOUSSEF", "IDRISSI SAAD", "KAFOUNI ZAKARIAE", "KHALOUQ RACHID", "LEMSSIEH JAWAD", "MAJDOUB JIHANE", "MOUJAHID IMANE", "MOHSINE YOUNESS", "SALIL HOUDA", "SBAI HAKIMA", "ZAIR FATIMA"];
 
-        let deviceId = localStorage.getItem('grey_corner_device_id');
-        if (!deviceId) {
-            deviceId = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-            localStorage.setItem('grey_corner_device_id', deviceId);
-        }
-
-        const equipe = [
-            "ALAOUI LAZIZ", "BELQASSE KHAOULA", "BENKHADA ABDESLAM", "BOURAHMA ANAS", 
-            "CHKAIRI YOUSSEF", "ELKOBBI MOSTAFA", "ELGORRAMY ANISSA", "ELGORRAMY SOUAD", 
-            "ELMCHAOURI SOUAD", "ENNHAIlI SOUMIA", "FILALI ABDERAFI", "GUETIBI AMINE", 
-            "HATTAF MOHAMED", "HIDARA YOUSSEF", "IDRISSI SAAD", "KAFOUNI ZAKARIAE", 
-            "KHALOUQ RACHID", "LEMSSIEH JAWAD", "MAJDOUB JIHANE", "MOUJAHID IMANE", 
-            "MOHSINE YOUNESS", "SALIL HOUDA", "SBAI HAKIMA", "ZAIR FATIMA"
-        ];
-
+        let heurePrevueCachee = null;
         const select = document.getElementById('staffSelect');
         const submitBtn = document.getElementById('submitBtn');
         const geoBtn = document.getElementById('geoBtn');
@@ -94,18 +74,18 @@
 
         equipe.sort().forEach(name => {
             let opt = document.createElement('option');
-            opt.value = name.replace(/\s+/g, '_');
+            opt.value = name.replace(/\s+/g, '_').toUpperCase();
             opt.innerHTML = name;
             select.appendChild(opt);
         });
 
-        function verifierException(val) {
-            if (!val) {
-                geoBtn.style.display = "none";
-                submitBtn.style.display = "none";
-                geoStatus.innerHTML = "Sélectionnez votre nom";
-                return;
-            }
+        async function chargerInfosPointage(val) {
+            if (!val) { geoBtn.style.display = "none"; submitBtn.style.display = "none"; return; }
+
+            // Récupération de l'heure prévue par le caissier
+            const dateStr = new Date().toISOString().split('T')[0];
+            const snap = await database.ref('presences/' + dateStr + '/' + val + '/hP').once('value');
+            heurePrevueCachee = snap.val();
 
             if (exceptionsGPS.includes(val)) {
                 geoStatus.innerHTML = "✨ Accès Libre 🌿";
@@ -124,36 +104,28 @@
             }
         }
 
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
         function verifierPosition() {
             geoBtn.innerHTML = "Vérification...";
             geoBtn.classList.add('pulse');
-            
             navigator.geolocation.getCurrentPosition((pos) => {
                 const d = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
                 geoBtn.classList.remove('pulse');
-                
                 if (d <= RAYON_AUTORISE) {
                     geoStatus.innerHTML = "✅ Zone Grey Corner";
                     geoStatus.className = "inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 mb-8";
                     submitBtn.disabled = false;
                     submitBtn.style.opacity = "1";
                     geoBtn.style.display = "none";
-                } else {
-                    alert("📍 Trop loin. Rapprochez-vous du café.");
-                    geoBtn.innerHTML = "📍 Réessayer la position";
-                }
-            }, (err) => {
-                alert("⚠️ Activez le GPS de votre téléphone.");
-                geoBtn.innerHTML = "📍 Activer le GPS";
-            }, { enableHighAccuracy: true });
+                } else { alert("📍 Trop loin."); geoBtn.innerHTML = "📍 Réessayer"; }
+            }, (err) => alert("⚠️ Activez le GPS."), { enableHighAccuracy: true });
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         async function validerPresence() {
@@ -164,36 +136,24 @@
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            const estEnRetard = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 5));
 
-            const dailyDevicesRef = database.ref('security/' + dateStr);
-            const devSnap = await dailyDevicesRef.once('value');
-            const devicesUsedToday = devSnap.val() || {};
-
-            for (let name in devicesUsedToday) {
-                if (devicesUsedToday[name] === deviceId && name !== user) {
-                    alert("❌ Un seul pointage par téléphone.");
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = "Valider mon arrivée";
-                    return;
-                }
+            let estEnRetard = false;
+            if (heurePrevueCachee) {
+                const [h, m] = heurePrevueCachee.split(':').map(Number);
+                const minutesNow = now.getHours() * 60 + now.getMinutes();
+                const minutesCible = h * 60 + m;
+                if (minutesNow > (minutesCible + 5)) estEnRetard = true;
             }
 
             database.ref('presences/' + dateStr + '/' + user).update({
-                on: true, hA: timeStr, device: deviceId, retard: estEnRetard, timestamp: firebase.database.ServerValue.TIMESTAMP
+                on: true, hA: timeStr, retard: estEnRetard, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                dailyDevicesRef.update({ [user]: deviceId });
                 document.getElementById('zenSound').play();
                 const msg = document.getElementById('msg');
-                if(estEnRetard) {
-                    msg.innerHTML = `⏳ Arrivée enregistrée à ${timeStr}. <br> <span class="text-orange-600">Note : Arrivée tardive.</span>`;
-                    msg.className = "mt-8 p-4 bg-orange-50 text-orange-700 rounded-2xl font-bold block border border-orange-100";
-                } else {
-                    msg.innerHTML = `✨ Merci ! <br> Arrivée certifiée à <span class="text-amber-600">${timeStr}</span>.`;
-                    msg.className = "mt-8 p-4 bg-green-50 text-green-700 rounded-2xl font-bold block border border-green-100";
-                }
+                msg.innerHTML = estEnRetard ? `⏳ Arrivée enregistrée (${timeStr}). <br> Note : Retard.` : `✨ Merci ! <br> Arrivée certifiée à ${timeStr}.`;
+                msg.className = "mt-8 p-4 rounded-2xl font-bold block " + (estEnRetard ? "bg-orange-50 text-orange-700" : "bg-green-50 text-green-700");
                 msg.style.display = "block";
-                setTimeout(() => location.reload(), 4000);
+                setTimeout(() => location.reload(), 3500);
             });
         }
     </script>
