@@ -24,12 +24,20 @@
             border-radius: 12px; text-transform: uppercase; display: flex; 
             align-items: center; justify-content: center; text-align: center;
         }
-        .btn-staff.selected { border-color: #c5a059; background: #fffcf5; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.15); transform: scale(0.96); }
+        .btn-staff.selected { border-color: #c5a059; background: #fffcf5; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.15); }
         .type-service { background: #eff6ff; color: #1e40af; }
         .type-cuisine { background: #fef2f2; color: #991b1b; }
         .type-menage { background: #ecfdf5; color: #065f46; }
         .type-bar { background: #f5f3ff; color: #5b21b6; }
         .type-admin { background: #fdf2f8; color: #9d174d; }
+
+        /* ANIMATION DU BOUTON GPS */
+        @keyframes pulse-geo {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.98); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .searching { animation: pulse-geo 1.5s infinite ease-in-out; background-color: #4b5563 !important; }
 
         .confirm-zone { display: flex; flex-direction: column; gap: 10px; padding: 15px 0; border-top: 1px solid #f1f5f9; }
         .btn-main {
@@ -52,7 +60,9 @@
             <div id="staffGrid" class="staff-grid"></div>
 
             <div class="confirm-zone">
-                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase tracking-widest hidden">📍 Étape 1 : Localisation</button>
+                <button onclick="verifierPosition()" id="geoBtn" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase tracking-widest hidden transition-all">
+                    📍 Étape 1 : Localisation
+                </button>
                 <button onclick="validerPresence()" id="submitBtn" class="btn-main w-full" disabled>Appuyer pour confirmer</button>
             </div>
             <div id="msg" class="mt-2 text-[11px] font-bold hidden p-3 rounded-xl text-center"></div>
@@ -91,7 +101,6 @@
         const submitBtn = document.getElementById('submitBtn');
         const geoBtn = document.getElementById('geoBtn');
 
-        // Génération ID Unique du téléphone
         Fingerprint2.get((components) => {
             deviceID = Fingerprint2.x64hash128(components.map(c => c.value).join(''), 31);
         });
@@ -111,19 +120,48 @@
             selectedUser = emp.n.replace(/\s+/g, '_').toUpperCase();
             
             const dateStr = new Date().toISOString().split('T')[0];
-            const snap = await database.ref('presences/' + dateStr + '/' + selectedUser + '/hP').once('value');
-            hpCache = snap.val();
+            const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
+            const data = snap.val();
+            
+            if (data && data.on === true) {
+                alert("✅ Déjà pointé pour aujourd'hui. Bon service !");
+                selectedUser = null; element.classList.remove('selected');
+                submitBtn.disabled = true; geoBtn.style.display = "none";
+                return;
+            }
 
+            hpCache = data ? data.hP : null;
             geoBtn.style.display = emp.ex ? "none" : "block";
+            geoBtn.innerHTML = "📍 Étape 1 : Localisation"; // Reset texte
+            geoBtn.classList.remove('searching');
             submitBtn.disabled = !emp.ex;
         }
 
         function verifierPosition() {
+            // Activer l'animation
+            geoBtn.innerHTML = "🔍 Recherche de l'emplacement...";
+            geoBtn.classList.add('searching');
+            geoBtn.disabled = true;
+
             navigator.geolocation.getCurrentPosition((pos) => {
-                if (getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON) <= RAYON_AUTORISE) {
-                    submitBtn.disabled = false; geoBtn.style.display = "none";
-                } else { alert("Hors zone."); }
-            }, null, { enableHighAccuracy: true });
+                const dist = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
+                if (dist <= RAYON_AUTORISE) {
+                    geoBtn.innerHTML = "✅ Emplacement validé";
+                    geoBtn.classList.remove('searching');
+                    geoBtn.style.backgroundColor = "#10b981"; // Vert succès
+                    submitBtn.disabled = false;
+                } else { 
+                    alert("⚠️ Vous n'êtes pas au Grey Corner."); 
+                    geoBtn.innerHTML = "📍 Réessayer la localisation";
+                    geoBtn.classList.remove('searching');
+                    geoBtn.disabled = false;
+                }
+            }, (err) => {
+                alert("⚠️ Erreur GPS. Activez votre localisation.");
+                geoBtn.innerHTML = "📍 Réessayer";
+                geoBtn.classList.remove('searching');
+                geoBtn.disabled = false;
+            }, { enableHighAccuracy: true });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -135,21 +173,18 @@
         }
 
         async function validerPresence() {
-            if (!deviceID) return alert("Erreur ID Téléphone.");
+            if (!deviceID || !selectedUser) return;
             submitBtn.disabled = true;
 
-            // VÉRIFICATION SÉCURITÉ : Est-ce le téléphone enregistré pour cet employé ?
             const userRef = database.ref('users/' + selectedUser);
             const userSnap = await userRef.once('value');
             const storedID = userSnap.val() ? userSnap.val().deviceID : null;
 
             if (storedID && storedID !== deviceID) {
-                alert("⚠️ Appareil non autorisé. Utilisez votre téléphone habituel.");
-                submitBtn.disabled = false;
-                return;
+                alert("⚠️ Appareil non reconnu.");
+                submitBtn.disabled = false; return;
             }
 
-            // Si c'est le premier pointage, on lie le téléphone au nom
             if (!storedID) { await userRef.set({ deviceID: deviceID }); }
 
             const now = new Date();
@@ -166,7 +201,7 @@
                 on: true, hA: timeStr, retard: retard, device: deviceID
             }).then(() => {
                 const msg = document.getElementById('msg');
-                msg.innerHTML = `✨ Merci ! Pointage réussi (${timeStr})`;
+                msg.innerHTML = `✨ Pointage réussi à ${timeStr}`;
                 msg.className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
                 msg.style.display = "block";
                 setTimeout(() => location.reload(), 3000);
