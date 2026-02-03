@@ -15,15 +15,13 @@
             border-radius: 2.5rem; padding: 1.2rem;
             display: flex; flex-direction: column; position: relative;
         }
-
-        /* BOUTON RESET DISCRET */
         .admin-reset {
-            position: absolute; top: 20px; right: 20px;
-            width: 30px; height: 30px; border-radius: 50%;
-            background: #f1f5f9; display: flex; align-items: center;
-            justify-content: center; cursor: pointer; opacity: 0.5;
+            position: absolute; top: 15px; right: 15px;
+            width: 35px; height: 35px; border-radius: 12px;
+            background: #fffbeb; border: 1px solid #fde68a;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; z-index: 100;
         }
-
         .staff-grid { 
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
             overflow-y: auto; flex-grow: 1; padding: 5px; margin-bottom: 10px;
@@ -50,7 +48,7 @@
             text-transform: uppercase; font-size: 13px; box-shadow: 0 10px 25px rgba(197, 160, 89, 0.2);
         }
         .btn-main:disabled { background: #e2e8f0; color: #94a3b8; opacity: 0.6; }
-        .logo-img { height: 70px; width: auto; object-fit: contain; margin: 0 auto 10px auto; }
+        .logo-img { height: 60px; width: auto; object-fit: contain; margin: 0 auto 10px auto; }
         .staff-grid::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
@@ -58,20 +56,11 @@
 
     <div class="main-container">
         <div class="glass-card">
-            <div class="admin-reset" onclick="adminResetDevice()" title="Admin Reset">⚙️</div>
-
+            <div class="admin-reset" onclick="adminResetDevice()">⚙️</div>
             <img src="images/LOGO GREY CORNER.png" alt="Logo" class="logo-img">
-            
-            <div id="statusLabel" class="text-center px-3 py-2 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 mb-2 min-h-[32px] flex items-center justify-center">
-                Sélectionnez votre nom
-            </div>
-
+            <div id="statusLabel" class="text-center px-3 py-2 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 mb-2 min-h-[32px] flex items-center justify-center">Sélectionnez votre nom</div>
             <div id="staffGrid" class="staff-grid"></div>
-
-            <div class="confirm-zone">
-                <button onclick="validerPresence()" id="submitBtn" class="btn-main w-full" disabled>Appuyer pour confirmer</button>
-            </div>
-            
+            <div class="confirm-zone"><button onclick="validerPresence()" id="submitBtn" class="btn-main w-full" disabled>Appuyer pour confirmer</button></div>
             <div id="msg" class="mt-2 text-[11px] font-bold hidden p-3 rounded-xl text-center"></div>
         </div>
     </div>
@@ -84,9 +73,7 @@
         const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-
-        const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941;
-        const RAYON_AUTORISE = 300; 
+        const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
 
         const equipeConfig = [
             {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"},
@@ -103,13 +90,14 @@
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
-        let selectedUser = null; let hpCache = null; let deviceID = null;
-        const grid = document.getElementById('staffGrid');
+        let selectedUser = null; let deviceID = null;
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
         Fingerprint2.get((components) => {
-            deviceID = Fingerprint2.x64hash128(components.map(c => c.value).join(''), 31);
+            // Empreinte simplifiée pour éviter les blocages après mise à jour système
+            const values = components.filter(c => !['canvas', 'webgl'].includes(c.key)).map(c => c.value);
+            deviceID = Fingerprint2.x64hash128(values.join(''), 31);
         });
 
         const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
@@ -118,7 +106,7 @@
             btn.className = `btn-staff type-${emp.t}`;
             btn.innerHTML = emp.n;
             btn.onclick = () => sélectionnerEmployé(btn, emp);
-            grid.appendChild(btn);
+            document.getElementById('staffGrid').appendChild(btn);
         });
 
         async function sélectionnerEmployé(element, emp) {
@@ -128,17 +116,14 @@
             
             const dateStr = new Date().toISOString().split('T')[0];
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
-            const data = snap.val();
-            
-            if (data && data.on === true) {
+            if (snap.val() && snap.val().on === true) {
                 alert("✅ Déjà pointé aujourd'hui.");
                 resetSelection(); return;
             }
 
-            hpCache = data ? data.hP : null;
             if (emp.ex) {
                 statusLabel.innerHTML = "✨ Accès Libre 🌿";
-                statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-amber-100 text-amber-600 mb-2 flex items-center justify-center";
+                statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-amber-50 text-amber-600 mb-2 flex items-center justify-center";
                 submitBtn.disabled = false;
             } else {
                 activerGPSAutomatique();
@@ -147,26 +132,23 @@
 
         function activerGPSAutomatique() {
             statusLabel.innerHTML = "<span class='searching-gps'>🔍 Vérification GPS...</span>";
-            statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] bg-blue-50 text-blue-600 mb-2 flex items-center justify-center";
             navigator.geolocation.getCurrentPosition((pos) => {
                 if (getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON) <= RAYON_AUTORISE) {
-                    statusLabel.innerHTML = "✅ Zone Validée";
-                    statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-green-100 text-green-700 mb-2 flex items-center justify-center";
+                    statusLabel.innerHTML = "✅ Zone Grey Corner Validée";
+                    statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-green-50 text-green-700 mb-2 flex items-center justify-center";
                     submitBtn.disabled = false;
-                } else { alert("Hors zone."); resetSelection(); }
+                } else { alert("Vous n'êtes pas au café."); resetSelection(); }
             }, (err) => { alert("Activez votre GPS."); resetSelection(); }, { enableHighAccuracy: true });
         }
 
-        // FONCTION RESET ADMIN
         function adminResetDevice() {
-            if (!selectedUser) return alert("Sélectionnez d'abord le nom de la personne à débloquer.");
-            const pass = prompt("Entrez le mot de passe Admin :");
-            if (pass === "corner") {
+            if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
+            if (prompt("Code Admin :") === "corner") {
                 database.ref('users/' + selectedUser).remove().then(() => {
-                    alert("✅ Appareil réinitialisé pour " + selectedUser.replace('_', ' '));
+                    alert("✅ Appareil débloqué pour " + selectedUser);
                     location.reload();
                 });
-            } else { alert("❌ Mot de passe incorrect."); }
+            }
         }
 
         function resetSelection() {
@@ -193,29 +175,22 @@
             const storedID = userSnap.val() ? userSnap.val().deviceID : null;
 
             if (storedID && storedID !== deviceID) {
-                alert("⚠️ Cet appareil n'est pas lié à votre nom. Contactez le gérant.");
+                alert("⚠️ Appareil non reconnu. Cliquez sur l'engrenage en haut pour réinitialiser.");
                 submitBtn.disabled = false; return;
             }
 
-            if (!storedID) { await userRef.set({ deviceID: deviceID }); }
+            if (!storedID) await userRef.set({ deviceID: deviceID });
 
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            let retard = false;
-            if (hpCache) {
-                const [h, m] = hpCache.split(':').map(Number);
-                if ((now.getHours() * 60 + now.getMinutes()) > (h * 60 + m + 5)) retard = true;
-            }
-
             database.ref('presences/' + dateStr + '/' + selectedUser).update({
-                on: true, hA: timeStr, retard: retard, device: deviceID, timestamp: firebase.database.ServerValue.TIMESTAMP
+                on: true, hA: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                const msg = document.getElementById('msg');
-                msg.innerHTML = `✨ Pointage réussi (${timeStr})`;
-                msg.className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
-                msg.style.display = "block";
-                setTimeout(() => location.reload(), 3000);
+                document.getElementById('msg').innerHTML = "✨ Pointage réussi !";
+                document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
+                document.getElementById('msg').style.display = "block";
+                setTimeout(() => location.reload(), 2000);
             });
         }
     </script>
