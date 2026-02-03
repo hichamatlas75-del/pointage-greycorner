@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grey Corner • Pointage Intelligent</title>
+    <title>Grey Corner • Pointage Certifié</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
@@ -36,7 +36,7 @@
         .btn-staff { 
             border: 2px solid transparent; height: 60px; font-size: 9px; font-weight: 800; 
             border-radius: 12px; text-transform: uppercase; display: flex; 
-            align-items: center; justify-content: center; text-align: center;
+            align-items: center; justify-content: center; text-align: center; transition: all 0.2s;
         }
         .btn-staff.selected { border-color: #c5a059; background: #fffcf5; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.15); }
         .type-admin { background: #fdf2f8; color: #9d174d; }
@@ -78,13 +78,23 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/2.1.0/fingerprint2.min.js"></script>
 
     <script>
         const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
+
+        // --- GESTION DU TOKEN UNIQUE PAR EMPLOYÉ ---
+        function getPersistentToken(userName) {
+            let key = "gc_token_" + userName;
+            let token = localStorage.getItem(key);
+            if (!token) {
+                token = 'GC-' + Math.random().toString(36).substr(2, 9).toUpperCase() + '-' + Date.now();
+                localStorage.setItem(key, token);
+            }
+            return token;
+        }
 
         const equipeConfig = [
             {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"},
@@ -101,26 +111,14 @@
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
-        const libellesFonctions = {
-            "admin": "Caisse et Économat",
-            "bar": "Bar",
-            "cuisine": "Cuisine",
-            "menage": "Ménage",
-            "service": "Service"
-        };
+        const libellesFonctions = { "admin": "Caisse et Économat", "bar": "Bar", "cuisine": "Cuisine", "menage": "Ménage", "service": "Service" };
+        const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
 
-        let selectedUser = null; let deviceID = null;
+        let selectedUser = null; 
         const grid = document.getElementById('staffGrid');
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
-        Fingerprint2.get((components) => {
-            const values = components.filter(c => !['canvas', 'webgl'].includes(c.key)).map(c => c.value);
-            deviceID = Fingerprint2.x64hash128(values.join(''), 31);
-        });
-
-        const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
-        
         let currentCat = "";
         equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach(emp => {
             if (emp.t !== currentCat) {
@@ -173,18 +171,42 @@
             if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
             if (prompt("Code Admin :") === "corner") {
                 database.ref('users/' + selectedUser).remove().then(() => {
+                    localStorage.removeItem("gc_token_" + selectedUser);
                     alert("✅ Appareil débloqué pour " + selectedUser);
                     location.reload();
                 });
             }
         }
 
-        function resetSelection() {
-            selectedUser = null;
-            document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
-            statusLabel.innerHTML = "Sélectionnez votre nom";
-            statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-slate-100 text-slate-400 mb-2 flex items-center justify-center";
+        async function validerPresence() {
+            if (!selectedUser) return;
             submitBtn.disabled = true;
+
+            const currentToken = getPersistentToken(selectedUser);
+            const userRef = database.ref('users/' + selectedUser);
+            const userSnap = await userRef.once('value');
+            const storedToken = userSnap.val() ? userSnap.val().token : null;
+
+            if (storedToken && storedToken !== currentToken) {
+                alert("⚠️ Appareil non autorisé. Contactez le gérant (Admin Reset).");
+                submitBtn.disabled = false; return;
+            }
+
+            if (!storedToken) await userRef.set({ token: currentToken });
+
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            database.ref('presences/' + dateStr + '/' + selectedUser).update({
+                on: true, 
+                hA: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                const msg = document.getElementById('msg');
+                msg.innerHTML = "✨ Pointage réussi !";
+                msg.className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
+                msg.style.display = "block";
+                setTimeout(() => location.reload(), 2000);
+            });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -195,31 +217,12 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        async function validerPresence() {
-            if (!deviceID || !selectedUser) return;
+        function resetSelection() {
+            selectedUser = null;
+            document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
+            statusLabel.innerHTML = "Sélectionnez votre nom";
+            statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-slate-100 text-slate-400 mb-2 flex items-center justify-center";
             submitBtn.disabled = true;
-            const userRef = database.ref('users/' + selectedUser);
-            const userSnap = await userRef.once('value');
-            const storedID = userSnap.val() ? userSnap.val().deviceID : null;
-
-            if (storedID && storedID !== deviceID) {
-                alert("⚠️ Appareil non reconnu. Cliquez sur l'engrenage pour réinitialiser.");
-                submitBtn.disabled = false; return;
-            }
-
-            if (!storedID) await userRef.set({ deviceID: deviceID });
-
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            database.ref('presences/' + dateStr + '/' + selectedUser).update({
-                on: true, hA: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                document.getElementById('msg').innerHTML = "✨ Pointage réussi !";
-                document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
-                document.getElementById('msg').style.display = "block";
-                setTimeout(() => location.reload(), 2000);
-            });
         }
     </script>
 </body>
