@@ -137,15 +137,13 @@
         async function sélectionnerEmployé(element, emp) {
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
-            
-            // On définit le nom immédiatement pour que l'engrenage fonctionne toujours
             selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
             
             const dateStr = new Date().toISOString().split('T')[0];
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
             
             if (snap.val() && snap.val().on === true) {
-                alert("✅ Déjà pointé aujourd'hui. (Admin : Reset possible via l'engrenage)");
+                alert("⚠️ Déjà pointé aujourd'hui. Pour repointer, utilisez l'engrenage (Admin).");
                 submitBtn.disabled = true; 
                 statusLabel.innerHTML = "DÉJÀ POINTÉ";
                 statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-green-50 text-green-700 mb-2 flex items-center justify-center";
@@ -173,12 +171,17 @@
         }
 
         function adminResetDevice() {
-            if (!selectedUser) return alert("Sélectionnez d'abord un nom dans la liste.");
+            if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
             if (prompt("Code Admin :") === "corner") {
-                // Réinitialise tout pour ce nom
-                database.ref('users/' + selectedUser).remove().then(() => {
-                    localStorage.removeItem("gc_token_" + selectedUser);
-                    alert("✅ Réinitialisation réussie pour " + selectedUser.replace('_', ' '));
+                const dateStr = new Date().toISOString().split('T')[0];
+                
+                // On nettoie TOUT pour permettre le re-pointage
+                database.ref('users/' + selectedUser).remove();
+                localStorage.removeItem("gc_token_" + selectedUser);
+                
+                // Suppression de la présence du jour
+                database.ref('presences/' + dateStr + '/' + selectedUser).remove().then(() => {
+                    alert("✅ " + selectedUser.replace('_', ' ') + " a été réinitialisé. Il peut maintenant repointer.");
                     location.reload();
                 });
             }
