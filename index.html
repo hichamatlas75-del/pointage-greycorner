@@ -36,7 +36,7 @@
         .btn-staff { 
             border: 2px solid transparent; height: 60px; font-size: 9px; font-weight: 800; 
             border-radius: 12px; text-transform: uppercase; display: flex; 
-            align-items: center; justify-content: center; text-align: center; transition: all 0.2s;
+            align-items: center; justify-content: center; text-align: center;
         }
         .btn-staff.selected { border-color: #c5a059; background: #fffcf5; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.15); }
         .type-admin { background: #fdf2f8; color: #9d174d; }
@@ -85,7 +85,6 @@
         const database = firebase.database();
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
 
-        // --- GESTION DU TOKEN UNIQUE PAR EMPLOYÉ ---
         function getPersistentToken(userName) {
             let key = "gc_token_" + userName;
             let token = localStorage.getItem(key);
@@ -138,13 +137,19 @@
         async function sélectionnerEmployé(element, emp) {
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
+            
+            // On définit le nom immédiatement pour que l'engrenage fonctionne toujours
             selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
             
             const dateStr = new Date().toISOString().split('T')[0];
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
+            
             if (snap.val() && snap.val().on === true) {
-                alert("✅ Déjà pointé aujourd'hui.");
-                resetSelection(); return;
+                alert("✅ Déjà pointé aujourd'hui. (Admin : Reset possible via l'engrenage)");
+                submitBtn.disabled = true; 
+                statusLabel.innerHTML = "DÉJÀ POINTÉ";
+                statusLabel.className = "text-center px-3 py-2 rounded-full text-[9px] font-black bg-green-50 text-green-700 mb-2 flex items-center justify-center";
+                return; 
             }
 
             if (emp.ex) {
@@ -168,11 +173,12 @@
         }
 
         function adminResetDevice() {
-            if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
+            if (!selectedUser) return alert("Sélectionnez d'abord un nom dans la liste.");
             if (prompt("Code Admin :") === "corner") {
+                // Réinitialise tout pour ce nom
                 database.ref('users/' + selectedUser).remove().then(() => {
                     localStorage.removeItem("gc_token_" + selectedUser);
-                    alert("✅ Appareil débloqué pour " + selectedUser);
+                    alert("✅ Réinitialisation réussie pour " + selectedUser.replace('_', ' '));
                     location.reload();
                 });
             }
@@ -188,7 +194,7 @@
             const storedToken = userSnap.val() ? userSnap.val().token : null;
 
             if (storedToken && storedToken !== currentToken) {
-                alert("⚠️ Appareil non autorisé. Contactez le gérant (Admin Reset).");
+                alert("⚠️ Appareil non autorisé. Cliquez sur l'engrenage pour débloquer.");
                 submitBtn.disabled = false; return;
             }
 
@@ -201,10 +207,9 @@
                 hA: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                const msg = document.getElementById('msg');
-                msg.innerHTML = "✨ Pointage réussi !";
-                msg.className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
-                msg.style.display = "block";
+                document.getElementById('msg').innerHTML = "✨ Pointage réussi !";
+                document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-100 text-green-700";
+                document.getElementById('msg').style.display = "block";
                 setTimeout(() => location.reload(), 2000);
             });
         }
