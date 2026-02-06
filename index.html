@@ -55,17 +55,17 @@
             height: 55px; font-size: 10px; font-weight: 700; 
             border-radius: 12px; text-transform: uppercase; 
             display: flex; align-items: center; justify-content: center; 
-            text-align: center; color: #d1d5db;
+            text-align: center;
             transition: all 0.2s ease;
         }
 
         .btn-staff.selected { 
-            border-color: #c5a059; 
-            background: rgba(197, 160, 89, 0.15); 
-            color: #fcd34d;
+            border-color: #c5a059 !important; 
+            background: rgba(197, 160, 89, 0.15) !important; 
             box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
         }
 
+        /* Bordures de fonctions */
         .type-admin { border-left: 3px solid #f472b6; }
         .type-bar { border-left: 3px solid #818cf8; }
         .type-cuisine { border-left: 3px solid #f87171; }
@@ -137,19 +137,12 @@
         const database = firebase.database();
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
 
-        // Date du jour
         const maintenant = new Date();
         document.getElementById('date-du-jour').textContent = String(maintenant.getDate()).padStart(2, '0') + '/' + String(maintenant.getMonth() + 1).padStart(2, '0');
 
-        function getPersistentToken(userName) {
-            let key = "gc_token_" + userName;
-            let token = localStorage.getItem(key);
-            if (!token) {
-                token = 'GC-' + Math.random().toString(36).substr(2, 9).toUpperCase() + '-' + Date.now();
-                localStorage.setItem(key, token);
-            }
-            return token;
-        }
+        const couleursFonctions = {
+            "admin": "#f472b6", "bar": "#818cf8", "cuisine": "#f87171", "menage": "#34d399", "service": "#60a5fa"
+        };
 
         const equipeConfig = [
             {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"},
@@ -174,7 +167,6 @@
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
-        // --- GÉNÉRATION DE LA GRILLE AVEC SYNCHRO DASHBOARD ---
         let currentCat = "";
         equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach((emp) => {
             if (emp.t !== currentCat) {
@@ -189,10 +181,10 @@
             btn.className = `btn-staff type-${emp.t}`;
             btn.innerHTML = emp.n;
             btn.id = "btn-" + userKey;
+            btn.style.color = couleursFonctions[emp.t] || "#d1d5db";
             btn.onclick = () => sélectionnerEmployé(btn, emp);
             grid.appendChild(btn);
 
-            // Écoute temps réel de la clé 'off' du Dashboard
             const dateStr = new Date().toISOString().split('T')[0];
             database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
                 const data = snap.val();
@@ -208,7 +200,7 @@
                     btn.disabled = false;
                     btn.style.background = "rgba(255, 255, 255, 0.03)";
                     btn.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                    btn.style.color = "#d1d5db";
+                    btn.style.color = couleursFonctions[emp.t] || "#d1d5db";
                     btn.style.opacity = "1";
                     btn.style.filter = "none";
                     btn.innerHTML = emp.n;
@@ -232,7 +224,6 @@
                 statusLabel.style.color = "#10b981";
                 return; 
             }
-
             if (emp.ex) {
                 statusLabel.innerHTML = "✨ Accès Libre 🌿";
                 statusLabel.style.color = "#fbbf24";
@@ -257,23 +248,26 @@
             if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
             const code = prompt("Code Administrateur requis :");
             if (code !== "0000") return alert("Accès refusé.");
-
             if (confirm("Réinitialiser le pointage pour " + selectedUser.replace('_',' ') + " ?")) {
                 const dateStr = new Date().toISOString().split('T')[0];
                 const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
                 const snap = await refP.once('value');
                 const estOff = snap.val() && snap.val().off === true;
-
                 database.ref('users/' + selectedUser).remove();
                 localStorage.removeItem("gc_token_" + selectedUser);
-
-                if (estOff) {
-                    await refP.set({ off: true }); 
-                } else {
-                    await refP.remove();
-                }
+                if (estOff) await refP.set({ off: true }); else await refP.remove();
                 location.reload();
             }
+        }
+
+        function getPersistentToken(userName) {
+            let key = "gc_token_" + userName;
+            let token = localStorage.getItem(key);
+            if (!token) {
+                token = 'GC-' + Math.random().toString(36).substr(2, 9).toUpperCase() + '-' + Date.now();
+                localStorage.setItem(key, token);
+            }
+            return token;
         }
 
         async function validerPresence() {
@@ -283,14 +277,11 @@
             const userRef = database.ref('users/' + selectedUser);
             const userSnap = await userRef.once('value');
             const storedToken = userSnap.val() ? userSnap.val().token : null;
-
             if (storedToken && storedToken !== currentToken) {
                 alert("⚠️ Appareil non autorisé.");
                 submitBtn.disabled = false; return;
             }
-
             if (!storedToken) await userRef.set({ token: currentToken });
-
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             database.ref('presences/' + dateStr + '/' + selectedUser).update({
