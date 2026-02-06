@@ -254,13 +254,13 @@
                 const dateStr = new Date().toISOString().split('T')[0];
                 const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
                 const snap = await refP.once('value');
-                const estOff = snap.val() && snap.val().status === "OFF";
+                const estOff = snap.val() && snap.val().status === "off";
 
                 database.ref('users/' + selectedUser).remove();
                 localStorage.removeItem("gc_token_" + selectedUser);
 
                 if (estOff) {
-                    await refP.set({ status: "OFF" }); 
+                    await refP.set({ status: "off" }); 
                 } else {
                     await refP.remove();
                 }
