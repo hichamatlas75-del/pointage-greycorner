@@ -160,17 +160,22 @@
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
-        window.onload = function() {
-            const lastUser = localStorage.getItem('gc_last_user');
-            if (lastUser) {
-                const buttons = document.querySelectorAll('.btn-staff');
-                buttons.forEach(btn => {
-                    if (btn.innerHTML === lastUser.replace(/_/g, ' ')) {
-                        btn.click();
-                    }
-                });
+      window.onload = function() {
+    const lastUser = localStorage.getItem('gc_last_user');
+    if (lastUser) {
+        const buttons = document.querySelectorAll('.btn-staff');
+        buttons.forEach(btn => {
+            // On transforme le texte du bouton exactement comme lors de la sauvegarde
+            // pour que "ALAOUI LAZIZ" devienne "ALAOUI_LAZIZ"
+            const btnValue = btn.innerText.trim().replace(/\s+/g, '_').toUpperCase();
+            
+            if (btnValue === lastUser) {
+                // On simule le clic pour déclencher la vérification GPS
+                btn.click();
             }
-        };
+        });
+    }
+};
 
         const libellesFonctions = { "admin": "Caisse et Économat", "bar": "Bar", "cuisine": "Cuisine", "menage": "Ménage", "service": "Service" };
         const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
