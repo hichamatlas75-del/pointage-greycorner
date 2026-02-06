@@ -9,7 +9,7 @@
     <style>
         html, body { 
             height: 100%; margin: 0; overflow: hidden; 
-            background: #111827; /* Fond ultra sombre pro */
+            background: #111827; 
             font-family: 'Plus Jakarta Sans', sans-serif; 
         }
         
@@ -66,7 +66,6 @@
             box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
         }
 
-        /* Indicateurs de fonction discrets */
         .type-admin { border-left: 3px solid #f472b6; }
         .type-bar { border-left: 3px solid #818cf8; }
         .type-cuisine { border-left: 3px solid #f87171; }
@@ -88,9 +87,7 @@
         .btn-main:disabled { background: #374151; color: #6b7280; box-shadow: none; opacity: 0.5; }
 
         .logo-container { text-align: center; margin-bottom: 15px; }
-        .logo-img { 
-            height: 55px; width: auto; display: inline-block;
-        }
+        .logo-img { height: 55px; width: auto; display: inline-block; cursor: pointer; }
 
         .staff-grid::-webkit-scrollbar { width: 0px; }
         
@@ -102,8 +99,6 @@
     </style>
 </head>
 <body>
-  
-
     <div class="main-container">
         <div class="glass-card">
             <div class="admin-reset" onclick="adminResetDevice()">RESET</div>
@@ -111,34 +106,15 @@
             <div class="logo-container">
                 <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="logo-img">
             </div>
-   <div style="text-align: center; margin-top: 15px; margin-bottom: 15px;">
-    <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
-        <button type="button" style="
-            background-color: #27ae60; 
-            color: white; 
-            border: none; 
-            padding: 8px 16px; 
-            border-radius: 6px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;">
-            <span>📅</span> 
-            PLANNING DU <span id="date-du-jour"></span>
-        </button>
-    </a>
-</div>
 
-<script>
-    // Petit script pour afficher la date du jour (format : 06/02)
-    const maintenant = new Date();
-    const jour = String(maintenant.getDate()).padStart(2, '0');
-    const mois = String(maintenant.getMonth() + 1).padStart(2, '0');
-    document.getElementById('date-du-jour').textContent = jour + '/' + mois;
-</script>
-            
+            <div style="text-align: center; margin-top: 15px; margin-bottom: 15px;">
+                <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
+                    <button type="button" style="background-color: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                        <span>📅</span> PLANNING DU <span id="date-du-jour"></span>
+                    </button>
+                </a>
+            </div>
+
             <div id="statusLabel" class="text-center px-3 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest mb-4 min-h-[40px] flex items-center justify-center">
                 Sélectionnez votre nom
             </div>
@@ -156,11 +132,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Le reste de votre logique JavaScript reste inchangé pour préserver le fonctionnement GPS et Firebase
         const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
+
+        // Script Date du jour
+        const maintenant = new Date();
+        document.getElementById('date-du-jour').textContent = String(maintenant.getDate()).padStart(2, '0') + '/' + String(maintenant.getMonth() + 1).padStart(2, '0');
 
         function getPersistentToken(userName) {
             let key = "gc_token_" + userName;
@@ -187,23 +166,6 @@
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
-      window.onload = function() {
-    const lastUser = localStorage.getItem('gc_last_user');
-    if (lastUser) {
-        const buttons = document.querySelectorAll('.btn-staff');
-        buttons.forEach(btn => {
-            // On transforme le texte du bouton exactement comme lors de la sauvegarde
-            // pour que "ALAOUI LAZIZ" devienne "ALAOUI_LAZIZ"
-            const btnValue = btn.innerText.trim().replace(/\s+/g, '_').toUpperCase();
-            
-            if (btnValue === lastUser) {
-                // On simule le clic pour déclencher la vérification GPS
-                btn.click();
-            }
-        });
-    }
-};
-
         const libellesFonctions = { "admin": "Caisse et Économat", "bar": "Bar", "cuisine": "Cuisine", "menage": "Ménage", "service": "Service" };
         const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
 
@@ -212,8 +174,9 @@
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
+        // --- GÉNÉRATION DE LA GRILLE AVEC VÉRIFICATION REPOS (OFF) ---
         let currentCat = "";
-        equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach(emp => {
+        equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach((emp) => {
             if (emp.t !== currentCat) {
                 currentCat = emp.t;
                 const title = document.createElement('div');
@@ -222,10 +185,27 @@
                 grid.appendChild(title);
             }
             const btn = document.createElement('button');
+            const userKey = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
             btn.className = `btn-staff type-${emp.t}`;
             btn.innerHTML = emp.n;
+            btn.id = "btn-" + userKey;
             btn.onclick = () => sélectionnerEmployé(btn, emp);
             grid.appendChild(btn);
+
+            // Écoute temps réel du repos depuis le Dashboard
+            const dateStr = new Date().toISOString().split('T')[0];
+            database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
+                const data = snap.val();
+                if (data && data.status === "OFF") {
+                    btn.disabled = true;
+                    btn.style.background = "rgba(0, 0, 0, 0.4)"; 
+                    btn.style.borderColor = "rgba(255, 255, 255, 0.02)";
+                    btn.style.color = "#4b5563";
+                    btn.style.opacity = "0.5";
+                    btn.style.filter = "grayscale(100%)";
+                    btn.innerHTML = `${emp.n}<br><span style="font-size:7px; color:#991b1b; letter-spacing:1px;">• REPOS •</span>`;
+                }
+            });
         });
 
         async function sélectionnerEmployé(element, emp) {
@@ -264,15 +244,27 @@
             }, (err) => { alert("Activez votre GPS."); resetSelection(); }, { enableHighAccuracy: true });
         }
 
-        function adminResetDevice() {
+        // --- RESET SÉCURISÉ (GARDE LE REPOS) ---
+        async function adminResetDevice() {
             if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
-            if (confirm("Réinitialiser le pointage ?")) {
+            const code = prompt("Code Administrateur requis :");
+            if (code !== "0000") return alert("Code incorrect.");
+
+            if (confirm("Réinitialiser le pointage pour ce collaborateur ?")) {
                 const dateStr = new Date().toISOString().split('T')[0];
+                const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
+                const snap = await refP.once('value');
+                const estOff = snap.val() && snap.val().status === "OFF";
+
                 database.ref('users/' + selectedUser).remove();
                 localStorage.removeItem("gc_token_" + selectedUser);
-                database.ref('presences/' + dateStr + '/' + selectedUser).remove().then(() => {
-                    location.reload();
-                });
+
+                if (estOff) {
+                    await refP.set({ status: "OFF" }); 
+                } else {
+                    await refP.remove();
+                }
+                location.reload();
             }
         }
 
@@ -320,6 +312,17 @@
             statusLabel.style.color = "#9ca3af";
             submitBtn.disabled = true;
         }
+
+        window.onload = function() {
+            const lastUser = localStorage.getItem('gc_last_user');
+            if (lastUser) {
+                const buttons = document.querySelectorAll('.btn-staff');
+                buttons.forEach(btn => {
+                    const btnValue = btn.innerText.trim().replace(/\s+/g, '_').toUpperCase();
+                    if (btnValue === lastUser && !btn.disabled) { btn.click(); }
+                });
+            }
+        };
     </script>
 </body>
 </html>
