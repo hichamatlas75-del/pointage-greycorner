@@ -87,7 +87,7 @@
         .btn-main:disabled { background: #374151; color: #6b7280; box-shadow: none; opacity: 0.5; }
 
         .logo-container { text-align: center; margin-bottom: 15px; }
-        .logo-img { height: 55px; width: auto; display: inline-block; cursor: pointer; }
+        .logo-img { height: 55px; width: auto; display: inline-block; }
 
         .staff-grid::-webkit-scrollbar { width: 0px; }
         
@@ -137,7 +137,7 @@
         const database = firebase.database();
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
 
-        // Script Date du jour
+        // Date du jour
         const maintenant = new Date();
         document.getElementById('date-du-jour').textContent = String(maintenant.getDate()).padStart(2, '0') + '/' + String(maintenant.getMonth() + 1).padStart(2, '0');
 
@@ -174,7 +174,7 @@
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
-        // --- GÉNÉRATION DE LA GRILLE AVEC VÉRIFICATION REPOS (OFF) ---
+        // --- GÉNÉRATION DE LA GRILLE AVEC SYNCHRO DASHBOARD ---
         let currentCat = "";
         equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach((emp) => {
             if (emp.t !== currentCat) {
@@ -192,23 +192,32 @@
             btn.onclick = () => sélectionnerEmployé(btn, emp);
             grid.appendChild(btn);
 
-            // Écoute temps réel du repos depuis le Dashboard
+            // Écoute temps réel de la clé 'off' du Dashboard
             const dateStr = new Date().toISOString().split('T')[0];
             database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
                 const data = snap.val();
-                if (data && data.status === "OFF") {
+                if (data && data.off === true) {
                     btn.disabled = true;
-                    btn.style.background = "rgba(0, 0, 0, 0.4)"; 
+                    btn.style.background = "rgba(0, 0, 0, 0.5)"; 
                     btn.style.borderColor = "rgba(255, 255, 255, 0.02)";
                     btn.style.color = "#4b5563";
                     btn.style.opacity = "0.5";
                     btn.style.filter = "grayscale(100%)";
-                    btn.innerHTML = `${emp.n}<br><span style="font-size:7px; color:#991b1b; letter-spacing:1px;">• REPOS •</span>`;
+                    btn.innerHTML = `${emp.n}<br><span style="font-size:7px; color:#ef4444; font-weight:800;">REPOS</span>`;
+                } else {
+                    btn.disabled = false;
+                    btn.style.background = "rgba(255, 255, 255, 0.03)";
+                    btn.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                    btn.style.color = "#d1d5db";
+                    btn.style.opacity = "1";
+                    btn.style.filter = "none";
+                    btn.innerHTML = emp.n;
                 }
             });
         });
 
         async function sélectionnerEmployé(element, emp) {
+            if(element.disabled) return;
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
             selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
@@ -244,23 +253,22 @@
             }, (err) => { alert("Activez votre GPS."); resetSelection(); }, { enableHighAccuracy: true });
         }
 
-        // --- RESET SÉCURISÉ (GARDE LE REPOS) ---
         async function adminResetDevice() {
             if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
             const code = prompt("Code Administrateur requis :");
-            if (code !== "0000") return alert("Code incorrect.");
+            if (code !== "0000") return alert("Accès refusé.");
 
-            if (confirm("Réinitialiser le pointage pour ce collaborateur ?")) {
+            if (confirm("Réinitialiser le pointage pour " + selectedUser.replace('_',' ') + " ?")) {
                 const dateStr = new Date().toISOString().split('T')[0];
                 const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
                 const snap = await refP.once('value');
-                const estOff = snap.val() && snap.val().status === "off";
+                const estOff = snap.val() && snap.val().off === true;
 
                 database.ref('users/' + selectedUser).remove();
                 localStorage.removeItem("gc_token_" + selectedUser);
 
                 if (estOff) {
-                    await refP.set({ status: "off" }); 
+                    await refP.set({ off: true }); 
                 } else {
                     await refP.remove();
                 }
@@ -318,7 +326,7 @@
             if (lastUser) {
                 const buttons = document.querySelectorAll('.btn-staff');
                 buttons.forEach(btn => {
-                    const btnValue = btn.innerText.trim().replace(/\s+/g, '_').toUpperCase();
+                    const btnValue = btn.innerText.trim().split('\n')[0].replace(/\s+/g, '_').toUpperCase();
                     if (btnValue === lastUser && !btn.disabled) { btn.click(); }
                 });
             }
