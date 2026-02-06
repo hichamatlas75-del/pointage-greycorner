@@ -109,7 +109,28 @@
             {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"},
             {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
+// --- NOUVEAU : RECONNAISSANCE AUTOMATIQUE ---
+window.onload = function() {
+    // On regarde si un nom est déjà enregistré dans ce téléphone
+    const lastUser = localStorage.getItem('gc_last_user');
+    if (lastUser) {
+        // On cherche le bouton correspondant et on simule un clic
+        const buttons = document.querySelectorAll('.btn-staff');
+        buttons.forEach(btn => {
+            if (btn.innerHTML === lastUser.replace(/_/g, ' ')) {
+                btn.click(); // Sélectionne automatiquement l'employé
+            }
+        });
+    }
+};
 
+// --- MODIFICATION : Enregistrer le nom lors du clic ---
+function sélectionnerEmployé(element, emp) {
+    // ... votre code existant ...
+    selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
+    localStorage.setItem('gc_last_user', selectedUser); // On mémorise pour demain
+    // ... reste du code ...
+}
         const libellesFonctions = { "admin": "Caisse et Économat", "bar": "Bar", "cuisine": "Cuisine", "menage": "Ménage", "service": "Service" };
         const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
 
