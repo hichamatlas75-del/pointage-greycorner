@@ -55,8 +55,7 @@
             height: 55px; font-size: 10px; font-weight: 700; 
             border-radius: 12px; text-transform: uppercase; 
             display: flex; align-items: center; justify-content: center; 
-            text-align: center;
-            transition: all 0.2s ease;
+            text-align: center; transition: all 0.2s ease;
         }
 
         .btn-staff.selected { 
@@ -65,7 +64,6 @@
             box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
         }
 
-        /* Bordures de fonctions */
         .type-admin { border-left: 3px solid #f472b6; }
         .type-bar { border-left: 3px solid #818cf8; }
         .type-cuisine { border-left: 3px solid #f87171; }
@@ -137,8 +135,24 @@
         const database = firebase.database();
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
 
-        const maintenant = new Date();
-        document.getElementById('date-du-jour').textContent = String(maintenant.getDate()).padStart(2, '0') + '/' + String(maintenant.getMonth() + 1).padStart(2, '0');
+        // --- CALCUL DATE & HEURE MAROC (GMT+1) ---
+        const getMarocDate = () => {
+            return new Intl.DateTimeFormat('fr-CA', {
+                timeZone: 'Africa/Casablanca',
+                year: 'numeric', month: '2-digit', day: '2-digit'
+            }).format(new Date());
+        };
+
+        const getMarocTime = () => {
+            return new Date().toLocaleTimeString('fr-FR', {
+                timeZone: 'Africa/Casablanca',
+                hour: '2-digit', minute: '2-digit'
+            });
+        };
+
+        const dateStr = getMarocDate();
+        const [y, m, d] = dateStr.split('-');
+        document.getElementById('date-du-jour').textContent = d + '/' + m;
 
         const couleursFonctions = {
             "admin": "#f472b6", "bar": "#818cf8", "cuisine": "#f87171", "menage": "#34d399", "service": "#60a5fa"
@@ -167,6 +181,7 @@
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
+        // Génération de la grille
         let currentCat = "";
         equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach((emp) => {
             if (emp.t !== currentCat) {
@@ -181,17 +196,16 @@
             btn.className = `btn-staff type-${emp.t}`;
             btn.innerHTML = emp.n;
             btn.id = "btn-" + userKey;
-            btn.style.color = couleursFonctions[emp.t] || "#d1d5db";
+            btn.style.color = couleursFonctions[emp.t];
             btn.onclick = () => sélectionnerEmployé(btn, emp);
             grid.appendChild(btn);
 
-            const dateStr = new Date().toISOString().split('T')[0];
+            // Synchro REPOS depuis Dashboard (Clé 'off')
             database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.off === true) {
                     btn.disabled = true;
                     btn.style.background = "rgba(0, 0, 0, 0.5)"; 
-                    btn.style.borderColor = "rgba(255, 255, 255, 0.02)";
                     btn.style.color = "#4b5563";
                     btn.style.opacity = "0.5";
                     btn.style.filter = "grayscale(100%)";
@@ -199,8 +213,7 @@
                 } else {
                     btn.disabled = false;
                     btn.style.background = "rgba(255, 255, 255, 0.03)";
-                    btn.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                    btn.style.color = couleursFonctions[emp.t] || "#d1d5db";
+                    btn.style.color = couleursFonctions[emp.t];
                     btn.style.opacity = "1";
                     btn.style.filter = "none";
                     btn.innerHTML = emp.n;
@@ -215,9 +228,7 @@
             selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
             localStorage.setItem('gc_last_user', selectedUser);
             
-            const dateStr = new Date().toISOString().split('T')[0];
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
-            
             if (snap.val() && snap.val().on === true) {
                 submitBtn.disabled = true; 
                 statusLabel.innerHTML = "DÉJÀ POINTÉ";
@@ -244,12 +255,38 @@
             }, (err) => { alert("Activez votre GPS."); resetSelection(); }, { enableHighAccuracy: true });
         }
 
+        async function validerPresence() {
+            if (!selectedUser) return;
+            submitBtn.disabled = true;
+            const currentToken = getPersistentToken(selectedUser);
+            const userRef = database.ref('users/' + selectedUser);
+            const userSnap = await userRef.once('value');
+            const storedToken = userSnap.val() ? userSnap.val().token : null;
+
+            if (storedToken && storedToken !== currentToken) {
+                alert("⚠️ Appareil non autorisé.");
+                submitBtn.disabled = false; return;
+            }
+
+            if (!storedToken) await userRef.set({ token: currentToken });
+
+            database.ref('presences/' + dateStr + '/' + selectedUser).update({
+                on: true, 
+                hA: getMarocTime(),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                document.getElementById('msg').innerHTML = "Pointage réussi !";
+                document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-500/20 text-green-400";
+                document.getElementById('msg').style.display = "block";
+                setTimeout(() => location.reload(), 2000);
+            });
+        }
+
         async function adminResetDevice() {
             if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
             const code = prompt("Code Administrateur requis :");
             if (code !== "0000") return alert("Accès refusé.");
             if (confirm("Réinitialiser le pointage pour " + selectedUser.replace('_',' ') + " ?")) {
-                const dateStr = new Date().toISOString().split('T')[0];
                 const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
                 const snap = await refP.once('value');
                 const estOff = snap.val() && snap.val().off === true;
@@ -268,32 +305,6 @@
                 localStorage.setItem(key, token);
             }
             return token;
-        }
-
-        async function validerPresence() {
-            if (!selectedUser) return;
-            submitBtn.disabled = true;
-            const currentToken = getPersistentToken(selectedUser);
-            const userRef = database.ref('users/' + selectedUser);
-            const userSnap = await userRef.once('value');
-            const storedToken = userSnap.val() ? userSnap.val().token : null;
-            if (storedToken && storedToken !== currentToken) {
-                alert("⚠️ Appareil non autorisé.");
-                submitBtn.disabled = false; return;
-            }
-            if (!storedToken) await userRef.set({ token: currentToken });
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            database.ref('presences/' + dateStr + '/' + selectedUser).update({
-                on: true, 
-                hA: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                document.getElementById('msg').innerHTML = "Pointage réussi !";
-                document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-500/20 text-green-400";
-                document.getElementById('msg').style.display = "block";
-                setTimeout(() => location.reload(), 2000);
-            });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
