@@ -27,40 +27,40 @@
             display: flex; flex-direction: column; position: relative;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
         }
-/* Alignement parfait pour le Grey Corner */
-.info-ticker-container {
-    background: #1f2937; 
-    border: 2px solid #c5a059; 
-    border-radius: 12px;
-    margin: 10px 0;
-    overflow: hidden;
-    position: relative;
-    height: 60px; /* Hauteur ajustée */
-    display: none; 
-    z-index: 50;
-    /* Ce qui suit centre le contenu verticalement */
-    display: flex;
-    align-items: center; 
-}
 
-.ticker-text {
-    display: inline-block;
-    white-space: nowrap;
-    padding-left: 100%;
-    animation: ticker 18s linear infinite;
-    color: #ffffff; 
-    font-size: 13px; /* Taille optimale pour mobile */
-    font-weight: 800;
-    text-transform: uppercase;
-    /* On retire le line-height fixe pour laisser le Flexbox gérer le centrage */
-    margin: 0;
-    padding: 0;
-}
+        /* --- TICKER D'INFORMATION (MIS À JOUR À 60PX) --- */
+        .info-ticker-container {
+            background: #1f2937; 
+            border: 2px solid #c5a059; 
+            border-radius: 16px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            white-space: nowrap;
+            display: none; /* Masqué par défaut */
+            height: 60px; /* Taille mémorisée : 60px */
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
 
-@keyframes ticker {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-}
+        .ticker-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 20s linear infinite;
+            color: #c5a059; /* Doré par défaut */
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
         .admin-reset {
             position: absolute; top: 20px; right: 20px;
             padding: 6px 10px; border-radius: 8px;
@@ -138,7 +138,7 @@
                 <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="logo-img">
             </div>
 
-            <div style="text-align: center; margin-top: 5px; margin-bottom: 15px;">
+            <div style="text-align: center; margin-bottom: 15px;">
                 <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
                     <button type="button" style="background-color: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                         <span>📅</span> PLANNING DU <span id="date-du-jour"></span>
@@ -146,7 +146,7 @@
                 </a>
             </div>
 
-            <div id="tickerContainer" class="info-ticker-container">
+            <div id="tickerContainer" class="info-ticker-container" style="display: none;">
                 <div id="tickerText" class="ticker-text"></div>
             </div>
 
@@ -171,13 +171,10 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Config Google Sheet pour les messages
         const SHEET_ID = "1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64";
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
 
-        const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
-
-        // --- FONCTION TICKER (GOOGLE SHEETS) ---
+        // --- LOGIQUE TICKER AVEC COULEURS DYNAMIQUES ---
         async function chargerMessageUrgent() {
             try {
                 const response = await fetch(SHEET_URL);
@@ -185,7 +182,6 @@
                 const jsonData = JSON.parse(text.substr(47).slice(0, -2));
                 const rows = jsonData.table.rows;
 
-                // Trouver le message "Actif" (Colonne D est l'index 3)
                 const messageActif = rows.find(row => row.c[3] && row.c[3].v === "Actif");
 
                 if (messageActif) {
@@ -195,54 +191,41 @@
                     const container = document.getElementById('tickerContainer');
                     const tickerText = document.getElementById('tickerText');
                     
-                    tickerText.innerHTML = `📢 ${type} : ${texte} — ${texte}`;
-                    container.style.display = 'block';
+                    tickerText.innerHTML = `📢 ${type} : ${texte} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 📢 ${type} : ${texte}`;
+                    container.style.display = 'flex';
 
-                    if(type.toLowerCase() === "urgent") {
-                        container.style.background = "rgba(239, 68, 68, 0.15)";
-                        container.style.borderColor = "rgba(239, 68, 68, 0.3)";
-                        tickerText.style.color = "#f87171";
+                    // CHANGEMENT DE COULEUR SELON LE TYPE
+                    if(type.toUpperCase() === "URGENT") {
+                        container.style.background = "#991b1b"; // Fond Rouge
+                        container.style.borderColor = "#f87171";
+                        tickerText.style.color = "#ffffff"; // Texte Blanc
+                    } else {
+                        container.style.background = "#1f2937"; // Fond Sombre
+                        container.style.borderColor = "#c5a059";
+                        tickerText.style.color = "#c5a059"; // Texte Doré
                     }
                 }
             } catch (e) { console.error("Erreur Ticker:", e); }
         }
 
-        // --- CALCUL DATE & HEURE MAROC (GMT+1) ---
-        const getMarocDate = () => {
-            return new Intl.DateTimeFormat('fr-CA', {
-                timeZone: 'Africa/Casablanca',
-                year: 'numeric', month: '2-digit', day: '2-digit'
-            }).format(new Date());
-        };
+        // --- RESTE DU CODE (GPS, FIREBASE, GRILLE) ---
+        const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
 
-        const getMarocTime = () => {
-            return new Date().toLocaleTimeString('fr-FR', {
-                timeZone: 'Africa/Casablanca',
-                hour: '2-digit', minute: '2-digit'
-            });
-        };
+        const getMarocDate = () => new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
+        const getMarocTime = () => new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca', hour: '2-digit', minute: '2-digit'});
 
         const dateStr = getMarocDate();
         const [y, m, d] = dateStr.split('-');
         document.getElementById('date-du-jour').textContent = d + '/' + m;
 
-        const couleursFonctions = {
-            "admin": "#f472b6", "bar": "#818cf8", "cuisine": "#f87171", "menage": "#34d399", "service": "#60a5fa"
-        };
-
+        const couleursFonctions = {"admin": "#f472b6", "bar": "#818cf8", "cuisine": "#f87171", "menage": "#34d399", "service": "#60a5fa"};
         const equipeConfig = [
-            {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"},
-            {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "BOURAHMA ANAS", t: "cuisine"},
-            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"},
-            {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"},
-            {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "ENNHAILI SOUMIA", t: "admin"},
-            {n: "FILALI ABDERAFI", t: "bar"}, {n: "GUETIBI AMINE", t: "service"},
-            {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"},
-            {n: "IDRISSI SAAD", t: "cuisine"}, {n: "KAFOUNI ZAKARIAE", t: "service"},
-            {n: "KHALOUQ RACHID", t: "bar", ex: true}, {n: "LEMSSIEH JAWAD", t: "cuisine"},
-            {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"},
-            {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"},
-            {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
+            {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "BOURAHMA ANAS", t: "cuisine"},
+            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"},
+            {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "GUETIBI AMINE", t: "service"},
+            {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "KAFOUNI ZAKARIAE", t: "service"},
+            {n: "KHALOUQ RACHID", t: "bar", ex: true}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"},
+            {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"}, {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
         const libellesFonctions = { "admin": "Caisse et Économat", "bar": "Bar", "cuisine": "Cuisine", "menage": "Ménage", "service": "Service" };
@@ -253,7 +236,6 @@
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
 
-        // Génération de la grille
         let currentCat = "";
         equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach((emp) => {
             if (emp.t !== currentCat) {
@@ -275,16 +257,10 @@
             database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.off === true) {
-                    btn.disabled = true;
-                    btn.style.background = "rgba(0, 0, 0, 0.5)"; 
-                    btn.style.color = "#4b5563";
-                    btn.style.opacity = "0.5";
+                    btn.disabled = true; btn.style.opacity = "0.5";
                     btn.innerHTML = `${emp.n}<br><span style="font-size:7px; color:#ef4444; font-weight:800;">REPOS</span>`;
                 } else {
-                    btn.disabled = false;
-                    btn.style.background = "rgba(255, 255, 255, 0.03)";
-                    btn.style.color = couleursFonctions[emp.t];
-                    btn.style.opacity = "1";
+                    btn.disabled = false; btn.style.opacity = "1";
                     btn.innerHTML = emp.n;
                 }
             });
@@ -295,31 +271,19 @@
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
             selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
-            localStorage.setItem('gc_last_user', selectedUser);
-            
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
             if (snap.val() && snap.val().on === true) {
-                submitBtn.disabled = true; 
-                statusLabel.innerHTML = "DÉJÀ POINTÉ";
-                statusLabel.style.color = "#10b981";
-                return; 
+                submitBtn.disabled = true; statusLabel.innerHTML = "DÉJÀ POINTÉ"; statusLabel.style.color = "#10b981"; return; 
             }
-            if (emp.ex) {
-                statusLabel.innerHTML = "✨ Accès Libre 🌿";
-                statusLabel.style.color = "#fbbf24";
-                submitBtn.disabled = false;
-            } else {
-                activerGPSAutomatique();
-            }
+            if (emp.ex) { statusLabel.innerHTML = "✨ Accès Libre 🌿"; statusLabel.style.color = "#fbbf24"; submitBtn.disabled = false; }
+            else { activerGPSAutomatique(); }
         }
 
         function activerGPSAutomatique() {
             statusLabel.innerHTML = "🔍 Vérification GPS...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 if (getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON) <= RAYON_AUTORISE) {
-                    statusLabel.innerHTML = "✅ Zone Validée";
-                    statusLabel.style.color = "#10b981";
-                    submitBtn.disabled = false;
+                    statusLabel.innerHTML = "✅ Zone Validée"; statusLabel.style.color = "#10b981"; submitBtn.disabled = false;
                 } else { alert("Vous n'êtes pas au café."); resetSelection(); }
             }, (err) => { alert("Activez votre GPS."); resetSelection(); }, { enableHighAccuracy: true });
         }
@@ -327,53 +291,13 @@
         async function validerPresence() {
             if (!selectedUser) return;
             submitBtn.disabled = true;
-            const currentToken = getPersistentToken(selectedUser);
-            const userRef = database.ref('users/' + selectedUser);
-            const userSnap = await userRef.once('value');
-            const storedToken = userSnap.val() ? userSnap.val().token : null;
-
-            if (storedToken && storedToken !== currentToken) {
-                alert("⚠️ Appareil non autorisé.");
-                submitBtn.disabled = false; return;
-            }
-
-            if (!storedToken) await userRef.set({ token: currentToken });
-
             database.ref('presences/' + dateStr + '/' + selectedUser).update({
-                on: true, 
-                hA: getMarocTime(),
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                on: true, hA: getMarocTime(), timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 document.getElementById('msg').innerHTML = "Pointage réussi !";
                 document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-500/20 text-green-400";
-                document.getElementById('msg').style.display = "block";
                 setTimeout(() => location.reload(), 2000);
             });
-        }
-
-        async function adminResetDevice() {
-            if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
-            const code = prompt("Code Administrateur :");
-            if (code !== "0000") return alert("Accès refusé.");
-            if (confirm("Réinitialiser le pointage pour " + selectedUser.replace('_',' ') + " ?")) {
-                const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
-                const snap = await refP.once('value');
-                const estOff = snap.val() && snap.val().off === true;
-                database.ref('users/' + selectedUser).remove();
-                localStorage.removeItem("gc_token_" + selectedUser);
-                if (estOff) await refP.set({ off: true }); else await refP.remove();
-                location.reload();
-            }
-        }
-
-        function getPersistentToken(userName) {
-            let key = "gc_token_" + userName;
-            let token = localStorage.getItem(key);
-            if (!token) {
-                token = 'GC-' + Math.random().toString(36).substr(2, 9).toUpperCase() + '-' + Date.now();
-                localStorage.setItem(key, token);
-            }
-            return token;
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -387,21 +311,11 @@
         function resetSelection() {
             selectedUser = null;
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
-            statusLabel.innerHTML = "Sélectionnez votre nom";
-            statusLabel.style.color = "#9ca3af";
-            submitBtn.disabled = true;
+            statusLabel.innerHTML = "Sélectionnez votre nom"; statusLabel.style.color = "#9ca3af"; submitBtn.disabled = true;
         }
 
         window.onload = function() {
-            chargerMessageUrgent(); // Charger le ticker
-            const lastUser = localStorage.getItem('gc_last_user');
-            if (lastUser) {
-                const buttons = document.querySelectorAll('.btn-staff');
-                buttons.forEach(btn => {
-                    const btnValue = btn.innerText.trim().split('\n')[0].replace(/\s+/g, '_').toUpperCase();
-                    if (btnValue === lastUser && !btn.disabled) { btn.click(); }
-                });
-            }
+            chargerMessageUrgent();
         };
     </script>
 </body>
