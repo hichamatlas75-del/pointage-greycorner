@@ -28,30 +28,31 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
         }
 
-    /* Style amélioré pour une visibilité maximale */
+/* Style haute visibilité pour le Grey Corner */
 .info-ticker-container {
-    background: rgba(197, 160, 89, 0.15); /* Fond légèrement plus opaque */
-    border: 2px solid rgba(197, 160, 89, 0.3); /* Bordure plus marquée */
-    border-radius: 16px;
-    margin: 10px 0 20px 0; /* Plus d'espace autour */
+    background: #1f2937; /* Fond sombre solide pour faire ressortir le texte */
+    border: 2px solid #c5a059; /* Bordure dorée signature */
+    border-radius: 12px;
+    margin: 10px 0;
     overflow: hidden;
-    white-space: nowrap;
     position: relative;
-    height: 45px; /* Hauteur fixe pour éviter l'écrasement */
+    height: 48px; /* Plus haut pour la lisibilité */
     display: none; 
-    box-shadow: inset 0 0 10px rgba(197, 160, 89, 0.1);
+    z-index: 50; /* S'assure d'être au premier plan */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .ticker-text {
     display: inline-block;
+    white-space: nowrap;
     padding-left: 100%;
-    animation: ticker 20s linear infinite; /* Animation un peu plus lente pour la lecture */
-    color: #f3e8d2; /* Couleur plus claire, presque blanche, pour le contraste */
-    font-size: 14px; /* Texte plus grand */
-    font-weight: 700;
-    line-height: 45px; /* Aligne le texte verticalement au centre */
+    animation: ticker 18s linear infinite;
+    color: #ffffff; /* Texte BLANC pur pour être visible à 100% */
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 44px; /* Centrage vertical parfait */
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 @keyframes ticker {
