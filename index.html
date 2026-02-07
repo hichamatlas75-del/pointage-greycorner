@@ -28,35 +28,36 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
         }
 
-        /* --- NOUVEAU : STYLE DU TICKER D'INFORMATION --- */
-        .info-ticker-container {
-            background: rgba(197, 160, 89, 0.1);
-            border: 1px solid rgba(197, 160, 89, 0.2);
-            border-radius: 12px;
-            margin-bottom: 12px;
-            overflow: hidden;
-            white-space: nowrap;
-            display: none; /* Masqué si pas de message actif */
-        }
+    /* Style amélioré pour une visibilité maximale */
+.info-ticker-container {
+    background: rgba(197, 160, 89, 0.15); /* Fond légèrement plus opaque */
+    border: 2px solid rgba(197, 160, 89, 0.3); /* Bordure plus marquée */
+    border-radius: 16px;
+    margin: 10px 0 20px 0; /* Plus d'espace autour */
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    height: 45px; /* Hauteur fixe pour éviter l'écrasement */
+    display: none; 
+    box-shadow: inset 0 0 10px rgba(197, 160, 89, 0.1);
+}
 
-        .ticker-text {
-            display: inline-block;
-            padding-left: 100%;
-            animation: ticker 15s linear infinite;
-            color: #c5a059;
-            font-size: 10px;
-            font-weight: 800;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+.ticker-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: ticker 20s linear infinite; /* Animation un peu plus lente pour la lecture */
+    color: #f3e8d2; /* Couleur plus claire, presque blanche, pour le contraste */
+    font-size: 14px; /* Texte plus grand */
+    font-weight: 700;
+    line-height: 45px; /* Aligne le texte verticalement au centre */
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
 
-        @keyframes ticker {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
-        }
-
+@keyframes ticker {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-100%, 0); }
+}
         .admin-reset {
             position: absolute; top: 20px; right: 20px;
             padding: 6px 10px; border-radius: 8px;
