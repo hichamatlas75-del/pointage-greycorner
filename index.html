@@ -28,6 +28,35 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
         }
 
+        /* --- NOUVEAU : STYLE DU TICKER D'INFORMATION --- */
+        .info-ticker-container {
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            white-space: nowrap;
+            display: none; /* Masqué si pas de message actif */
+        }
+
+        .ticker-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 15s linear infinite;
+            color: #c5a059;
+            font-size: 10px;
+            font-weight: 800;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes ticker {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
         .admin-reset {
             position: absolute; top: 20px; right: 20px;
             padding: 6px 10px; border-radius: 8px;
@@ -105,12 +134,16 @@
                 <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="logo-img">
             </div>
 
-            <div style="text-align: center; margin-top: 15px; margin-bottom: 15px;">
+            <div style="text-align: center; margin-top: 5px; margin-bottom: 15px;">
                 <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
                     <button type="button" style="background-color: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                         <span>📅</span> PLANNING DU <span id="date-du-jour"></span>
                     </button>
                 </a>
+            </div>
+
+            <div id="tickerContainer" class="info-ticker-container">
+                <div id="tickerText" class="ticker-text"></div>
             </div>
 
             <div id="statusLabel" class="text-center px-3 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest mb-4 min-h-[40px] flex items-center justify-center">
@@ -133,7 +166,42 @@
         const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        
+        // Config Google Sheet pour les messages
+        const SHEET_ID = "1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64";
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
+
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
+
+        // --- FONCTION TICKER (GOOGLE SHEETS) ---
+        async function chargerMessageUrgent() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const text = await response.text();
+                const jsonData = JSON.parse(text.substr(47).slice(0, -2));
+                const rows = jsonData.table.rows;
+
+                // Trouver le message "Actif" (Colonne D est l'index 3)
+                const messageActif = rows.find(row => row.c[3] && row.c[3].v === "Actif");
+
+                if (messageActif) {
+                    const texte = messageActif.c[1] ? messageActif.c[1].v : "";
+                    const type = messageActif.c[2] ? messageActif.c[2].v : "INFO";
+                    
+                    const container = document.getElementById('tickerContainer');
+                    const tickerText = document.getElementById('tickerText');
+                    
+                    tickerText.innerHTML = `📢 ${type} : ${texte} — ${texte}`;
+                    container.style.display = 'block';
+
+                    if(type.toLowerCase() === "urgent") {
+                        container.style.background = "rgba(239, 68, 68, 0.15)";
+                        container.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                        tickerText.style.color = "#f87171";
+                    }
+                }
+            } catch (e) { console.error("Erreur Ticker:", e); }
+        }
 
         // --- CALCUL DATE & HEURE MAROC (GMT+1) ---
         const getMarocDate = () => {
@@ -200,7 +268,6 @@
             btn.onclick = () => sélectionnerEmployé(btn, emp);
             grid.appendChild(btn);
 
-            // Synchro REPOS depuis Dashboard (Clé 'off')
             database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.off === true) {
@@ -208,14 +275,12 @@
                     btn.style.background = "rgba(0, 0, 0, 0.5)"; 
                     btn.style.color = "#4b5563";
                     btn.style.opacity = "0.5";
-                    btn.style.filter = "grayscale(100%)";
                     btn.innerHTML = `${emp.n}<br><span style="font-size:7px; color:#ef4444; font-weight:800;">REPOS</span>`;
                 } else {
                     btn.disabled = false;
                     btn.style.background = "rgba(255, 255, 255, 0.03)";
                     btn.style.color = couleursFonctions[emp.t];
                     btn.style.opacity = "1";
-                    btn.style.filter = "none";
                     btn.innerHTML = emp.n;
                 }
             });
@@ -284,7 +349,7 @@
 
         async function adminResetDevice() {
             if (!selectedUser) return alert("Sélectionnez d'abord un nom.");
-            const code = prompt("Code Administrateur requis :");
+            const code = prompt("Code Administrateur :");
             if (code !== "0000") return alert("Accès refusé.");
             if (confirm("Réinitialiser le pointage pour " + selectedUser.replace('_',' ') + " ?")) {
                 const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
@@ -324,6 +389,7 @@
         }
 
         window.onload = function() {
+            chargerMessageUrgent(); // Charger le ticker
             const lastUser = localStorage.getItem('gc_last_user');
             if (lastUser) {
                 const buttons = document.querySelectorAll('.btn-staff');
