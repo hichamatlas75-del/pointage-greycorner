@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grey Corner • Gestion Staff</title>
+    <title>Grey Corner • Système de Pointage</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
@@ -14,6 +14,8 @@
         .btn-staff:active { transform: scale(0.95); background: rgba(212, 175, 55, 0.2); }
         .hidden { display: none !important; }
         .team-title { color: #D4AF37; font-size: 10px; font-weight: 800; letter-spacing: 1px; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 2px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 10px; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-2">
@@ -29,9 +31,9 @@
             </a>
         </div>
 
-        <div id="statusLabel" class="text-center text-sm font-medium mb-5 text-slate-400">Identification...</div>
+        <div id="statusLabel" class="text-center text-sm font-medium mb-5 text-slate-400 italic">Initialisation...</div>
 
-        <div id="selectionZone" class="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+        <div id="selectionZone" class="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar hidden">
             </div>
 
         <div id="actionZone" class="hidden text-center">
@@ -77,16 +79,49 @@
         document.getElementById('date-btn').textContent = d + '/' + m;
         document.getElementById('date-footer').textContent = d + '/' + m;
 
+        // Fonction de calcul de distance (Zone de 300m)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+            const a = Math.sin(((lat2-lat1)*Math.PI/180)/2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(((lon2-lon1)*Math.PI/180)/2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function activerGPS() {
+            const statusLabel = document.getElementById('statusLabel');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            statusLabel.innerHTML = "🌙 Vérification de votre position...";
+            statusLabel.style.color = "#D4AF37";
+
+            navigator.geolocation.getCurrentPosition((pos) => {
+                // Coordonnées Grey Corner Fès
+                const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
+                if (dist <= 300) {
+                    statusLabel.innerHTML = "Bonjour " + selectedUser + ",<br><span class='text-green-400'>✅ VOUS ÊTES EN ZONE</span>";
+                    submitBtn.disabled = false;
+                } else {
+                    statusLabel.innerHTML = "❌ HORS ZONE (Distance: " + Math.round(dist) + "m)";
+                    statusLabel.style.color = "#ef4444";
+                    submitBtn.disabled = true;
+                }
+            }, (err) => {
+                statusLabel.innerHTML = "⚠️ ACTIVEZ VOTRE GPS";
+                statusLabel.style.color = "#f87171";
+            }, { enableHighAccuracy: true });
+        }
+
         function checkStatus(name) {
             database.ref('presences/' + dateStr + '/' + name).on('value', snapshot => {
                 const statusLabel = document.getElementById('statusLabel');
                 const submitBtn = document.getElementById('submitBtn');
+                
                 if (snapshot.exists() && snapshot.val().on) {
-                    statusLabel.innerHTML = "Bonjour " + name + ", <br><span class='text-green-400 font-bold'>POINTAGE VALIDÉ ✓</span>";
+                    statusLabel.innerHTML = "Bonjour " + name + ", <br><span class='text-green-400 font-bold'>POINTAGE DÉJÀ VALIDÉ ✓</span>";
                     submitBtn.disabled = true;
                 } else {
-                    statusLabel.innerHTML = "Bonjour <span class='text-white font-bold'>" + name + "</span>,<br>Validez votre présence pour le service";
-                    submitBtn.disabled = false;
+                    // Si pas encore pointé, on lance le GPS
+                    activerGPS();
                 }
             });
         }
@@ -102,9 +137,8 @@
             } else {
                 selectionZone.classList.remove('hidden');
                 actionZone.classList.add('hidden');
-                document.getElementById('statusLabel').innerText = "Configurez votre appareil en choisissant votre nom";
+                document.getElementById('statusLabel').innerText = "Configurez votre appareil (Choix unique)";
                 
-                // Groupement par équipe
                 const equipes = ["admin", "bar", "cuisine", "menage", "service"];
                 equipes.forEach(eq => {
                     const filtered = equipeConfig.filter(emp => emp.t === eq);
@@ -113,16 +147,14 @@
                         title.className = "team-title uppercase";
                         title.innerText = eq;
                         selectionZone.appendChild(title);
-                        
                         const grid = document.createElement('div');
                         grid.className = "grid grid-cols-2 gap-2";
-                        
                         filtered.forEach(emp => {
                             const btn = document.createElement('button');
                             btn.className = "btn-staff py-3 px-1 rounded-lg font-bold text-center";
                             btn.innerText = emp.n;
                             btn.onclick = () => {
-                                if(confirm("Enregistrer cet appareil pour " + emp.n + " ?")) {
+                                if(confirm("Mémoriser " + emp.n + " sur cet appareil ?")) {
                                     localStorage.setItem('gc_staff_name', emp.n);
                                     selectedUser = emp.n;
                                     init();
@@ -139,19 +171,18 @@
         async function validerPresence() {
             if (!selectedUser) return;
             document.getElementById('submitBtn').disabled = true;
-            
             database.ref('presences/' + dateStr + '/' + selectedUser).update({
                 on: true, 
                 hA: new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca'}), 
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('msg').innerHTML = "Merci " + selectedUser + ". Bon service !";
+                document.getElementById('msg').innerHTML = "Succès ! Bon service au Grey Corner.";
                 document.getElementById('msg').className = "mt-2 p-3 bg-green-500/20 text-green-400 font-bold rounded-lg border border-green-500/30";
             });
         }
 
         function resetUserMemory() {
-            if(confirm("Changer d'utilisateur sur ce téléphone ?")) {
+            if(confirm("Voulez-vous changer d'utilisateur sur ce téléphone ?")) {
                 localStorage.removeItem('gc_staff_name');
                 location.reload();
             }
