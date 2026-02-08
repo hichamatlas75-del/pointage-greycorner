@@ -11,7 +11,6 @@
         body::before { content: ""; position: absolute; inset: 0; background-image: url('https://www.transparenttextures.com/patterns/arabesque.png'); opacity: 0.1; pointer-events: none; }
         .glass-card { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 400px; height: 95vh; border-radius: 2.5rem; padding: 1.2rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
         
-        /* Ticker Style */
         .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 12px; margin-bottom: 12px; height: 40px; overflow: hidden; white-space: nowrap; display: none; align-items: center; }
         .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; color: #f3e8d2; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
@@ -21,13 +20,16 @@
         .custom-scroll::-webkit-scrollbar { width: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
         .hidden { display: none !important; }
+
+        /* Style Admin */
+        #adminPanel { background: #0f172a; z-index: 100; border-radius: 2.5rem; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
 
     <div class="glass-card">
         <div class="text-center mb-2">
-            <img src="images/LOGO GREY CORNER.png" alt="Logo" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer">
+            <img src="images/LOGO GREY CORNER.png" alt="Logo" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer active:scale-90 transition-transform">
             <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
                 <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 6px 14px; border-radius: 10px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 5px;">
                     📅 PLANNING DU <span id="date-btn"></span>
@@ -50,6 +52,15 @@
                 POINTER PRÉSENCE
             </button>
             <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">Changer de nom</button>
+        </div>
+
+        <div id="adminPanel" class="hidden absolute inset-0 p-6 flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-[#c5a059] font-extrabold tracking-tighter">LISTE DE CONTRÔLE</h2>
+                <button onclick="closeAdmin()" class="text-white text-[10px] bg-white/10 px-3 py-1 rounded-full uppercase">Fermer</button>
+            </div>
+            <div id="presenceList" class="flex-grow overflow-y-auto custom-scroll text-white text-[11px] space-y-4"></div>
+            <button onclick="if(confirm('Reset cet appareil ?')) { localStorage.clear(); location.reload(); }" class="mt-4 p-3 border border-red-900/50 text-red-500 text-[9px] font-bold rounded-xl uppercase">Réinitialiser Appareil</button>
         </div>
 
         <div id="msg" class="text-center mt-2 text-[11px] font-bold hidden p-3 rounded-xl"></div>
@@ -75,7 +86,37 @@
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         document.getElementById('date-btn').innerText = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
 
-        // --- CHARGEMENT DU TICKER ---
+        // --- MODE ADMIN (3 CLICS LOGO) ---
+        let logoClicks = 0;
+        document.getElementById('logoAdmin').onclick = () => {
+            logoClicks++;
+            if (logoClicks === 3) {
+                let code = prompt("Code Administrateur Grey Corner :");
+                if (code === "2026") { openAdmin(); }
+                logoClicks = 0;
+            }
+            setTimeout(() => { logoClicks = 0; }, 2000); // Reset si pas 3 clics rapides
+        };
+
+        function openAdmin() {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            database.ref('presences/' + dateStr).on('value', snap => {
+                const list = document.getElementById('presenceList');
+                list.innerHTML = "";
+                const data = snap.val() || {};
+                ["admin", "bar", "cuisine", "menage", "service"].forEach(cat => {
+                    list.innerHTML += `<div class="text-[#c5a059] font-bold border-b border-white/5 mt-4 mb-2 uppercase text-[9px] tracking-widest">${cat}</div>`;
+                    equipeConfig.filter(m => m.t === cat).forEach(m => {
+                        const key = m.n.replace(/\s+/g, '_').toUpperCase();
+                        const isOk = data[key] && data[key].on;
+                        list.innerHTML += `<div class="flex justify-between items-center py-1 opacity-${isOk?'100':'40'}"><span>${m.n}</span><span class="${isOk?'text-green-400':'text-slate-600'}">${isOk ? data[key].hA : '---'}</span></div>`;
+                    });
+                });
+            });
+        }
+        function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
+
+        // --- TICKER & GPS & LOGIQUE (Version Débloquée) ---
         async function chargerTicker() {
             const SHEET_URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
             try {
@@ -84,14 +125,12 @@
                 const json = JSON.parse(txt.substr(47).slice(0, -2));
                 const messageActif = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
                 if (messageActif) {
-                    const texte = messageActif.c[1].v;
-                    document.getElementById('tickerText').innerHTML = `🌙 INFO : ${texte} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${texte}`;
+                    document.getElementById('tickerText').innerHTML = `🌙 INFO : ${messageActif.c[1].v} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${messageActif.c[1].v}`;
                     document.getElementById('tickerContainer').style.display = 'flex';
                 }
             } catch (e) {}
         }
 
-        // --- GPS ---
         function lancerGPS() {
             document.getElementById('statusLabel').innerHTML = "📍 GÉOLOCALISATION...";
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -102,9 +141,7 @@
                 } else {
                     document.getElementById('statusLabel').innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)";
                 }
-            }, (err) => {
-                document.getElementById('statusLabel').innerHTML = "❌ GPS NON ACTIVÉ";
-            }, { enableHighAccuracy: true });
+            }, null, { enableHighAccuracy: true });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -136,7 +173,7 @@
             database.ref('presences/' + dateStr + '/' + key).update({
                 on: true, hA: heure, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('msg').innerHTML = "✨ MERCI ! POINTAGE VALIDÉ.";
+                document.getElementById('msg').innerHTML = "✨ VALIDÉ ! Bon service.";
                 document.getElementById('msg').className = "mt-4 p-4 block bg-green-500/20 text-green-400 rounded-2xl";
                 document.getElementById('msg').style.display = "block";
                 setTimeout(() => { location.reload(); }, 2000);
@@ -156,25 +193,14 @@
                 selection.classList.remove('hidden');
                 action.classList.add('hidden');
                 document.getElementById('statusLabel').innerText = "SÉLECTIONNEZ VOTRE NOM";
-                
                 selection.innerHTML = "";
-                const cats = ["admin", "bar", "cuisine", "menage", "service"];
-                cats.forEach(c => {
+                ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
                     const h = document.createElement('div');
-                    h.className = "category-header";
-                    h.innerText = c;
-                    selection.appendChild(h);
-
+                    h.className = "category-header"; h.innerText = c; selection.appendChild(h);
                     equipeConfig.filter(e => e.t === c).forEach(emp => {
                         const b = document.createElement('button');
-                        b.className = "btn-staff";
-                        b.innerText = emp.n;
-                        b.onclick = () => {
-                            if(confirm("Est-ce bien vous : " + emp.n + " ?")) {
-                                localStorage.setItem('gc_staff_name', emp.n);
-                                location.reload();
-                            }
-                        };
+                        b.className = "btn-staff"; b.innerText = emp.n;
+                        b.onclick = () => { if(confirm("Confirmer : " + emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); } };
                         selection.appendChild(b);
                     });
                 });
