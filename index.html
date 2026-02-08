@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grey Corner • Portier Numérique</title>
+    <title>Grey Corner • Système Intelligent</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
@@ -11,31 +11,20 @@
         body::before { content: ""; position: absolute; inset: 0; background-image: url('https://www.transparenttextures.com/patterns/arabesque.png'); opacity: 0.1; pointer-events: none; }
         .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 380px; height: 92vh; border-radius: 2.5rem; padding: 1.5rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
         
-        /* Ticker Style */
-        .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 16px; margin-bottom: 12px; height: 60px; overflow: hidden; white-space: nowrap; display: none; align-items: center; z-index: 50; }
-        .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 22s linear infinite; color: #f3e8d2; font-size: 13px; font-weight: 700; text-transform: uppercase; }
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-
-        .btn-staff { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.15); height: 50px; font-size: 10px; font-weight: 700; border-radius: 14px; text-transform: uppercase; color: #d1d5db; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .category-title { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 10px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); grid-column: span 2; display: flex; align-items: center; gap: 8px; }
-        .category-title::before { content: "✦"; }
+        .btn-staff { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.15); height: 45px; font-size: 10px; font-weight: 700; border-radius: 12px; text-transform: uppercase; color: #d1d5db; display: flex; align-items: center; justify-content: center; }
+        .category-title { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 10px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); grid-column: span 2; }
         .hidden { display: none !important; }
+        
+        /* Style Admin Panel */
+        #adminPanel { position: absolute; inset: 0; background: #0f172a; z-index: 100; border-radius: 2.5rem; padding: 2rem; overflow-y: auto; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
 
     <div class="glass-card">
         <div class="text-center mb-4">
-            <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="h-16 mx-auto mb-3">
-            <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
-                <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
-                    <span>📅</span> PLANNING DU <span id="date-btn"></span>
-                </button>
-            </a>
-        </div>
-
-        <div id="tickerContainer" class="info-ticker-container">
-            <div id="tickerText" class="ticker-text"></div>
+            <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" id="logoAdmin" class="h-16 mx-auto mb-3 cursor-pointer">
+            <div id="date-btn" class="text-[#c5a059] font-bold text-xs uppercase tracking-widest"></div>
         </div>
 
         <div id="statusLabel" class="text-center px-3 py-4 text-[11px] font-bold uppercase tracking-widest mb-4 bg-black/30 border border-white/5 rounded-xl min-h-[50px] flex items-center justify-center text-slate-400">
@@ -48,13 +37,22 @@
             <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-5 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-lg shadow-lg active:scale-95 disabled:opacity-30">
                 POINTER PRÉSENCE
             </button>
-            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">
-                Ce n'est pas moi / Changer de profil
-            </button>
+            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">Changer de profil</button>
+        </div>
+
+        <div id="adminPanel" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-[#c5a059] font-extrabold">MODE ADMIN</h2>
+                <button onclick="closeAdmin()" class="text-white text-xs bg-red-900/50 px-3 py-1 rounded">Fermer</button>
+            </div>
+            <div id="adminStats" class="text-white text-[11px] space-y-2">
+                <p class="text-slate-400">Chargement des présences en temps réel...</p>
+                <div id="presenceList" class="mt-4 border-t border-slate-700 pt-4"></div>
+            </div>
+            <button onclick="localStorage.clear(); location.reload();" class="w-full mt-10 p-3 bg-red-600 text-white font-bold rounded-xl text-xs">RÉINITIALISER TOUT L'APPAREIL</button>
         </div>
 
         <div id="msg" class="text-center mt-2 text-[11px] font-bold hidden p-3 rounded-xl"></div>
-        <div class="text-center text-[9px] color-[#64748b] mt-4 uppercase tracking-[0.2em]">✨ GREY CORNER • RAMADAN 2026 ✨</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -67,48 +65,58 @@
 
         const equipeConfig = [
             {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "BOURAHMA ANAS", t: "cuisine"},
-            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"},
-            {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "GUETIBI AMINE", t: "service"},
+            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "ELGORRAMY ANISSA", t: "menage"}, {n: "ELGORRAMY SOUAD", t: "menage"},
+            {n: "ELMCHAOURI SOUAD", t: "menage"}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "GUETIBI AMINE", t: "service"},
             {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "KAFOUNI ZAKARIAE", t: "service"},
-            {n: "KHALOUQ RACHID", t: "bar", ex: true}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"},
-            {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"}, {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
+            {n: "KHALOUQ RACHID", t: "bar"}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"},
+            {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"}, {n: "SBAI HAKIMA", t: "menage"}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
         let selectedUser = localStorage.getItem('gc_staff_name');
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
-        const [y, m, d] = dateStr.split('-');
-        document.getElementById('date-btn').textContent = d + '/' + m;
+        document.getElementById('date-btn').innerText = "VOTRE POINTAGE : " + dateStr;
 
-        async function chargerTicker() {
-            const SHEET_URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
-            try {
-                const r = await fetch(SHEET_URL);
-                const txt = await r.text();
-                const json = JSON.parse(txt.substr(47).slice(0, -2));
-                const messageActif = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
-                if (messageActif) {
-                    const texte = messageActif.c[1].v;
-                    const container = document.getElementById('tickerContainer');
-                    const tickerTxt = document.getElementById('tickerText');
-                    tickerTxt.innerHTML = `🌙 INFO : ${texte} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${texte}`;
-                    container.style.display = 'flex';
+        // --- GESTION ADMIN ---
+        let logoClicks = 0;
+        document.getElementById('logoAdmin').onclick = () => {
+            logoClicks++;
+            if (logoClicks === 3) {
+                let code = prompt("Code Administrateur :");
+                if (code === "1234") { // <--- CHANGEZ LE CODE ICI
+                    openAdmin();
                 }
-            } catch (e) { console.error(e); }
-        }
+                logoClicks = 0;
+            }
+        };
 
-        function activerGPSAutomatique() {
+        function openAdmin() {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            database.ref('presences/' + dateStr).on('value', snap => {
+                const list = document.getElementById('presenceList');
+                list.innerHTML = "<h3 class='text-amber-500 mb-2'>POINTAGES DU JOUR :</h3>";
+                if (!snap.exists()) { list.innerHTML += "Aucun pointage."; return; }
+                snap.forEach(child => {
+                    list.innerHTML += `<div class='flex justify-between py-1 border-b border-slate-800'>
+                        <span>${child.key.replace(/_/g, ' ')}</span>
+                        <span class='text-green-400'>${child.val().hA}</span>
+                    </div>`;
+                });
+            });
+        }
+        function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
+
+        // --- LOGIQUE GPS & POINTAGE ---
+        function activerGPS() {
             const status = document.getElementById('statusLabel');
-            status.innerHTML = "🌙 VÉRIFICATION POSITION...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
                 if (dist <= 300) {
-                    status.innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400'>✅ VOUS ÊTES AU RESTAURANT</span>";
+                    status.innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400'>✅ ZONE VALIDÉE</span>";
                     document.getElementById('submitBtn').disabled = false;
                 } else {
                     status.innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)";
-                    status.style.color = "#ef4444";
                 }
-            }, (err) => { status.innerHTML = "⚠️ ACTIVEZ LE GPS"; }, { enableHighAccuracy: true });
+            }, null, { enableHighAccuracy: true });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -121,12 +129,11 @@
         function checkFirebase() {
             const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             database.ref('presences/' + dateStr + '/' + userKey).on('value', snap => {
-                const data = snap.val();
-                if (data && data.on) {
-                    document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400'>DÉJÀ POINTÉ ✓</span>";
+                if (snap.exists() && snap.val().on) {
+                    document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400'>POINTÉ ✓</span>";
                     document.getElementById('submitBtn').disabled = true;
                 } else {
-                    activerGPSAutomatique();
+                    activerGPS();
                 }
             });
         }
@@ -134,7 +141,6 @@
         function init() {
             const selection = document.getElementById('selectionZone');
             const action = document.getElementById('actionZone');
-            
             if (selectedUser) {
                 selection.classList.add('hidden');
                 action.classList.remove('hidden');
@@ -148,11 +154,9 @@
                     btn.className = "btn-staff";
                     btn.innerText = emp.n;
                     btn.onclick = () => {
-                        if(confirm("Mémoriser " + emp.n + " ?")) {
-                            localStorage.setItem('gc_staff_name', emp.n);
-                            selectedUser = emp.n;
-                            init();
-                        }
+                        localStorage.setItem('gc_staff_name', emp.n);
+                        selectedUser = emp.n;
+                        init();
                     };
                     selection.appendChild(btn);
                 });
@@ -164,20 +168,15 @@
             database.ref('presences/' + dateStr + '/' + userKey).update({
                 on: true, hA: new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca'}), timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('msg').innerHTML = "Pointage validé !";
-                document.getElementById('msg').className = "mt-2 p-3 block bg-green-500/20 text-green-400 rounded-xl";
+                document.getElementById('msg').innerHTML = "Succès !";
+                document.getElementById('msg').classList.remove('hidden');
                 setTimeout(() => location.reload(), 2000);
             });
         }
 
-        function resetUserMemory() {
-            if(confirm("Changer de profil ?")) {
-                localStorage.removeItem('gc_staff_name');
-                location.reload();
-            }
-        }
+        function resetUserMemory() { if(confirm("Changer de profil ?")) { localStorage.removeItem('gc_staff_name'); location.reload(); } }
 
-        window.onload = () => { chargerTicker(); init(); };
+        window.onload = init;
     </script>
 </body>
 </html>
