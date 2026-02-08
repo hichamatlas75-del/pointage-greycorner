@@ -3,58 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grey Corner • Staff</title>
+    <title>Grey Corner • Système</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        html, body { height: 100%; margin: 0; overflow: hidden; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); font-family: 'Plus Jakarta Sans', sans-serif; }
-        body::before { content: ""; position: absolute; inset: 0; background-image: url('https://www.transparenttextures.com/patterns/arabesque.png'); opacity: 0.1; pointer-events: none; }
-        .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 400px; height: 95vh; border-radius: 2.5rem; padding: 1.5rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
-        .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 12px; margin-bottom: 12px; height: 45px; overflow: hidden; white-space: nowrap; display: none; align-items: center; }
-        .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; color: #f3e8d2; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-        .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); height: 42px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #f3e8d2; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
-        .category-header { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 12px 0 6px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); margin-bottom: 8px; grid-column: span 2; }
-        .hidden { display: none !important; }
+        html, body { height: 100%; margin: 0; overflow: hidden; background: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 400px; height: 95vh; border-radius: 2.5rem; padding: 1.2rem; display: flex; flex-direction: column; position: relative; }
+        .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); height: 44px; font-size: 10px; font-weight: 700; border-radius: 12px; text-transform: uppercase; color: #f3e8d2; display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; }
+        .category-header { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 15px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); margin-bottom: 8px; grid-column: span 2; width: 100%; }
         .custom-scroll::-webkit-scrollbar { width: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
 
     <div class="glass-card">
-        <div class="text-center mb-3">
-            <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" id="logoAdmin" class="h-12 mx-auto mb-3 cursor-pointer">
-            <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
-                <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    📅 PLANNING DU <span id="date-btn"></span>
-                </button>
-            </a>
+        <div class="text-center mb-2">
+            <img src="images/LOGO GREY CORNER.png" alt="Logo" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer">
+            <div id="date-btn" class="text-[#c5a059] font-bold text-[10px] uppercase"></div>
         </div>
 
-        <div id="tickerContainer" class="info-ticker-container">
-            <div id="tickerText" class="ticker-text"></div>
+        <div id="statusLabel" class="text-center px-3 py-2 text-[10px] font-bold uppercase mb-4 bg-black/40 border border-white/5 rounded-xl min-h-[45px] flex items-center justify-center text-slate-400">
+            PRÊT
         </div>
 
-        <div id="statusLabel" class="text-center px-3 py-3 text-[10px] font-bold uppercase tracking-widest mb-4 bg-black/30 border border-white/5 rounded-xl min-h-[50px] flex items-center justify-center text-slate-400">
-            INITIALISATION...
-        </div>
-
-        <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow custom-scroll hidden"></div>
+        <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow custom-scroll">
+            </div>
 
         <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-center">
-            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-5 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-lg shadow-lg active:scale-95 disabled:opacity-30">
+            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-6 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-xl shadow-lg active:scale-95 disabled:opacity-30">
                 POINTER PRÉSENCE
             </button>
-            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">Ce n'est pas moi / Changer</button>
-        </div>
-
-        <div id="adminPanel" class="hidden absolute inset-0 bg-[#0f172a] z-[100] rounded-[2.5rem] p-6 flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-[#c5a059] font-extrabold tracking-tighter">CONTRÔLE</h2>
-                <button onclick="closeAdmin()" class="text-white text-[10px] bg-white/10 px-3 py-1 rounded-full uppercase">Fermer</button>
-            </div>
-            <div id="presenceList" class="flex-grow overflow-y-auto custom-scroll text-white text-[11px] space-y-4"></div>
+            <button onclick="resetUserMemory()" class="mt-10 text-[10px] text-slate-500 underline uppercase tracking-widest">Ce n'est pas mon nom</button>
         </div>
 
         <div id="msg" class="text-center mt-2 text-[11px] font-bold hidden p-3 rounded-xl"></div>
@@ -68,6 +49,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // LISTE COMPLÈTE - VÉRIFIÉE
         const equipeConfig = [
             {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "SALIL HOUDA", t: "admin"},
             {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar"},
@@ -78,35 +60,61 @@
 
         let selectedUser = localStorage.getItem('gc_staff_name');
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
-        document.getElementById('date-btn').innerText = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
+        document.getElementById('date-btn').innerText = "DATE : " + dateStr;
 
-        // --- TICKER ---
-        async function chargerTicker() {
-            const SHEET_URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
-            try {
-                const r = await fetch(SHEET_URL);
-                const txt = await r.text();
-                const json = JSON.parse(txt.substr(47).slice(0, -2));
-                const messageActif = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
-                if (messageActif) {
-                    document.getElementById('tickerText').innerHTML = `🌙 INFO : ${messageActif.c[1].v} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${messageActif.c[1].v}`;
-                    document.getElementById('tickerContainer').style.display = 'flex';
-                }
-            } catch (e) {}
+        function init() {
+            const selection = document.getElementById('selectionZone');
+            const action = document.getElementById('actionZone');
+
+            if (selectedUser) {
+                // MODE POINTAGE
+                selection.classList.add('hidden');
+                action.classList.remove('hidden');
+                lancerGPS();
+            } else {
+                // MODE SÉLECTION (FORCER L'AFFICHAGE)
+                selection.classList.remove('hidden');
+                action.classList.add('hidden');
+                selection.innerHTML = ""; // On vide pour être sûr
+                
+                const categories = ["admin", "bar", "cuisine", "menage", "service"];
+                categories.forEach(cat => {
+                    // Titre Catégorie
+                    const head = document.createElement('div');
+                    head.className = "category-header";
+                    head.innerText = cat;
+                    selection.appendChild(head);
+
+                    // Membres
+                    equipeConfig.filter(e => e.t === cat).forEach(emp => {
+                        const b = document.createElement('button');
+                        b.className = "btn-staff";
+                        b.innerText = emp.n;
+                        b.onclick = () => {
+                            if(confirm("Confirmer : " + emp.n + " ?")) {
+                                localStorage.setItem('gc_staff_name', emp.n);
+                                location.reload(); // On recharge pour passer en mode pointage
+                            }
+                        };
+                        selection.appendChild(b);
+                    });
+                });
+            }
         }
 
-        // --- LOGIQUE GPS ---
-        function activerGPS() {
-            document.getElementById('statusLabel').innerHTML = "📍 GPS EN COURS...";
+        function lancerGPS() {
+            document.getElementById('statusLabel').innerHTML = "📍 VÉRIFICATION POSITION...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
                 if (dist <= 300) {
-                    document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400 font-extrabold'>✅ AU RESTAURANT</span>";
-                    verifierPresenceEffective();
+                    document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400'>✅ AU RESTAURANT</span>";
+                    verifierSiDejaFait();
                 } else {
-                    document.getElementById('statusLabel').innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)";
+                    document.getElementById('statusLabel').innerHTML = "❌ TROP LOIN (" + Math.round(dist) + "m)";
                 }
-            }, null, { enableHighAccuracy: true });
+            }, (err) => {
+                document.getElementById('statusLabel').innerHTML = "❌ ACTIVER LE GPS";
+            }, { enableHighAccuracy: true });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -116,11 +124,11 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function verifierPresenceEffective() {
-            const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
-            database.ref('presences/' + dateStr + '/' + userKey).once('value', snap => {
+        function verifierSiDejaFait() {
+            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
                 if (snap.exists() && snap.val().on) {
-                    document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400 font-extrabold'>POINTAGE DÉJÀ VALIDÉ ✓</span>";
+                    document.getElementById('statusLabel').innerHTML = "✓ POINTAGE DÉJÀ ENREGISTRÉ";
                     document.getElementById('submitBtn').disabled = true;
                 } else {
                     document.getElementById('submitBtn').disabled = false;
@@ -128,86 +136,40 @@
             });
         }
 
-        // --- ACTIONS ---
         function validerPresence() {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = "ENVOI...";
-            const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = "ENVOI...";
+            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             const heure = new Intl.DateTimeFormat('fr-FR', {timeZone: 'Africa/Casablanca', hour:'2-digit', minute:'2-digit'}).format(new Date());
 
-            database.ref('presences/' + dateStr + '/' + userKey).update({
+            database.ref('presences/' + dateStr + '/' + key).update({
                 on: true, hA: heure, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('msg').innerHTML = `✨ Merci ${selectedUser} ! Enregistré à ${heure}.`;
-                document.getElementById('msg').className = "mt-4 p-4 block bg-green-500/20 text-green-400 rounded-2xl border border-green-500/30";
+                document.getElementById('msg').innerHTML = "✨ VALIDÉ ! Bon service.";
+                document.getElementById('msg').className = "mt-4 p-4 block bg-green-500/20 text-green-400 rounded-2xl";
                 document.getElementById('msg').style.display = "block";
                 setTimeout(() => { location.reload(); }, 2000);
             });
         }
 
-        function init() {
-            const selection = document.getElementById('selectionZone');
-            const action = document.getElementById('actionZone');
-            chargerTicker();
-
-            if (selectedUser) {
-                selection.classList.add('hidden');
-                action.classList.remove('hidden');
-                activerGPS();
-            } else {
-                selection.classList.remove('hidden');
-                action.classList.add('hidden');
-                document.getElementById('statusLabel').innerText = "SÉLECTIONNEZ VOTRE NOM";
-                
-                // GÉNÉRATION SIMPLE DE LA LISTE (TOUJOURS DISPONIBLE)
-                selection.innerHTML = "";
-                ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
-                    selection.innerHTML += `<div class="category-header">${c}</div>`;
-                    equipeConfig.filter(e => e.t === c).forEach(emp => {
-                        const b = document.createElement('button');
-                        b.className = "btn-staff";
-                        b.innerText = emp.n;
-                        b.onclick = () => {
-                            if(confirm("Confirmer : " + emp.n + " ?")) {
-                                localStorage.setItem('gc_staff_name', emp.n);
-                                selectedUser = emp.n;
-                                init();
-                            }
-                        };
-                        selection.appendChild(b);
-                    });
-                });
+        function resetUserMemory() {
+            if(confirm("Changer de nom ?")) {
+                localStorage.clear();
+                location.reload();
             }
         }
 
-        // --- ADMIN ---
+        // Accès Admin rapide (3 clics logo)
         let logoClicks = 0;
         document.getElementById('logoAdmin').onclick = () => {
             logoClicks++;
             if (logoClicks === 3) {
-                let code = prompt("Code :");
-                if (code === "2026") { 
-                    document.getElementById('adminPanel').classList.remove('hidden');
-                    database.ref('presences/' + dateStr).on('value', snap => {
-                        const list = document.getElementById('presenceList');
-                        list.innerHTML = "";
-                        const data = snap.val() || {};
-                        ["admin", "bar", "cuisine", "menage", "service"].forEach(cat => {
-                            list.innerHTML += `<div class="text-[#c5a059] font-bold border-b border-white/5 mt-4 mb-2 uppercase text-[9px] tracking-widest">${cat}</div>`;
-                            equipeConfig.filter(m => m.t === cat).forEach(m => {
-                                const key = m.n.replace(/\s+/g, '_').toUpperCase();
-                                const isOk = data[key] && data[key].on;
-                                list.innerHTML += `<div class="flex justify-between items-center py-1 opacity-${isOk?'100':'40'}"><span>${m.n}</span><span>${isOk ? data[key].hA : '---'}</span></div>`;
-                            });
-                        });
-                    });
-                }
+                let p = prompt("Code :");
+                if (p === "2026") { location.href = "https://grey-corner-presence.pages.dev/admin"; } // Redirection vers une page admin si vous en avez une, sinon on peut ajouter le panneau ici.
                 logoClicks = 0;
             }
         };
-        function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
-        function resetUserMemory() { if(confirm("Changer de profil ?")) { localStorage.removeItem('gc_staff_name'); location.reload(); } }
 
         window.onload = init;
     </script>
