@@ -9,12 +9,10 @@
     <style>
         html, body { 
             height: 100%; margin: 0; overflow: hidden; 
-            /* Dégradé nuit étoilée */
             background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
         }
         
-        /* Motif moucharabieh discret en fond */
         body::before {
             content: ""; position: absolute; inset: 0;
             background-image: url('https://www.transparenttextures.com/patterns/arabesque.png');
@@ -41,13 +39,12 @@
             background: rgba(197, 160, 89, 0.1); 
             border: 1px solid #c5a059; 
             border-radius: 16px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             overflow: hidden;
             white-space: nowrap;
-            display: none;
-            height: 60px; /* Taille mémorisée */
+            height: 60px;
             z-index: 50;
-            display: flex;
+            display: none; 
             align-items: center;
             box-shadow: inset 0 0 15px rgba(197, 160, 89, 0.2);
         }
@@ -82,34 +79,25 @@
         }
 
         .category-title {
-            grid-column: span 2;
-            font-size: 10px; font-weight: 800; color: #c5a059;
+            grid-column: span 2; font-size: 10px; font-weight: 800; color: #c5a059;
             text-transform: uppercase; letter-spacing: 0.2em;
-            padding: 15px 0 5px 0; margin-top: 5px;
-            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+            padding: 15px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2);
             display: flex; align-items: center; gap: 8px;
         }
-        .category-title::before { content: "✦"; font-size: 12px; }
 
         .btn-staff { 
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(197, 160, 89, 0.15);
-            height: 55px; font-size: 10px; font-weight: 700; 
-            border-radius: 14px; text-transform: uppercase; 
-            display: flex; align-items: center; justify-content: center; 
-            text-align: center; transition: all 0.3s ease;
-            color: #d1d5db;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.15);
+            height: 55px; font-size: 10px; font-weight: 700; border-radius: 14px; 
+            text-transform: uppercase; display: flex; align-items: center; justify-content: center; 
+            text-align: center; transition: all 0.3s ease; color: #d1d5db;
         }
 
         .btn-staff.selected { 
-            border-color: #c5a059 !important; 
-            background: rgba(197, 160, 89, 0.2) !important; 
-            box-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
-            transform: scale(1.02);
-            color: #ffffff !important;
+            border-color: #c5a059 !important; background: rgba(197, 160, 89, 0.2) !important; 
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.3); color: #ffffff !important;
         }
 
-        /* Indicateurs de fonction ramadanisés */
+        /* Couleurs Ramadanisées pour les fonctions */
         .type-admin { border-left: 3px solid #f472b6; }
         .type-bar { border-left: 3px solid #818cf8; }
         .type-cuisine { border-left: 3px solid #f87171; }
@@ -124,27 +112,17 @@
         .btn-main {
             background: linear-gradient(135deg, #c5a059 0%, #8a6d3b 100%);
             color: #0f172a; font-weight: 800; padding: 18px; border-radius: 18px;
-            text-transform: uppercase; font-size: 13px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            letter-spacing: 0.1em;
+            text-transform: uppercase; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);
         }
 
-        .btn-main:disabled { background: #1e293b; color: #475569; box-shadow: none; opacity: 0.5; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-main:disabled { background: #1e293b; color: #475569; opacity: 0.5; }
 
         .logo-container { text-align: center; margin-bottom: 10px; }
-        .logo-img { height: 65px; width: auto; display: inline-block; filter: drop-shadow(0 0 8px rgba(197,160,89,0.3)); }
+        .logo-img { height: 60px; width: auto; display: inline-block; }
 
-        .staff-grid::-webkit-scrollbar { width: 0px; }
-        
         #statusLabel {
-            background: rgba(0, 0, 0, 0.3);
-            color: #94a3b8;
-            border: 1px solid rgba(197, 160, 89, 0.1);
-            border-radius: 12px;
-        }
-
-        .ramadan-footer {
-            text-align: center; font-size: 9px; color: #64748b; margin-top: 10px; letter-spacing: 0.1em;
+            background: rgba(0, 0, 0, 0.3); color: #94a3b8;
+            border: 1px solid rgba(197, 160, 89, 0.1); border-radius: 12px;
         }
     </style>
 </head>
@@ -153,22 +131,21 @@
         <div class="glass-card">
             <div class="admin-reset" onclick="adminResetDevice()">RESET</div>
             
-<div class="logo-container">
-    <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="logo-img">
-</div>
+            <div class="logo-container">
+                <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="logo-img">
+            </div>
 
-<div style="text-align: center; margin-bottom: 20px;">
-    <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
-        <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);">
-            <span style="font-size: 16px;">📅</span> 
-            <span>PLANNING DU <span id="date-du-jour"></span></span>
-        </button>
-    </a>
-</div>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
+                    <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;">
+                        <span>📅</span> PLANNING DU <span id="date-du-jour"></span>
+                    </button>
+                </a>
+            </div>
 
-<div id="tickerContainer" class="info-ticker-container" style="display: none;">
-    <div id="tickerText" class="ticker-text"></div>
-</div>
+            <div id="tickerContainer" class="info-ticker-container">
+                <div id="tickerText" class="ticker-text"></div>
+            </div>
 
             <div id="statusLabel" class="text-center px-3 py-3 text-[10px] font-bold uppercase tracking-widest mb-4 min-h-[40px] flex items-center justify-center">
                 Choisissez votre nom
@@ -180,8 +157,6 @@
                 <button onclick="validerPresence()" id="submitBtn" class="btn-main w-full" disabled>Valider le pointage</button>
             </div>
             <div id="msg" class="mt-2 text-[11px] font-bold hidden p-3 rounded-xl text-center"></div>
-            
-            <div class="ramadan-footer">✨ GREY CORNER • RAMADAN 2026 ✨</div>
         </div>
     </div>
 
@@ -196,24 +171,26 @@
         const SHEET_ID = "1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64";
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
 
-        // --- TICKER LOGIC (60PX) ---
+        function checkAutoRefresh() {
+            const now = new Date();
+            if (now.getHours() === 4 && now.getMinutes() === 0) location.reload();
+        }
+        setInterval(checkAutoRefresh, 60000);
+
         async function chargerMessageUrgent() {
             try {
                 const response = await fetch(SHEET_URL);
                 const text = await response.text();
                 const jsonData = JSON.parse(text.substr(47).slice(0, -2));
-                const rows = jsonData.table.rows;
-                const messageActif = rows.find(row => row.c[3] && row.c[3].v === "Actif");
+                const messageActif = jsonData.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
 
                 if (messageActif) {
                     const texte = messageActif.c[1] ? messageActif.c[1].v : "";
                     const type = messageActif.c[2] ? messageActif.c[2].v : "INFO";
                     const container = document.getElementById('tickerContainer');
                     const tickerText = document.getElementById('tickerText');
-                    
                     tickerText.innerHTML = `🌙 ${type} : ${texte} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${texte}`;
                     container.style.display = 'flex';
-
                     if(type.toUpperCase() === "URGENT") {
                         container.style.background = "rgba(153, 27, 27, 0.4)";
                         container.style.borderColor = "#f87171";
@@ -224,43 +201,38 @@
                         tickerText.style.color = "#f3e8d2";
                     }
                 }
-            } catch (e) { console.error("Ticker Error:", e); }
+            } catch (e) { console.error(e); }
         }
 
-        // --- GPS & CONFIG ---
         const CAFE_LAT = 34.0343959; const CAFE_LON = -5.0155941; const RAYON_AUTORISE = 300; 
         const getMarocDate = () => new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         const getMarocTime = () => new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca', hour: '2-digit', minute: '2-digit'});
 
         const dateStr = getMarocDate();
-        const [y, m, d] = dateStr.split('-');
-        document.getElementById('date-du-jour').textContent = d + '/' + m;
+        document.getElementById('date-du-jour').textContent = dateStr.split('-').reverse().slice(0,2).join('/');
 
-        const couleursFonctions = {"admin": "#f472b6", "bar": "#818cf8", "cuisine": "#f87171", "menage": "#34d399", "service": "#c5a059"};
         const equipeConfig = [
-            {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "BOURAHMA ANAS", t: "cuisine"},
-            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"},
-            {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "GUETIBI AMINE", t: "service"},
-            {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "KAFOUNI ZAKARIAE", t: "service"},
-            {n: "KHALOUQ RACHID", t: "bar", ex: true}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"},
-            {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"}, {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
+            {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "SALIL HOUDA", t: "admin"},
+            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar", ex: true},
+            {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BOURAHMA ANAS", t: "cuisine"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"}, {n: "ZAIR FATIMA", t: "cuisine"},
+            {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"}, {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "SBAI HAKIMA", t: "menage", ex: true},
+            {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}
         ];
 
-        const libellesFonctions = { "admin": "Caisse", "bar": "Bar", "cuisine": "Cuisine", "menage": "Hygiène", "service": "Service" };
-        const ordreFonctions = { "admin": 1, "bar": 2, "cuisine": 3, "menage": 4, "service": 5 };
-
+        const libelles = { "admin": "Caisse et Économat", "bar": "Bar", "cuisine": "Cuisine", "menage": "Ménage", "service": "Service" };
         let selectedUser = null; 
-        const grid = document.getElementById('staffGrid');
         const submitBtn = document.getElementById('submitBtn');
         const statusLabel = document.getElementById('statusLabel');
+        const grid = document.getElementById('staffGrid');
 
+        // Génération classée
         let currentCat = "";
-        equipeConfig.sort((a, b) => ordreFonctions[a.t] - ordreFonctions[b.t] || a.n.localeCompare(b.n)).forEach((emp) => {
+        equipeConfig.forEach(emp => {
             if (emp.t !== currentCat) {
                 currentCat = emp.t;
                 const title = document.createElement('div');
                 title.className = "category-title";
-                title.innerHTML = libellesFonctions[currentCat] || currentCat;
+                title.innerHTML = libelles[currentCat];
                 grid.appendChild(title);
             }
             const btn = document.createElement('button');
@@ -269,12 +241,11 @@
             btn.innerHTML = emp.n;
             btn.onclick = () => sélectionnerEmployé(btn, emp);
             grid.appendChild(btn);
-
-            database.ref('presences/' + dateStr + '/' + userKey).on('value', (snap) => {
-                const data = snap.val();
-                if (data && data.off === true) {
+            
+            database.ref('presences/' + dateStr + '/' + userKey).on('value', snap => {
+                if (snap.val() && snap.val().off) {
                     btn.disabled = true; btn.style.opacity = "0.3";
-                    btn.innerHTML = `${emp.n}<br><span style="font-size:7px; color:#ef4444;">REPOS</span>`;
+                    btn.innerHTML = `${emp.n}<br><span style="color:#f87171;font-size:7px">REPOS</span>`;
                 } else {
                     btn.disabled = false; btn.style.opacity = "1";
                     btn.innerHTML = emp.n;
@@ -283,58 +254,55 @@
         });
 
         async function sélectionnerEmployé(element, emp) {
-            if(element.disabled) return;
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
             selectedUser = emp.n.trim().replace(/\s+/g, '_').toUpperCase();
             const snap = await database.ref('presences/' + dateStr + '/' + selectedUser).once('value');
-            if (snap.val() && snap.val().on === true) {
-                submitBtn.disabled = true; statusLabel.innerHTML = "DÉJÀ POINTÉ ✓"; statusLabel.style.color = "#2ecc71"; return; 
+            if (snap.val() && snap.val().on) {
+                submitBtn.disabled = true; statusLabel.innerHTML = "DÉJÀ POINTÉ ✓"; statusLabel.style.color = "#2ecc71";
+            } else {
+                statusLabel.style.color = "#94a3b8";
+                if (emp.ex) { statusLabel.innerHTML = "✦ Accès Libre ✦"; submitBtn.disabled = false; }
+                else activerGPS();
             }
-            if (emp.ex) { statusLabel.innerHTML = "✦ Accès Libre Ramadan ✦"; statusLabel.style.color = "#fbbf24"; submitBtn.disabled = false; }
-            else { activerGPSAutomatique(); }
         }
 
-        function activerGPSAutomatique() {
+        function activerGPS() {
             statusLabel.innerHTML = "🌙 Localisation...";
-            navigator.geolocation.getCurrentPosition((pos) => {
+            navigator.geolocation.getCurrentPosition(pos => {
                 if (getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON) <= RAYON_AUTORISE) {
-                    statusLabel.innerHTML = "✅ Bienvenue au Café"; statusLabel.style.color = "#2ecc71"; submitBtn.disabled = false;
-                } else { alert("Vous n'êtes pas au Grey Corner."); resetSelection(); }
-            }, (err) => { alert("Activez votre GPS."); resetSelection(); }, { enableHighAccuracy: true });
+                    statusLabel.innerHTML = "✅ Zone Validée"; statusLabel.style.color = "#2ecc71"; submitBtn.disabled = false;
+                } else { alert("Hors zone !"); resetSelection(); }
+            }, () => { alert("Activez le GPS !"); resetSelection(); });
         }
 
-        async function validerPresence() {
-            if (!selectedUser) return;
-            submitBtn.disabled = true;
+        function validerPresence() {
             database.ref('presences/' + dateStr + '/' + selectedUser).update({
                 on: true, hA: getMarocTime(), timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('msg').innerHTML = "Pointage validé. Ramadan Kareem !";
-                document.getElementById('msg').className = "mt-2 p-3 font-bold block bg-green-500/20 text-green-400";
+                document.getElementById('msg').innerHTML = "Ramadan Kareem ! Pointé ✓";
+                document.getElementById('msg').style.display = "block";
                 setTimeout(() => location.reload(), 2000);
             });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
-            const a = Math.sin(((lat2-lat1)*Math.PI/180)/2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(((lon2-lon1)*Math.PI/180)/2) ** 2;
+            const a = Math.sin(((lat2-lat1)*Math.PI/180)/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(((lon2-lon1)*Math.PI/180)/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         function resetSelection() {
-            selectedUser = null;
+            selectedUser = null; submitBtn.disabled = true;
             document.querySelectorAll('.btn-staff').forEach(b => b.classList.remove('selected'));
-            statusLabel.innerHTML = "Choisissez votre nom"; statusLabel.style.color = "#94a3b8"; submitBtn.disabled = true;
         }
 
         async function adminResetDevice() {
-            if (!selectedUser) return alert("Sélectionnez un nom.");
-            const code = prompt("Code Admin :");
-            if (code !== "0000") return alert("Accès refusé.");
-            const refP = database.ref('presences/' + dateStr + '/' + selectedUser);
-            await refP.remove(); location.reload();
+            const code = prompt("Admin ?");
+            if (code === "0000" && selectedUser) {
+                await database.ref('presences/' + dateStr + '/' + selectedUser).remove();
+                location.reload();
+            }
         }
 
         window.onload = () => chargerMessageUrgent();
