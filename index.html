@@ -16,7 +16,6 @@
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .btn-staff { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.15); height: 40px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #d1d5db; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .btn-staff:disabled { opacity: 0.2; border-color: transparent; color: #475569; }
         .category-header { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 12px 0 6px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); margin-bottom: 8px; grid-column: span 2; }
         .hidden { display: none !important; }
         .custom-scroll::-webkit-scrollbar { width: 3px; }
@@ -49,7 +48,7 @@
             <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-5 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-lg shadow-lg active:scale-95 disabled:opacity-30">
                 POINTER PRÉSENCE
             </button>
-            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">Changer de profil</button>
+            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">Ce n'est pas moi / Changer de profil</button>
         </div>
 
         <div id="adminPanel" class="hidden absolute inset-0 bg-[#0f172a] z-[100] rounded-[2.5rem] p-6 flex flex-col">
@@ -135,7 +134,8 @@
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
                 if (dist <= 300) {
                     document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400 font-extrabold'>✅ AU RESTAURANT</span>";
-                    document.getElementById('submitBtn').disabled = false;
+                    // Le bouton s'active seulement si pas déjà pointé aujourd'hui
+                    verifierDejaPointe();
                 } else {
                     document.getElementById('statusLabel').innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)";
                 }
@@ -147,6 +147,18 @@
             const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
             const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function verifierDejaPointe() {
+            const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            database.ref('presences/' + dateStr + '/' + userKey).once('value', snap => {
+                if (snap.exists() && snap.val().on) {
+                    document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400 font-extrabold'>POINTAGE DÉJÀ VALIDÉ ✓</span>";
+                    document.getElementById('submitBtn').disabled = true;
+                } else {
+                    document.getElementById('submitBtn').disabled = false;
+                }
+            });
         }
 
         async function validerPresence() {
@@ -167,58 +179,36 @@
             });
         }
 
-        function checkFirebase() {
-            const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
-            database.ref('presences/' + dateStr + '/' + userKey).on('value', snap => {
-                if (snap.exists() && snap.val().on) {
-                    document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400 font-extrabold'>POINTAGE VALIDÉ ✓</span>";
-                    document.getElementById('submitBtn').disabled = true;
-                } else {
-                    activerGPS();
-                }
-            });
-        }
-
         function init() {
             const selection = document.getElementById('selectionZone');
             const action = document.getElementById('actionZone');
             chargerTicker();
 
             if (selectedUser) {
+                // Mode Personnel : Le nom est déjà choisi sur ce téléphone
                 selection.classList.add('hidden');
                 action.classList.remove('hidden');
-                checkFirebase();
+                activerGPS(); 
             } else {
+                // Mode Liste : Personne n'est identifié sur cet appareil
                 selection.classList.remove('hidden');
                 action.classList.add('hidden');
                 document.getElementById('statusLabel').innerText = "IDENTIFICATION STAFF";
-                
-                // VERROUILLAGE : On écoute les présences du jour pour griser les noms déjà pointés
-                database.ref('presences/' + dateStr).on('value', snap => {
-                    const data = snap.val() || {};
-                    selection.innerHTML = "";
-                    ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
-                        selection.innerHTML += `<div class="category-header">${c}</div>`;
-                        equipeConfig.filter(e => e.t === c).forEach(emp => {
-                            const key = emp.n.replace(/\s+/g, '_').toUpperCase();
-                            const dejaPointe = data[key] && data[key].on;
-                            
-                            const b = document.createElement('button');
-                            b.className = "btn-staff";
-                            b.innerText = dejaPointe ? emp.n + " (✓)" : emp.n;
-                            b.disabled = dejaPointe; // BLOQUE LE BOUTON SI DÉJÀ POINTÉ
-                            
-                            b.onclick = () => { 
-                                if(!dejaPointe) {
-                                    if(confirm("Mémoriser " + emp.n + " ?")) { 
-                                        localStorage.setItem('gc_staff_name', emp.n); 
-                                        selectedUser = emp.n; 
-                                        init(); 
-                                    } 
-                                }
-                            };
-                            selection.appendChild(b);
-                        });
+                selection.innerHTML = "";
+                ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
+                    selection.innerHTML += `<div class="category-header">${c}</div>`;
+                    equipeConfig.filter(e => e.t === c).forEach(emp => {
+                        const b = document.createElement('button');
+                        b.className = "btn-staff";
+                        b.innerText = emp.n;
+                        b.onclick = () => { 
+                            if(confirm("Est-ce bien vous : " + emp.n + " ?")) { 
+                                localStorage.setItem('gc_staff_name', emp.n); 
+                                selectedUser = emp.n; 
+                                init(); 
+                            } 
+                        };
+                        selection.appendChild(b);
                     });
                 });
             }
