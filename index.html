@@ -26,7 +26,7 @@
         </div>
 
         <div id="statusLabel" class="text-center px-3 py-3 text-[10px] font-bold uppercase tracking-widest mb-4 bg-black/30 border border-white/5 rounded-xl min-h-[55px] flex items-center justify-center text-slate-400">
-            Initialisation...
+            GPS...
         </div>
 
         <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow custom-scroll hidden"></div>
@@ -70,7 +70,6 @@
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         document.getElementById('date-display').innerText = "RAMADAN 2026 • " + dateStr;
 
-        // --- ADMIN LOGIC ---
         let logoClicks = 0;
         document.getElementById('logoAdmin').onclick = () => {
             logoClicks++;
@@ -100,8 +99,9 @@
         }
         function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
 
-        // --- GPS & POINTAGE ---
         function activerGPS() {
+            // Texte de chargement mis à jour
+            document.getElementById('statusLabel').innerHTML = "📍 GÉOLOCALISATION...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
                 if (dist <= 300) {
@@ -120,13 +120,11 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // --- LA NOUVELLE FONCTION DE POINTAGE ---
         async function validerPresence() {
             const submitBtn = document.getElementById('submitBtn');
             const msg = document.getElementById('msg');
             submitBtn.disabled = true;
             submitBtn.innerHTML = "ENVOI...";
-            
             const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             const heureArrivee = new Intl.DateTimeFormat('fr-FR', {timeZone: 'Africa/Casablanca', hour:'2-digit', minute:'2-digit'}).format(new Date());
 
@@ -147,7 +145,6 @@
                     document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400 font-extrabold'>POINTAGE VALIDÉ ✓</span>";
                     document.getElementById('submitBtn').disabled = true;
                 } else {
-                    document.getElementById('statusLabel').innerHTML = "🌙 VÉRIFICATION POSITION...";
                     activerGPS();
                 }
             });
