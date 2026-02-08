@@ -10,11 +10,15 @@
         html, body { height: 100%; margin: 0; overflow: hidden; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); font-family: 'Plus Jakarta Sans', sans-serif; }
         body::before { content: ""; position: absolute; inset: 0; background-image: url('https://www.transparenttextures.com/patterns/arabesque.png'); opacity: 0.1; pointer-events: none; }
         .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 380px; height: 92vh; border-radius: 2.5rem; padding: 1.5rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
+        
+        /* Ticker Style */
         .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 16px; margin-bottom: 12px; height: 60px; overflow: hidden; white-space: nowrap; display: none; align-items: center; z-index: 50; }
         .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 22s linear infinite; color: #f3e8d2; font-size: 13px; font-weight: 700; text-transform: uppercase; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
         .btn-staff { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.15); height: 50px; font-size: 10px; font-weight: 700; border-radius: 14px; text-transform: uppercase; color: #d1d5db; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .category-title { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 10px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); grid-column: span 2; }
+        .category-title { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 10px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); grid-column: span 2; display: flex; align-items: center; gap: 8px; }
+        .category-title::before { content: "✦"; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -25,7 +29,7 @@
             <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="h-16 mx-auto mb-3">
             <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
                 <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
-                    📅 PLANNING DU <span id="date-btn"></span>
+                    <span>📅</span> PLANNING DU <span id="date-btn"></span>
                 </button>
             </a>
         </div>
@@ -38,8 +42,7 @@
             Initialisation...
         </div>
 
-        <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow hidden">
-            </div>
+        <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow hidden"></div>
 
         <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-center">
             <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-5 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-lg shadow-lg active:scale-95 disabled:opacity-30">
@@ -62,7 +65,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Config Equipe Officielle
         const equipeConfig = [
             {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "BOURAHMA ANAS", t: "cuisine"},
             {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"},
@@ -77,10 +79,8 @@
         const [y, m, d] = dateStr.split('-');
         document.getElementById('date-btn').textContent = d + '/' + m;
 
-        // Ticker Logic
         async function chargerTicker() {
-            const SHEET_ID = "1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64";
-            const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
+            const SHEET_URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
             try {
                 const r = await fetch(SHEET_URL);
                 const txt = await r.text();
@@ -96,23 +96,19 @@
             } catch (e) { console.error(e); }
         }
 
-        // GPS Logic
-        function activerGPS() {
+        function activerGPSAutomatique() {
             const status = document.getElementById('statusLabel');
-            status.innerHTML = "🌙 LOCALISATION EN COURS...";
+            status.innerHTML = "🌙 VÉRIFICATION POSITION...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
                 if (dist <= 300) {
-                    status.innerHTML = "Bonjour " + selectedUser.replace(/_/g, ' ') + "<br><span class='text-green-400'>✅ VOUS ÊTES EN ZONE</span>";
+                    status.innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400'>✅ VOUS ÊTES AU RESTAURANT</span>";
                     document.getElementById('submitBtn').disabled = false;
                 } else {
-                    status.innerHTML = "❌ HORS ZONE (DISTANCE: " + Math.round(dist) + "m)";
+                    status.innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)";
                     status.style.color = "#ef4444";
                 }
-            }, (err) => {
-                status.innerHTML = "⚠️ ACTIVEZ LE GPS DE L'APK";
-                status.style.color = "#f87171";
-            }, { enableHighAccuracy: true });
+            }, (err) => { status.innerHTML = "⚠️ ACTIVEZ LE GPS"; }, { enableHighAccuracy: true });
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -126,12 +122,11 @@
             const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             database.ref('presences/' + dateStr + '/' + userKey).on('value', snap => {
                 const data = snap.val();
-                const status = document.getElementById('statusLabel');
                 if (data && data.on) {
-                    status.innerHTML = selectedUser.replace(/_/g, ' ') + "<br><span class='text-green-400'>POINTAGE DÉJÀ VALIDÉ ✓</span>";
+                    document.getElementById('statusLabel').innerHTML = selectedUser + "<br><span class='text-green-400'>DÉJÀ POINTÉ ✓</span>";
                     document.getElementById('submitBtn').disabled = true;
                 } else {
-                    activerGPS();
+                    activerGPSAutomatique();
                 }
             });
         }
@@ -139,6 +134,7 @@
         function init() {
             const selection = document.getElementById('selectionZone');
             const action = document.getElementById('actionZone');
+            
             if (selectedUser) {
                 selection.classList.add('hidden');
                 action.classList.remove('hidden');
@@ -163,14 +159,13 @@
             }
         }
 
-        async function validerPresence() {
+        function validerPresence() {
             const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             database.ref('presences/' + dateStr + '/' + userKey).update({
                 on: true, hA: new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca'}), timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                const msg = document.getElementById('msg');
-                msg.innerHTML = "Pointage validé. Ramadan Kareem !";
-                msg.className = "mt-2 p-3 font-bold block bg-green-500/20 text-green-400 rounded-xl";
+                document.getElementById('msg').innerHTML = "Pointage validé !";
+                document.getElementById('msg').className = "mt-2 p-3 block bg-green-500/20 text-green-400 rounded-xl";
                 setTimeout(() => location.reload(), 2000);
             });
         }
