@@ -3,192 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grey Corner • Système de Pointage</title>
+    <title>Grey Corner • Portier Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        html, body { height: 100%; margin: 0; overflow-x: hidden; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); font-family: 'Plus Jakarta Sans', sans-serif; }
+        html, body { height: 100%; margin: 0; overflow: hidden; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); font-family: 'Plus Jakarta Sans', sans-serif; }
         body::before { content: ""; position: absolute; inset: 0; background-image: url('https://www.transparenttextures.com/patterns/arabesque.png'); opacity: 0.1; pointer-events: none; }
-        .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 32px; width: 100%; max-width: 450px; padding: 25px; margin: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; z-index: 10; }
-        .btn-staff { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; transition: all 0.2s; font-size: 11px; text-transform: uppercase; }
-        .btn-staff:active { transform: scale(0.95); background: rgba(212, 175, 55, 0.2); }
+        .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 380px; height: 92vh; border-radius: 2.5rem; padding: 1.5rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
+        .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 16px; margin-bottom: 12px; height: 60px; overflow: hidden; white-space: nowrap; display: none; align-items: center; z-index: 50; }
+        .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 22s linear infinite; color: #f3e8d2; font-size: 13px; font-weight: 700; text-transform: uppercase; }
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        .btn-staff { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.15); height: 50px; font-size: 10px; font-weight: 700; border-radius: 14px; text-transform: uppercase; color: #d1d5db; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .category-title { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 10px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); grid-column: span 2; }
         .hidden { display: none !important; }
-        .team-title { color: #D4AF37; font-size: 10px; font-weight: 800; letter-spacing: 1px; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 2px; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 10px; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-2">
+<body class="flex items-center justify-center p-4">
 
-    <div class="card">
-        <div class="text-center mb-5">
-            <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="h-10 mx-auto mb-4">
-            
+    <div class="glass-card">
+        <div class="text-center mb-4">
+            <img src="images/LOGO GREY CORNER.png" alt="Grey Corner" class="h-16 mx-auto mb-3">
             <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
-                <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    <span>📅</span> PLANNING DU <span id="date-btn"></span>
+                <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+                    📅 PLANNING DU <span id="date-btn"></span>
                 </button>
             </a>
         </div>
 
-        <div id="statusLabel" class="text-center text-sm font-medium mb-5 text-slate-400 italic">Initialisation...</div>
+        <div id="tickerContainer" class="info-ticker-container">
+            <div id="tickerText" class="ticker-text"></div>
+        </div>
 
-        <div id="selectionZone" class="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar hidden">
+        <div id="statusLabel" class="text-center px-3 py-4 text-[11px] font-bold uppercase tracking-widest mb-4 bg-black/30 border border-white/5 rounded-xl min-h-[50px] flex items-center justify-center text-slate-400">
+            Initialisation...
+        </div>
+
+        <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow hidden">
             </div>
 
-        <div id="actionZone" class="hidden text-center">
-            <button id="submitBtn" onclick="validerPresence()" disabled 
-                class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-900 font-extrabold text-lg shadow-lg active:scale-95 disabled:opacity-30">
+        <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-center">
+            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-5 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-lg shadow-lg active:scale-95 disabled:opacity-30">
                 POINTER PRÉSENCE
             </button>
-            
-            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest block w-full text-center">
+            <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">
                 Ce n'est pas moi / Changer de profil
             </button>
         </div>
 
-        <div id="msg" class="text-center mt-4 text-sm min-h-[40px]"></div>
-
-        <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-700/50">
-            <span class="text-[8px] text-slate-500 font-bold tracking-widest uppercase text-left">Fès • Grey Corner<br>Ramadan 2026</span>
-            <span id="date-footer" class="text-[10px] text-amber-500/80 font-bold"></span>
-        </div>
+        <div id="msg" class="text-center mt-2 text-[11px] font-bold hidden p-3 rounded-xl"></div>
+        <div class="text-center text-[9px] color-[#64748b] mt-4 uppercase tracking-[0.2em]">✨ GREY CORNER • RAMADAN 2026 ✨</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://grey-corner-pointage-default-rtdb.europe-west1.firebasedatabase.app/" };
+        const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // Config Equipe Officielle
         const equipeConfig = [
-            {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "SALIL HOUDA", t: "admin"},
-            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar", ex: true},
-            {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BOURAHMA ANAS", t: "cuisine"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"}, {n: "ZAIR FATIMA", t: "cuisine"},
-            {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"}, {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "SBAI HAKIMA", t: "menage", ex: true},
-            {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}
+            {n: "ALAOUI LAZIZ", t: "service"}, {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BENKHADA ABDESLAM", t: "admin"}, {n: "BOURAHMA ANAS", t: "cuisine"},
+            {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "ELGORRAMY ANISSA", t: "menage", ex: true}, {n: "ELGORRAMY SOUAD", t: "menage"},
+            {n: "ELMCHAOURI SOUAD", t: "menage", ex: true}, {n: "ENNHAILI SOUMIA", t: "admin"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "GUETIBI AMINE", t: "service"},
+            {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "KAFOUNI ZAKARIAE", t: "service"},
+            {n: "KHALOUQ RACHID", t: "bar", ex: true}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"},
+            {n: "MOHSINE YOUNESS", t: "service"}, {n: "SALIL HOUDA", t: "admin"}, {n: "SBAI HAKIMA", t: "menage", ex: true}, {n: "ZAIR FATIMA", t: "cuisine"}
         ];
 
         let selectedUser = localStorage.getItem('gc_staff_name');
-
-        function getMarocDate() { return new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date()); }
-        const dateStr = getMarocDate();
+        const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         const [y, m, d] = dateStr.split('-');
         document.getElementById('date-btn').textContent = d + '/' + m;
-        document.getElementById('date-footer').textContent = d + '/' + m;
 
-        // Fonction de calcul de distance (Zone de 300m)
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
-            const a = Math.sin(((lat2-lat1)*Math.PI/180)/2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(((lon2-lon1)*Math.PI/180)/2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        // Ticker Logic
+        async function chargerTicker() {
+            const SHEET_ID = "1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64";
+            const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
+            try {
+                const r = await fetch(SHEET_URL);
+                const txt = await r.text();
+                const json = JSON.parse(txt.substr(47).slice(0, -2));
+                const messageActif = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
+                if (messageActif) {
+                    const texte = messageActif.c[1].v;
+                    const container = document.getElementById('tickerContainer');
+                    const tickerTxt = document.getElementById('tickerText');
+                    tickerTxt.innerHTML = `🌙 INFO : ${texte} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${texte}`;
+                    container.style.display = 'flex';
+                }
+            } catch (e) { console.error(e); }
         }
 
+        // GPS Logic
         function activerGPS() {
-            const statusLabel = document.getElementById('statusLabel');
-            const submitBtn = document.getElementById('submitBtn');
-            
-            statusLabel.innerHTML = "🌙 Vérification de votre position...";
-            statusLabel.style.color = "#D4AF37";
-
+            const status = document.getElementById('statusLabel');
+            status.innerHTML = "🌙 LOCALISATION EN COURS...";
             navigator.geolocation.getCurrentPosition((pos) => {
-                // Coordonnées Grey Corner Fès
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
                 if (dist <= 300) {
-                    statusLabel.innerHTML = "Bonjour " + selectedUser + ",<br><span class='text-green-400'>✅ VOUS ÊTES EN ZONE</span>";
-                    submitBtn.disabled = false;
+                    status.innerHTML = "Bonjour " + selectedUser.replace(/_/g, ' ') + "<br><span class='text-green-400'>✅ VOUS ÊTES EN ZONE</span>";
+                    document.getElementById('submitBtn').disabled = false;
                 } else {
-                    statusLabel.innerHTML = "❌ HORS ZONE (Distance: " + Math.round(dist) + "m)";
-                    statusLabel.style.color = "#ef4444";
-                    submitBtn.disabled = true;
+                    status.innerHTML = "❌ HORS ZONE (DISTANCE: " + Math.round(dist) + "m)";
+                    status.style.color = "#ef4444";
                 }
             }, (err) => {
-                statusLabel.innerHTML = "⚠️ ACTIVEZ VOTRE GPS";
-                statusLabel.style.color = "#f87171";
+                status.innerHTML = "⚠️ ACTIVEZ LE GPS DE L'APK";
+                status.style.color = "#f87171";
             }, { enableHighAccuracy: true });
         }
 
-        function checkStatus(name) {
-            database.ref('presences/' + dateStr + '/' + name).on('value', snapshot => {
-                const statusLabel = document.getElementById('statusLabel');
-                const submitBtn = document.getElementById('submitBtn');
-                
-                if (snapshot.exists() && snapshot.val().on) {
-                    statusLabel.innerHTML = "Bonjour " + name + ", <br><span class='text-green-400 font-bold'>POINTAGE DÉJÀ VALIDÉ ✓</span>";
-                    submitBtn.disabled = true;
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function checkFirebase() {
+            const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            database.ref('presences/' + dateStr + '/' + userKey).on('value', snap => {
+                const data = snap.val();
+                const status = document.getElementById('statusLabel');
+                if (data && data.on) {
+                    status.innerHTML = selectedUser.replace(/_/g, ' ') + "<br><span class='text-green-400'>POINTAGE DÉJÀ VALIDÉ ✓</span>";
+                    document.getElementById('submitBtn').disabled = true;
                 } else {
-                    // Si pas encore pointé, on lance le GPS
                     activerGPS();
                 }
             });
         }
 
         function init() {
-            const selectionZone = document.getElementById('selectionZone');
-            const actionZone = document.getElementById('actionZone');
-
+            const selection = document.getElementById('selectionZone');
+            const action = document.getElementById('actionZone');
             if (selectedUser) {
-                selectionZone.classList.add('hidden');
-                actionZone.classList.remove('hidden');
-                checkStatus(selectedUser);
+                selection.classList.add('hidden');
+                action.classList.remove('hidden');
+                checkFirebase();
             } else {
-                selectionZone.classList.remove('hidden');
-                actionZone.classList.add('hidden');
-                document.getElementById('statusLabel').innerText = "Configurez votre appareil (Choix unique)";
-                
-                const equipes = ["admin", "bar", "cuisine", "menage", "service"];
-                equipes.forEach(eq => {
-                    const filtered = equipeConfig.filter(emp => emp.t === eq);
-                    if(filtered.length > 0) {
-                        const title = document.createElement('div');
-                        title.className = "team-title uppercase";
-                        title.innerText = eq;
-                        selectionZone.appendChild(title);
-                        const grid = document.createElement('div');
-                        grid.className = "grid grid-cols-2 gap-2";
-                        filtered.forEach(emp => {
-                            const btn = document.createElement('button');
-                            btn.className = "btn-staff py-3 px-1 rounded-lg font-bold text-center";
-                            btn.innerText = emp.n;
-                            btn.onclick = () => {
-                                if(confirm("Mémoriser " + emp.n + " sur cet appareil ?")) {
-                                    localStorage.setItem('gc_staff_name', emp.n);
-                                    selectedUser = emp.n;
-                                    init();
-                                }
-                            };
-                            grid.appendChild(btn);
-                        });
-                        selectionZone.appendChild(grid);
-                    }
+                selection.classList.remove('hidden');
+                action.classList.add('hidden');
+                document.getElementById('statusLabel').innerText = "CHOISISSEZ VOTRE NOM";
+                equipeConfig.forEach(emp => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-staff";
+                    btn.innerText = emp.n;
+                    btn.onclick = () => {
+                        if(confirm("Mémoriser " + emp.n + " ?")) {
+                            localStorage.setItem('gc_staff_name', emp.n);
+                            selectedUser = emp.n;
+                            init();
+                        }
+                    };
+                    selection.appendChild(btn);
                 });
             }
         }
 
         async function validerPresence() {
-            if (!selectedUser) return;
-            document.getElementById('submitBtn').disabled = true;
-            database.ref('presences/' + dateStr + '/' + selectedUser).update({
-                on: true, 
-                hA: new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca'}), 
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+            const userKey = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            database.ref('presences/' + dateStr + '/' + userKey).update({
+                on: true, hA: new Date().toLocaleTimeString('fr-FR', {timeZone: 'Africa/Casablanca'}), timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                document.getElementById('msg').innerHTML = "Succès ! Bon service au Grey Corner.";
-                document.getElementById('msg').className = "mt-2 p-3 bg-green-500/20 text-green-400 font-bold rounded-lg border border-green-500/30";
+                const msg = document.getElementById('msg');
+                msg.innerHTML = "Pointage validé. Ramadan Kareem !";
+                msg.className = "mt-2 p-3 font-bold block bg-green-500/20 text-green-400 rounded-xl";
+                setTimeout(() => location.reload(), 2000);
             });
         }
 
         function resetUserMemory() {
-            if(confirm("Voulez-vous changer d'utilisateur sur ce téléphone ?")) {
+            if(confirm("Changer de profil ?")) {
                 localStorage.removeItem('gc_staff_name');
                 location.reload();
             }
         }
 
-        init();
+        window.onload = () => { chargerTicker(); init(); };
     </script>
 </body>
 </html>
