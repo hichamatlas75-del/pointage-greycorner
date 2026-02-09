@@ -16,12 +16,11 @@
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); height: 42px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #f3e8d2; display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; }
+        .btn-staff:disabled { opacity: 0.3; color: #64748b; border-color: transparent; }
         .category-header { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 12px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); margin-bottom: 8px; grid-column: span 2; width: 100%; }
         .custom-scroll::-webkit-scrollbar { width: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
         .hidden { display: none !important; }
-
-        /* Style Admin */
         #adminPanel { background: #0f172a; z-index: 100; border-radius: 2.5rem; }
     </style>
 </head>
@@ -42,7 +41,7 @@
         </div>
 
         <div id="statusLabel" class="text-center px-3 py-2 text-[10px] font-bold uppercase mb-4 bg-black/40 border border-white/5 rounded-xl min-h-[45px] flex items-center justify-center text-slate-400">
-            INITIALISATION...
+            SYNC PLANNING...
         </div>
 
         <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow custom-scroll"></div>
@@ -82,20 +81,60 @@
             {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}
         ];
 
+        let staffRepos = [];
         let selectedUser = localStorage.getItem('gc_staff_name');
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         document.getElementById('date-btn').innerText = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
 
-        // --- MODE ADMIN (3 CLICS LOGO) ---
+        // --- FETCH REPOS DEPUIS GOOGLE SHEETS ---
+        async function fetchRepos() {
+            const URL_PLANNING = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning`;
+            try {
+                const r = await fetch(URL_PLANNING);
+                const txt = await r.text();
+                const json = JSON.parse(txt.substr(47).slice(0, -2));
+                const rows = json.table.rows;
+                
+                // On cherche la colonne d'aujourd'hui (en supposant que la date est en ligne 1)
+                let colIdx = -1;
+                const todayFormatted = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
+                rows[0].c.forEach((cell, idx) => { if(cell && cell.v && cell.v.toString().includes(todayFormatted)) colIdx = idx; });
+
+                if (colIdx !== -1) {
+                    rows.forEach(row => {
+                        if (row.c[0] && row.c[colIdx] && (row.c[colIdx].v === "REPOS" || row.c[colIdx].v === "R")) {
+                            staffRepos.push(row.c[0].v.trim().toUpperCase());
+                        }
+                    });
+                }
+            } catch (e) { console.log("Erreur repos sync"); }
+            init(); // On lance l'UI après avoir check les repos
+        }
+
+        async function chargerTicker() {
+            const URL_TICKER = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
+            try {
+                const r = await fetch(URL_TICKER);
+                const txt = await r.text();
+                const json = JSON.parse(txt.substr(47).slice(0, -2));
+                const messageActif = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
+                if (messageActif) {
+                    document.getElementById('tickerText').innerHTML = `🌙 INFO : ${messageActif.c[1].v} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${messageActif.c[1].v}`;
+                    document.getElementById('tickerContainer').style.display = 'flex';
+                }
+            } catch (e) {}
+        }
+
+        // --- MODE ADMIN ---
         let logoClicks = 0;
         document.getElementById('logoAdmin').onclick = () => {
             logoClicks++;
             if (logoClicks === 3) {
-                let code = prompt("Code Administrateur Grey Corner :");
+                let code = prompt("Code Admin :");
                 if (code === "2026") { openAdmin(); }
                 logoClicks = 0;
             }
-            setTimeout(() => { logoClicks = 0; }, 2000); // Reset si pas 3 clics rapides
+            setTimeout(() => { logoClicks = 0; }, 2000);
         };
 
         function openAdmin() {
@@ -109,28 +148,16 @@
                     equipeConfig.filter(m => m.t === cat).forEach(m => {
                         const key = m.n.replace(/\s+/g, '_').toUpperCase();
                         const isOk = data[key] && data[key].on;
-                        list.innerHTML += `<div class="flex justify-between items-center py-1 opacity-${isOk?'100':'40'}"><span>${m.n}</span><span class="${isOk?'text-green-400':'text-slate-600'}">${isOk ? data[key].hA : '---'}</span></div>`;
+                        const isRepos = staffRepos.includes(m.n.toUpperCase());
+                        let statusTxt = isOk ? data[key].hA : (isRepos ? '<span class="text-orange-400">REPOS</span>' : '---');
+                        list.innerHTML += `<div class="flex justify-between items-center py-1 opacity-${(isOk || isRepos)?'100':'40'}"><span>${m.n}</span><span>${statusTxt}</span></div>`;
                     });
                 });
             });
         }
         function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
 
-        // --- TICKER & GPS & LOGIQUE (Version Débloquée) ---
-        async function chargerTicker() {
-            const SHEET_URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
-            try {
-                const r = await fetch(SHEET_URL);
-                const txt = await r.text();
-                const json = JSON.parse(txt.substr(47).slice(0, -2));
-                const messageActif = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
-                if (messageActif) {
-                    document.getElementById('tickerText').innerHTML = `🌙 INFO : ${messageActif.c[1].v} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${messageActif.c[1].v}`;
-                    document.getElementById('tickerContainer').style.display = 'flex';
-                }
-            } catch (e) {}
-        }
-
+        // --- LOGIQUE GPS & POINTAGE ---
         function lancerGPS() {
             document.getElementById('statusLabel').innerHTML = "📍 GÉOLOCALISATION...";
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -166,18 +193,10 @@
         function validerPresence() {
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = "ENVOI...";
             const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             const heure = new Intl.DateTimeFormat('fr-FR', {timeZone: 'Africa/Casablanca', hour:'2-digit', minute:'2-digit'}).format(new Date());
-
-            database.ref('presences/' + dateStr + '/' + key).update({
-                on: true, hA: heure, timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                document.getElementById('msg').innerHTML = "✨ VALIDÉ ! Bon service.";
-                document.getElementById('msg').className = "mt-4 p-4 block bg-green-500/20 text-green-400 rounded-2xl";
-                document.getElementById('msg').style.display = "block";
-                setTimeout(() => { location.reload(); }, 2000);
-            });
+            database.ref('presences/' + dateStr + '/' + key).update({ on: true, hA: heure, timestamp: firebase.database.ServerValue.TIMESTAMP })
+            .then(() => { location.reload(); });
         }
 
         function init() {
@@ -198,8 +217,11 @@
                     const h = document.createElement('div');
                     h.className = "category-header"; h.innerText = c; selection.appendChild(h);
                     equipeConfig.filter(e => e.t === c).forEach(emp => {
+                        const isRepos = staffRepos.includes(emp.n.toUpperCase());
                         const b = document.createElement('button');
-                        b.className = "btn-staff"; b.innerText = emp.n;
+                        b.className = "btn-staff";
+                        b.innerText = isRepos ? emp.n + " (REPOS)" : emp.n;
+                        b.disabled = isRepos;
                         b.onclick = () => { if(confirm("Confirmer : " + emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); } };
                         selection.appendChild(b);
                     });
@@ -209,7 +231,7 @@
 
         function resetUserMemory() { if(confirm("Changer de nom ?")) { localStorage.clear(); location.reload(); } }
 
-        window.onload = init;
+        window.onload = fetchRepos;
     </script>
 </body>
 </html>
