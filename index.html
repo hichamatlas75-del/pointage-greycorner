@@ -132,7 +132,7 @@
             document.getElementById('statusLabel').innerHTML = "📍 LOCALISATION...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
-                if (dist <= 300) {
+                if (dist <= 200) {
                     document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400 font-extrabold'>✅ AU RESTAURANT</span>";
                     verifierSiDejaFait();
                 } else {
