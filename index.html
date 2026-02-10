@@ -50,14 +50,19 @@
             <div id="presenceList" class="flex-grow overflow-y-auto custom-scroll space-y-3"></div>
         </div>
 
-        <div class="text-center mb-2">
-            <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer transition-transform active:scale-90">
-            <a href="https://grey-corner-app.pages.dev/" target="_blank" class="inline-block">
-                <div class="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-1.5 rounded-xl text-[10px] font-bold inline-flex items-center gap-2 active:scale-95 transition-transform">
-                    📅 VOIR LE PLANNING : <span id="date-label"></span>
-                </div>
-            </a>
+        <div class="text-center mb-4">
+    <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-14 mx-auto mb-4 cursor-pointer transition-transform active:scale-90">
+    <a href="https://grey-corner-app.pages.dev/" target="_blank" class="inline-block w-full px-4">
+        <div class="bg-emerald-500/10 border-2 border-emerald-500/50 text-emerald-400 py-4 rounded-2xl text-sm font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-emerald-500/10">
+            <span class="text-xl">📅</span> 
+            <div class="flex flex-col items-start">
+                <span class="leading-none text-[12px] opacity-80 uppercase">Consulter le</span>
+                <span class="leading-none">PLANNING : <span id="date-label"></span></span>
+            </div>
         </div>
+    </a>
+</div>
+
 
         <div id="tickerContainer" class="info-ticker-container">
             <div id="tickerText" class="ticker-text"></div>
