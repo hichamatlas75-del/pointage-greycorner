@@ -9,16 +9,25 @@
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); font-family: 'Plus Jakarta Sans', sans-serif; }
         body::before { content: ""; position: absolute; inset: 0; background-image: url('https://www.transparenttextures.com/patterns/arabesque.png'); opacity: 0.1; pointer-events: none; }
+        
         .glass-card { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 400px; height: 95vh; border-radius: 2.5rem; padding: 1.2rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
-        .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 12px; margin-bottom: 12px; height: 40px; overflow: hidden; white-space: nowrap; display: none; align-items: center; }
+        
+        /* TICKER CONFIGURÉ À 60PX */
+        .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 12px; margin-bottom: 12px; height: 60px; overflow: hidden; white-space: nowrap; display: none; align-items: center; }
         .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; color: #f3e8d2; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-        .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); height: 42px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #f3e8d2; display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; }
-        .btn-staff:disabled { opacity: 0.25; color: #64748b; border-color: rgba(255,255,255,0.05); cursor: not-allowed; }
-        .category-header { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; padding: 12px 0 5px 0; border-bottom: 1px solid rgba(197, 160, 89, 0.2); margin-bottom: 8px; grid-column: span 2; }
+
+        /* STYLE TIROIRS */
+        .drawer-header { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 12px; padding: 14px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .drawer-header span { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; letter-spacing: 1px; }
+        .drawer-content { display: none; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px 0; }
+        .drawer-content.active { display: grid; }
+
+        .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); height: 45px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #f3e8d2; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .btn-staff:disabled { opacity: 0.2; color: #64748b; }
+
         .custom-scroll::-webkit-scrollbar { width: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
-        .hidden { display: none !important; }
         #adminPanel { background: #0f172a; z-index: 100; border-radius: 2.5rem; }
     </style>
 </head>
@@ -27,8 +36,8 @@
     <div class="glass-card">
         <div class="text-center mb-2">
             <img src="images/LOGO GREY CORNER.png" alt="Logo" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer active:scale-90 transition-transform">
-            <a href="https://grey-corner-app.pages.dev/" style="text-decoration: none;">
-                <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 6px 14px; border-radius: 10px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+            <a href="https://grey-corner-app.pages.dev/">
+                <button type="button" style="background: rgba(39, 174, 96, 0.2); border: 1px solid #27ae60; color: #2ecc71; padding: 6px 14px; border-radius: 10px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
                     📅 PLANNING DU <span id="date-btn"></span>
                 </button>
             </a>
@@ -38,14 +47,14 @@
             <div id="tickerText" class="ticker-text"></div>
         </div>
 
-        <div id="statusLabel" class="text-center px-3 py-2 text-[10px] font-bold uppercase mb-4 bg-black/40 border border-white/5 rounded-xl min-h-[45px] flex items-center justify-center text-slate-400">
-            SYNC PLANNING...
+        <div id="statusLabel" class="text-center px-3 py-2 text-[10px] font-bold uppercase mb-4 bg-black/40 border border-white/5 rounded-xl min-h-[50px] flex items-center justify-center text-slate-400">
+            CHARGEMENT...
         </div>
 
-        <div id="selectionZone" class="grid grid-cols-2 gap-2 overflow-y-auto flex-grow custom-scroll"></div>
+        <div id="selectionZone" class="overflow-y-auto flex-grow custom-scroll hidden"></div>
 
         <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-center">
-            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-6 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-xl shadow-lg active:scale-95 disabled:opacity-30">
+            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-8 rounded-2xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-xl shadow-lg active:scale-95 disabled:opacity-30">
                 POINTER PRÉSENCE
             </button>
             <button onclick="resetUserMemory()" class="mt-8 text-[10px] text-slate-500 underline uppercase tracking-widest">Changer de nom</button>
@@ -53,14 +62,12 @@
 
         <div id="adminPanel" class="hidden absolute inset-0 p-6 flex flex-col">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-[#c5a059] font-extrabold tracking-tighter">LISTE DE CONTRÔLE</h2>
+                <h2 class="text-[#c5a059] font-extrabold">LISTE DE CONTRÔLE</h2>
                 <button onclick="closeAdmin()" class="text-white text-[10px] bg-white/10 px-3 py-1 rounded-full uppercase">Fermer</button>
             </div>
             <div id="presenceList" class="flex-grow overflow-y-auto custom-scroll text-white text-[11px] space-y-4"></div>
             <button onclick="if(confirm('Reset cet appareil ?')) { localStorage.clear(); location.reload(); }" class="mt-4 p-3 border border-red-900/50 text-red-500 text-[9px] font-bold rounded-xl uppercase">Réinitialiser Appareil</button>
         </div>
-
-        <div id="msg" class="text-center mt-2 text-[11px] font-bold hidden p-3 rounded-xl"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -84,6 +91,7 @@
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         document.getElementById('date-btn').innerText = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
 
+        // --- FETCH PLANNING (REPOS) ---
         async function fetchRepos() {
             const URL_PLANNING = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning`;
             try {
@@ -101,8 +109,106 @@
                         }
                     });
                 }
-            } catch (e) {}
+            } catch (e) { console.error("Erreur planning", e); }
             init();
+        }
+
+        // --- GPS HAUTE PRÉCISION ---
+        function lancerGPS() {
+            document.getElementById('statusLabel').innerHTML = "📍 GÉOLOCALISATION EN COURS...";
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
+                if (dist <= 300) {
+                    document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400 font-extrabold'>✅ AU RESTAURANT</span>";
+                    verifierSiDejaFait();
+                } else {
+                    document.getElementById('statusLabel').innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)<br><span class='text-[8px]'>Rapprochez-vous du Grey Corner</span>";
+                }
+            }, (err) => {
+                document.getElementById('statusLabel').innerHTML = "❌ GPS BLOQUÉ<br>Activez la position sur votre téléphone";
+            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function verifierSiDejaFait() {
+            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
+                if (snap.exists() && snap.val().on) {
+                    document.getElementById('statusLabel').innerHTML = "✓ POINTAGE DÉJÀ ENREGISTRÉ";
+                    document.getElementById('submitBtn').disabled = true;
+                } else {
+                    document.getElementById('submitBtn').disabled = false;
+                }
+            });
+        }
+
+        function validerPresence() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            const heure = new Intl.DateTimeFormat('fr-FR', {timeZone: 'Africa/Casablanca', hour:'2-digit', minute:'2-digit'}).format(new Date());
+            database.ref('presences/' + dateStr + '/' + key).update({ 
+                on: true, 
+                hA: heure, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP 
+            }).then(() => { 
+                document.getElementById('statusLabel').innerHTML = "✨ POINTAGE RÉUSSI !";
+                setTimeout(() => location.reload(), 2000); 
+            });
+        }
+
+        // --- GÉNÉRATION DE L'INTERFACE ---
+        function init() {
+            const selection = document.getElementById('selectionZone');
+            const action = document.getElementById('actionZone');
+            chargerTicker();
+
+            if (selectedUser) {
+                selection.classList.add('hidden');
+                action.classList.remove('hidden');
+                lancerGPS();
+            } else {
+                selection.classList.remove('hidden');
+                action.classList.add('hidden');
+                document.getElementById('statusLabel').innerText = "SÉLECTIONNEZ VOTRE NOM";
+                
+                selection.innerHTML = "";
+                const categories = ["admin", "bar", "cuisine", "menage", "service"];
+                
+                categories.forEach(cat => {
+                    const header = document.createElement('div');
+                    header.className = "drawer-header";
+                    header.innerHTML = `<span>${cat}</span> <i class="arrow">▼</i>`;
+                    
+                    const content = document.createElement('div');
+                    content.className = "drawer-content";
+
+                    header.onclick = () => {
+                        const isAct = content.classList.contains('active');
+                        document.querySelectorAll('.drawer-content').forEach(c => c.classList.remove('active'));
+                        if(!isAct) content.classList.add('active');
+                    };
+
+                    equipeConfig.filter(e => e.t === cat).forEach(emp => {
+                        const isRepos = staffRepos.includes(emp.n.toUpperCase());
+                        const b = document.createElement('button');
+                        b.className = "btn-staff";
+                        b.innerText = isRepos ? emp.n + " (REPOS)" : emp.n;
+                        b.disabled = isRepos;
+                        b.onclick = () => { if(confirm("Confirmer : " + emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); } };
+                        content.appendChild(b);
+                    });
+
+                    selection.appendChild(header);
+                    selection.appendChild(content);
+                });
+            }
         }
 
         async function chargerTicker() {
@@ -119,6 +225,7 @@
             } catch (e) {}
         }
 
+        // --- ADMIN PANEL SECRETS ---
         let logoClicks = 0;
         document.getElementById('logoAdmin').onclick = () => {
             logoClicks++;
@@ -149,77 +256,8 @@
             });
         }
         function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
-
-        function lancerGPS() {
-            document.getElementById('statusLabel').innerHTML = "📍 GÉOLOCALISATION...";
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const dist = getDistance(pos.coords.latitude, pos.coords.longitude, 34.0343959, -5.0155941);
-                if (dist <= 300) {
-                    document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-green-400 font-extrabold'>✅ AU RESTAURANT</span>";
-                    verifierSiDejaFait();
-                } else {
-                    document.getElementById('statusLabel').innerHTML = "❌ HORS ZONE (" + Math.round(dist) + "m)";
-                }
-            }, null, { enableHighAccuracy: true });
-        }
-
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function verifierSiDejaFait() {
-            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
-            database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
-                if (snap.exists() && snap.val().on) {
-                    document.getElementById('statusLabel').innerHTML = "✓ POINTAGE DÉJÀ ENREGISTRÉ";
-                    document.getElementById('submitBtn').disabled = true;
-                } else {
-                    document.getElementById('submitBtn').disabled = false;
-                }
-            });
-        }
-
-        function validerPresence() {
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
-            const heure = new Intl.DateTimeFormat('fr-FR', {timeZone: 'Africa/Casablanca', hour:'2-digit', minute:'2-digit'}).format(new Date());
-            database.ref('presences/' + dateStr + '/' + key).update({ on: true, hA: heure, timestamp: firebase.database.ServerValue.TIMESTAMP })
-            .then(() => { location.reload(); });
-        }
-
-        function init() {
-            const selection = document.getElementById('selectionZone');
-            const action = document.getElementById('actionZone');
-            chargerTicker();
-            if (selectedUser) {
-                selection.classList.add('hidden');
-                action.classList.remove('hidden');
-                lancerGPS();
-            } else {
-                selection.classList.remove('hidden');
-                action.classList.add('hidden');
-                document.getElementById('statusLabel').innerText = "SÉLECTIONNEZ VOTRE NOM";
-                selection.innerHTML = "";
-                ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
-                    const h = document.createElement('div');
-                    h.className = "category-header"; h.innerText = c; selection.appendChild(h);
-                    equipeConfig.filter(e => e.t === c).forEach(emp => {
-                        const isRepos = staffRepos.includes(emp.n.toUpperCase());
-                        const b = document.createElement('button');
-                        b.className = "btn-staff";
-                        b.innerText = isRepos ? emp.n + " (REPOS)" : emp.n;
-                        b.disabled = isRepos;
-                        b.onclick = () => { if(confirm("Confirmer : " + emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); } };
-                        selection.appendChild(b);
-                    });
-                });
-            }
-        }
         function resetUserMemory() { if(confirm("Changer de nom ?")) { localStorage.clear(); location.reload(); } }
+
         window.onload = fetchRepos;
     </script>
 </body>
