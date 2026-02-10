@@ -12,28 +12,26 @@
         
         .glass-card { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(197, 160, 89, 0.3); width: 100%; max-width: 400px; height: 95vh; border-radius: 2.5rem; padding: 1.2rem; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(197, 160, 89, 0.1); }
         
-        /* TICKER */
         .info-ticker-container { background: rgba(197, 160, 89, 0.1); border: 1px solid #c5a059; border-radius: 12px; margin-bottom: 12px; height: 60px; overflow: hidden; white-space: nowrap; display: none; align-items: center; z-index: 10; }
         .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; color: #f3e8d2; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* TIROIRS */
         .drawer-header { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 12px; padding: 14px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .drawer-header span { font-size: 10px; font-weight: 800; color: #c5a059; text-transform: uppercase; letter-spacing: 1px; }
         .drawer-content { display: none; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px 0; }
         .drawer-content.active { display: grid; }
 
-        .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); height: 45px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #f3e8d2; display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; }
+        .btn-staff { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); height: 45px; font-size: 10px; font-weight: 700; border-radius: 10px; text-transform: uppercase; color: #f3e8d2; }
         .btn-staff:disabled { opacity: 0.2; color: #64748b; }
 
-        /* ANIMATION SUCCÈS */
         #successOverlay { display: none; position: absolute; inset: 0; background: #0f172a; z-index: 200; border-radius: 2.5rem; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .seal-anim { width: 100px; height: 100px; filter: drop-shadow(0 0 15px #c5a059); animation: sealScale 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .seal-anim { width: 110px; height: 110px; filter: drop-shadow(0 0 15px #c5a059); animation: sealScale 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes sealScale { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .custom-scroll::-webkit-scrollbar { width: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
+        #adminPanel { background: #0f172a; z-index: 100; border-radius: 2.5rem; display: none; position: absolute; inset: 0; padding: 1.5rem; flex-direction: column; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -41,8 +39,16 @@
     <div class="glass-card">
         <div id="successOverlay"></div>
 
+        <div id="adminPanel">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-[#c5a059] font-extrabold text-sm uppercase">Administration</h2>
+                <button onclick="document.getElementById('adminPanel').style.display='none'" class="text-white text-[10px] bg-white/10 px-4 py-2 rounded-full uppercase">Fermer</button>
+            </div>
+            <div id="presenceList" class="flex-grow overflow-y-auto custom-scroll space-y-3"></div>
+        </div>
+
         <div class="text-center mb-2">
-            <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer active:scale-90 transition-transform">
+            <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-12 mx-auto mb-2 cursor-pointer transition-transform active:scale-90">
             <div class="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-1.5 rounded-xl text-[10px] font-bold inline-flex items-center gap-2">
                 📅 <span id="date-label"></span>
             </div>
@@ -58,7 +64,7 @@
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-[#c5a059]"></span>
             </div>
             <div class="text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                <span id="presentCount" class="text-[#c5a059] text-sm">0</span> membres de la famille en poste
+                <span id="presentCount" class="text-[#c5a059] text-sm">0</span> membres en poste
             </div>
         </div>
 
@@ -68,19 +74,11 @@
 
         <div id="selectionZone" class="overflow-y-auto flex-grow custom-scroll hidden"></div>
 
-        <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-between py-4">
-            <div class="bg-white/5 p-6 rounded-3xl border border-white/10">
-                <label class="block text-[#c5a059] text-[10px] font-black uppercase mb-3 tracking-[0.2em]">Heure d'entrée prévue</label>
-                <input type="time" id="heurePrevue" class="w-full bg-slate-900 border-2 border-[#c5a059]/30 text-[#c5a059] text-3xl font-bold text-center rounded-2xl p-3 focus:border-[#c5a059] outline-none transition-all">
-                <p class="text-slate-500 text-[9px] mt-3 italic">Saisissez l'heure de votre shift</p>
-            </div>
-
-            <div>
-                <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-7 rounded-3xl bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-extrabold text-xl shadow-2xl active:scale-95 disabled:opacity-20 transition-all uppercase">
-                    Valider Présence
-                </button>
-                <button onclick="resetUserMemory()" class="mt-6 text-[9px] text-slate-500 underline uppercase tracking-widest">Changer de profil</button>
-            </div>
+        <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-center">
+            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-12 rounded-[2.5rem] bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-black text-2xl shadow-2xl active:scale-95 disabled:opacity-10 transition-all uppercase tracking-tighter">
+                Pointer Arrivée
+            </button>
+            <button onclick="resetUserMemory()" class="mt-10 text-[9px] text-slate-500 underline uppercase tracking-[0.2em]">Changer de profil</button>
         </div>
     </div>
 
@@ -103,15 +101,37 @@
         ];
 
         let selectedUser = localStorage.getItem('gc_staff_name');
+        let staffRepos = [];
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
-        document.getElementById('date-label').innerText = "VOTRE POINTAGE : " + dateStr.split('-').reverse().join('/');
+        document.getElementById('date-label').innerText = dateStr.split('-').reverse().join(' / ');
 
+        // SYNC PLANNING
+        async function fetchRepos() {
+            const URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning`;
+            try {
+                const r = await fetch(URL); const txt = await r.text();
+                const json = JSON.parse(txt.substr(47).slice(0, -2));
+                const todayFormatted = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
+                let colIdx = -1;
+                json.table.rows[0].c.forEach((cell, idx) => { if(cell && cell.v && cell.v.toString().includes(todayFormatted)) colIdx = idx; });
+                if (colIdx !== -1) {
+                    json.table.rows.forEach(row => {
+                        if (row.c[0] && row.c[colIdx] && (row.c[colIdx].v === "REPOS" || row.c[colIdx].v === "R")) {
+                            staffRepos.push(row.c[0].v.trim().toUpperCase());
+                        }
+                    });
+                }
+            } catch (e) {}
+            init();
+        }
+
+        // GPS 200M
         function lancerGPS() {
-            document.getElementById('statusLabel').innerHTML = "📍 VÉRIFICATION LOCALISATION...";
+            document.getElementById('statusLabel').innerHTML = "📍 VÉRIFICATION DE LA ZONE...";
             navigator.geolocation.getCurrentPosition((pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
                 if (dist <= RAYON_MAX) {
-                    document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-emerald-400 font-extrabold'>✅ AU GREY CORNER</span>";
+                    document.getElementById('statusLabel').innerHTML = "Bonjour " + selectedUser + "<br><span class='text-emerald-400 font-black tracking-widest'>✓ ZONE AUTORISÉE</span>";
                     document.getElementById('submitBtn').disabled = false;
                 } else {
                     document.getElementById('statusLabel').innerHTML = `<span class="text-red-400">❌ HORS ZONE (${Math.round(dist)}m)</span>`;
@@ -126,46 +146,37 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
+        // VALIDATION
         function validerPresence() {
-            const hPrev = document.getElementById('heurePrevue').value;
-            if(!hPrev) return alert("Veuillez saisir votre heure prévue !");
-
-            const maintenant = new Date();
-            const hReel = maintenant.getHours().toString().padStart(2,'0') + ":" + maintenant.getMinutes().toString().padStart(2,'0');
-            
-            // Calcul retard
-            const [hp, mp] = hPrev.split(':').map(Number);
-            const [hr, mr] = hReel.split(':').map(Number);
-            const diff = (hr * 60 + mr) - (hp * 60 + mp);
-
-            const status = diff > 5 ? {t: "Retard de " + diff + "m", c: "text-red-500"} : {t: "À l'heure", c: "text-emerald-400"};
+            const maint = new Date();
+            const hReel = maint.getHours().toString().padStart(2,'0') + ":" + maint.getMinutes().toString().padStart(2,'0');
             const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
 
             database.ref('presences/' + dateStr + '/' + key).update({
-                on: true, hA: hReel, hP: hPrev, retard: diff > 0 ? diff : 0, timestamp: firebase.database.ServerValue.TIMESTAMP
+                on: true, hA: hReel, timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                afficherAnimationSucces(hReel, status.t, status.c);
+                afficherAnimationSucces(hReel);
             });
         }
 
-        function afficherAnimationSucces(heure, status, colorClass) {
+        function afficherAnimationSucces(heure) {
             const overlay = document.getElementById('successOverlay');
             overlay.innerHTML = `
-                <img src="images/LOGO GREY CORNER.png" class="seal-anim mb-4">
-                <div class="text-[#c5a059] font-black text-2xl tracking-tighter uppercase">Pointage Réussi</div>
-                <div class="text-white text-5xl font-extrabold my-4">${heure}</div>
-                <div class="${colorClass} font-black uppercase text-[12px] tracking-widest mb-10">${status}</div>
-                <div class="text-slate-400 text-[10px] px-10 italic border-t border-white/5 pt-6 uppercase tracking-widest">Famille Grey Corner</div>
+                <img src="images/LOGO GREY CORNER.png" class="seal-anim mb-6">
+                <div class="text-[#c5a059] font-black text-2xl tracking-tighter uppercase">Pointage Confirmé</div>
+                <div class="text-white text-6xl font-black my-4 tracking-tighter">${heure}</div>
+                <div class="text-emerald-400 font-black uppercase text-[12px] tracking-[0.3em] mb-12">Bon service</div>
+                <div class="text-slate-500 text-[10px] px-10 italic border-t border-white/5 pt-6 uppercase tracking-widest">Famille Grey Corner Fès</div>
             `;
             overlay.style.display = 'flex';
             setTimeout(() => location.reload(), 4000);
         }
 
+        // INIT PAGE
         function init() {
             const selection = document.getElementById('selectionZone');
             const action = document.getElementById('actionZone');
             
-            // Compteur Live
             database.ref('presences/' + dateStr).on('value', snap => {
                 let count = 0;
                 Object.values(snap.val() || {}).forEach(e => { if(e.on) count++; });
@@ -178,14 +189,20 @@
                 lancerGPS();
             } else {
                 selection.classList.remove('hidden');
-                document.getElementById('statusLabel').innerText = "CHOISISSEZ VOTRE PROFIL";
                 ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
                     const h = document.createElement('div'); h.className = "drawer-header";
                     h.innerHTML = `<span>${c}</span> <i>▼</i>`;
                     const div = document.createElement('div'); div.className = "drawer-content";
-                    h.onclick = () => { div.classList.toggle('active'); };
+                    h.onclick = () => { 
+                        const isAct = div.classList.contains('active');
+                        document.querySelectorAll('.drawer-content').forEach(el => el.classList.remove('active'));
+                        if(!isAct) div.classList.add('active');
+                    };
                     equipeConfig.filter(e => e.t === c).forEach(emp => {
-                        const b = document.createElement('button'); b.className = "btn-staff"; b.innerText = emp.n;
+                        const isRepos = staffRepos.includes(emp.n.toUpperCase());
+                        const b = document.createElement('button'); b.className = "btn-staff p-2 font-bold text-[9px]"; 
+                        b.innerText = isRepos ? emp.n + " (REPOS)" : emp.n;
+                        b.disabled = isRepos;
                         b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
                         div.appendChild(b);
                     });
@@ -193,6 +210,31 @@
                 });
             }
         }
+
+        // ADMIN (3 CLICS LOGO)
+        let logoClicks = 0;
+        document.getElementById('logoAdmin').onclick = () => {
+            logoClicks++;
+            if (logoClicks === 3) {
+                if (prompt("Code Admin :") === "2026") {
+                    document.getElementById('adminPanel').style.display = 'flex';
+                    database.ref('presences/' + dateStr).once('value', snap => {
+                        const list = document.getElementById('presenceList'); list.innerHTML = "";
+                        const data = snap.val() || {};
+                        equipeConfig.forEach(m => {
+                            const key = m.n.replace(/\s+/g, '_').toUpperCase();
+                            const p = data[key];
+                            list.innerHTML += `<div class="flex justify-between text-[10px] bg-white/5 p-3 rounded-xl border border-white/5">
+                                <span class="${p ? 'text-emerald-400 font-bold' : 'text-slate-600'}">${m.n}</span>
+                                <span class="text-[#c5a059] font-black">${p ? p.hA : '--:--'}</span>
+                            </div>`;
+                        });
+                    });
+                }
+                logoClicks = 0;
+            }
+            setTimeout(() => logoClicks = 0, 2000);
+        };
 
         async function chargerTicker() {
             const URL = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
@@ -207,8 +249,8 @@
             } catch (e) {}
         }
 
-        function resetUserMemory() { if(confirm("Changer de nom ?")) { localStorage.clear(); location.reload(); } }
-        window.onload = () => { init(); chargerTicker(); };
+        function resetUserMemory() { if(confirm("Changer de profil ?")) { localStorage.clear(); location.reload(); } }
+        window.onload = () => { fetchRepos(); chargerTicker(); };
     </script>
 </body>
 </html>
