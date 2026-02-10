@@ -264,19 +264,36 @@
         };
 
         async function chargerTicker() {
-            const URL_TICKER = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
-            try {
-                const r = await fetch(URL_TICKER); const txt = await r.text();
-                const json = JSON.parse(txt.substr(47).slice(0, -2));
-                const active = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
-                if (active) {
-                    document.getElementById('tickerText').innerHTML = `🌙 INFO : ${active.c[1].v} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${active.c[1].v}`;
-                    document.getElementById('tickerContainer').style.display = 'flex';
-                } else {
-                    document.getElementById('tickerContainer').style.display = 'none';
-                }
-            } catch (e) {}
+    const URL_TICKER = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
+    try {
+        const r = await fetch(URL_TICKER); 
+        const txt = await r.text();
+        const json = JSON.parse(txt.substr(47).slice(0, -2));
+        
+        // On cherche la ligne où la colonne D (index 3) est "Actif"
+        const active = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
+        
+        if (active) {
+            const msg = active.c[1].v; // Colonne B
+            const type = active.c[2] ? active.c[2].v : ""; // Colonne C
+            const container = document.getElementById('tickerContainer');
+            
+            // SI URGENT -> FOND ROUGE, SINON FOND DORÉ HABITUEL
+            if (type.toLowerCase() === "urgent") {
+                container.style.backgroundColor = "#ef4444"; // Rouge vif
+                container.style.borderColor = "#ffffff";
+            } else {
+                container.style.backgroundColor = "rgba(197, 160, 89, 0.1)"; // Doré Grey Corner
+                container.style.borderColor = "#c5a059";
+            }
+            
+            document.getElementById('tickerText').innerHTML = `⚠️ ${msg} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${msg}`;
+            container.style.display = 'flex';
+        } else {
+            document.getElementById('tickerContainer').style.display = 'none';
         }
+    } catch (e) { console.error("Erreur Ticker:", e); }
+}
 
         function resetUserMemory() { if(confirm("Changer de profil ?")) { localStorage.clear(); location.reload(); } }
         window.onload = () => { fetchRepos(); chargerTicker(); };
