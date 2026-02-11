@@ -35,6 +35,9 @@
         
         .refresh-spin { animation: spin 0.8s linear; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Style pour le nom géant */
+        .big-name { font-size: 32px; font-weight: 900; color: #c5a059; text-transform: uppercase; letter-spacing: -1px; line-height: 1; margin: 15px 0; text-shadow: 0 10px 20px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -51,18 +54,17 @@
         </div>
 
         <div class="text-center mb-4">
-    <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-14 mx-auto mb-4 cursor-pointer transition-transform active:scale-90">
-    <a href="https://grey-corner-app.pages.dev/" target="_blank" class="inline-block w-full px-4">
-        <div class="bg-emerald-500/10 border-2 border-emerald-500/50 text-emerald-400 py-4 rounded-2xl text-sm font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-emerald-500/10">
-            <span class="text-xl">📅</span> 
-            <div class="flex flex-col items-start">
-                <span class="leading-none text-[12px] opacity-80 uppercase">Consulter le</span>
-                <span class="leading-none">PLANNING : <span id="date-label"></span></span>
-            </div>
+            <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-14 mx-auto mb-4 cursor-pointer transition-transform active:scale-90">
+            <a href="https://grey-corner-app.pages.dev/" target="_blank" class="inline-block w-full px-4">
+                <div class="bg-emerald-500/10 border-2 border-emerald-500/50 text-emerald-400 py-4 rounded-2xl text-sm font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-emerald-500/10">
+                    <span class="text-xl">📅</span> 
+                    <div class="flex flex-col items-start">
+                        <span class="leading-none text-[12px] opacity-80 uppercase">Consulter le</span>
+                        <span class="leading-none">PLANNING : <span id="date-label"></span></span>
+                    </div>
+                </div>
+            </a>
         </div>
-    </a>
-</div>
-
 
         <div id="tickerContainer" class="info-ticker-container">
             <div id="tickerText" class="ticker-text"></div>
@@ -92,7 +94,9 @@
 
         <div id="selectionZone" class="overflow-y-auto flex-grow custom-scroll hidden"></div>
 
-        <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-center">
+        <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-start pt-4">
+            <div id="userNameBig" class="big-name">--</div>
+            
             <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-12 rounded-[2.5rem] bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-black text-2xl shadow-2xl active:scale-95 disabled:opacity-10 transition-all uppercase">
                 Pointer Arrivée
             </button>
@@ -123,25 +127,19 @@
         const dateStr = new Intl.DateTimeFormat('fr-CA', {timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
         document.getElementById('date-label').innerText = dateStr.split('-').reverse().join('/');
 
-        // FONCTION REFRESH
         async function refreshData() {
             const btn = document.getElementById('refreshBtn');
             btn.classList.add('refresh-spin');
-            document.getElementById('statusLabel').innerHTML = "🔄 MISE À JOUR...";
-            
             await fetchRepos();
             await chargerTicker();
             if (selectedUser) lancerGPS();
-
             setTimeout(() => { btn.classList.remove('refresh-spin'); }, 800);
         }
 
-        // PULL TO REFRESH
         let touchStart = 0;
         document.addEventListener('touchstart', e => { touchStart = e.touches[0].pageY; }, {passive: true});
         document.addEventListener('touchend', e => {
-            let touchEnd = e.changedTouches[0].pageY;
-            if (touchEnd > touchStart + 150) refreshData();
+            if (e.changedTouches[0].pageY > touchStart + 150) refreshData();
         }, {passive: true});
 
         async function fetchRepos() {
@@ -186,26 +184,41 @@
         }
 
         function validerPresence() {
+            // VIBRATION
+            if (navigator.vibrate) navigator.vibrate(100);
+
             const maint = new Date();
-            const hReel = maint.getHours().toString().padStart(2,'0') + ":" + maint.getMinutes().toString().padStart(2,'0');
+            const h = maint.getHours();
+            const m = maint.getMinutes();
+            const hReel = h.toString().padStart(2,'0') + ":" + m.toString().padStart(2,'0');
+            
+            // SEUIL DE RETARD (Exemple: 09:15)
+            const estEnRetard = (h > 9 || (h === 9 && m > 15));
+
             const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
 
             database.ref('presences/' + dateStr + '/' + key).update({
-                on: true, hA: hReel, timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => { afficherAnimationSucces(hReel); });
+                on: true, hA: hReel, retard: estEnRetard, timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => { afficherAnimationSucces(hReel, estEnRetard); });
         }
 
-        function afficherAnimationSucces(heure) {
+        function afficherAnimationSucces(heure, retard) {
             const overlay = document.getElementById('successOverlay');
+            
+            const couleurTitre = retard ? 'text-red-500' : 'text-[#c5a059]';
+            const msgTitre = retard ? '⚠️ POINTAGE TARDIF' : 'Pointage Réussi';
+            const msgBadge = retard ? 'Vite ! L\'équipe t\'attend' : 'Bon service à toute l\'équipe';
+            const couleurBadge = retard ? 'text-red-400' : 'text-emerald-400';
+
             overlay.innerHTML = `
                 <img src="images/LOGO GREY CORNER.png" class="seal-anim mb-6">
-                <div class="text-[#c5a059] font-black text-2xl tracking-tighter uppercase">Pointage Réussi</div>
+                <div class="${couleurTitre} font-black text-2xl tracking-tighter uppercase">${msgTitre}</div>
                 <div class="text-white text-6xl font-black my-4 tracking-tighter">${heure}</div>
-                <div class="text-emerald-400 font-black uppercase text-[10px] tracking-widest mb-10">Bon service à toute l'équipe</div>
+                <div class="${couleurBadge} font-black uppercase text-[10px] tracking-widest mb-10">${msgBadge}</div>
                 <div class="text-slate-500 text-[9px] uppercase tracking-widest">Grey Corner Fès</div>
             `;
             overlay.style.display = 'flex';
-            setTimeout(() => location.reload(), 4000);
+            setTimeout(() => location.reload(), 5000);
         }
 
         function init() {
@@ -221,6 +234,7 @@
             if (selectedUser) {
                 selection.classList.add('hidden');
                 action.classList.remove('hidden');
+                document.getElementById('userNameBig').innerText = selectedUser;
                 lancerGPS();
             } else {
                 selection.classList.remove('hidden');
@@ -269,36 +283,30 @@
         };
 
         async function chargerTicker() {
-    const URL_TICKER = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
-    try {
-        const r = await fetch(URL_TICKER); 
-        const txt = await r.text();
-        const json = JSON.parse(txt.substr(47).slice(0, -2));
-        
-        // On cherche la ligne où la colonne D (index 3) est "Actif"
-        const active = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
-        
-        if (active) {
-            const msg = active.c[1].v; // Colonne B
-            const type = active.c[2] ? active.c[2].v : ""; // Colonne C
-            const container = document.getElementById('tickerContainer');
-            
-            // SI URGENT -> FOND ROUGE, SINON FOND DORÉ HABITUEL
-            if (type.toLowerCase() === "urgent") {
-                container.style.backgroundColor = "#ef4444"; // Rouge vif
-                container.style.borderColor = "#ffffff";
-            } else {
-                container.style.backgroundColor = "rgba(197, 160, 89, 0.1)"; // Doré Grey Corner
-                container.style.borderColor = "#c5a059";
-            }
-            
-            document.getElementById('tickerText').innerHTML = `⚠️ ${msg} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${msg}`;
-            container.style.display = 'flex';
-        } else {
-            document.getElementById('tickerContainer').style.display = 'none';
+            const URL_TICKER = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
+            try {
+                const r = await fetch(URL_TICKER); 
+                const txt = await r.text();
+                const json = JSON.parse(txt.substr(47).slice(0, -2));
+                const active = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
+                if (active) {
+                    const msg = active.c[1].v;
+                    const type = active.c[2] ? active.c[2].v : "";
+                    const container = document.getElementById('tickerContainer');
+                    if (type.toLowerCase() === "urgent") {
+                        container.style.backgroundColor = "#ef4444";
+                        container.style.borderColor = "#ffffff";
+                    } else {
+                        container.style.backgroundColor = "rgba(197, 160, 89, 0.1)";
+                        container.style.borderColor = "#c5a059";
+                    }
+                    document.getElementById('tickerText').innerHTML = `⚠️ ${msg} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${msg}`;
+                    container.style.display = 'flex';
+                } else {
+                    document.getElementById('tickerContainer').style.display = 'none';
+                }
+            } catch (e) { console.error("Erreur Ticker:", e); }
         }
-    } catch (e) { console.error("Erreur Ticker:", e); }
-}
 
         function resetUserMemory() { if(confirm("Changer de profil ?")) { localStorage.clear(); location.reload(); } }
         window.onload = () => { fetchRepos(); chargerTicker(); };
