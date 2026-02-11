@@ -226,7 +226,7 @@
                 selection.classList.remove('hidden');
                 selection.innerHTML = "";
                 document.getElementById('statusLabel').innerText = "CHOISI TON NOM";
-                ["admin", "bar", "cuisine", "menage", "service"].forEach(c => {
+                ["caisse", "bar", "cuisine", "menage", "service"].forEach(c => {
                     const h = document.createElement('div'); h.className = "drawer-header";
                     h.innerHTML = `<span>${c}</span> <i>▼</i>`;
                     const div = document.createElement('div'); div.className = "drawer-content";
