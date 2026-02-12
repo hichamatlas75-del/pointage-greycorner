@@ -156,21 +156,22 @@
             init();
         }
 
-        // --- NOUVELLE FONCTION DE SÉCURITÉ ---
+        // --- SÉCURITÉ : VERROUILLE UNIQUEMENT SI hA (HEURE ARRIVÉE) EXISTE ---
         function checkPointageEtLancerGPS() {
             const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
             database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
                 const data = snap.val();
-                if (data && data.on === true) {
-                    // SI DÉJÀ POINTÉ
-                    document.getElementById('statusLabel').innerHTML = "SESSION ACTIVE<br><span class='text-emerald-400 font-black tracking-widest'>✓ DÉJÀ POINTÉ</span>";
+                
+                // Vérification stricte de l'heure d'arrivée réelle
+                if (data && data.hA) { 
+                    document.getElementById('statusLabel').innerHTML = "SESSION ACTIVE<br><span class='text-emerald-400 font-black tracking-widest'>✓ POINTAGE EFFECTUÉ (" + data.hA + ")</span>";
                     const btn = document.getElementById('submitBtn');
                     btn.disabled = true;
                     btn.innerText = "DÉJÀ POINTÉ ✅";
-                    btn.classList.add('from-slate-700', 'to-slate-800', 'text-slate-500');
-                    btn.classList.remove('from-[#c5a059]', 'to-[#8a6d3b]', 'text-slate-900');
+                    btn.classList.add('opacity-20');
+                    btn.classList.remove('from-[#c5a059]', 'to-[#8a6d3b]');
                 } else {
-                    // SI PAS ENCORE POINTÉ -> LANCER GPS
+                    // Si pas de hA, on autorise le pointage (GPS)
                     lancerGPS();
                 }
             });
@@ -214,14 +215,11 @@
             const overlay = document.getElementById('successOverlay');
             const couleurTitre = retard ? 'text-red-500' : 'text-[#c5a059]';
             const msgTitre = retard ? '⚠️ POINTAGE TARDIF' : 'Pointage Réussi';
-            const msgBadge = retard ? 'Vite ! L\'équipe t\'attend' : 'Bon service à toute l\'équipe';
-            const couleurBadge = retard ? 'text-red-400' : 'text-emerald-400';
-
             overlay.innerHTML = `
                 <img src="images/LOGO GREY CORNER.png" class="seal-anim mb-6">
                 <div class="${couleurTitre} font-black text-2xl tracking-tighter uppercase">${msgTitre}</div>
                 <div class="text-white text-6xl font-black my-4 tracking-tighter">${heure}</div>
-                <div class="${couleurBadge} font-black uppercase text-[10px] tracking-widest mb-10">${msgBadge}</div>
+                <div class="text-emerald-400 font-black uppercase text-[10px] tracking-widest mb-10">Bon service à toute l'équipe</div>
                 <div class="text-slate-500 text-[9px] uppercase tracking-widest">Grey Corner Fès</div>
             `;
             overlay.style.display = 'flex';
@@ -278,8 +276,8 @@
                             const key = m.n.replace(/\s+/g, '_').toUpperCase();
                             const p = data[key];
                             list.innerHTML += `<div class="flex justify-between text-[10px] bg-white/5 p-3 rounded-xl border border-white/5">
-                                <span class="${p ? 'text-emerald-400 font-bold' : 'text-slate-600'}">${m.n}</span>
-                                <span class="text-[#c5a059] font-black">${p ? p.hA : '--:--'}</span>
+                                <span class="${p && p.hA ? 'text-emerald-400 font-bold' : 'text-slate-600'}">${m.n}</span>
+                                <span class="text-[#c5a059] font-black">${p && p.hA ? p.hA : '--:--'}</span>
                             </div>`;
                         });
                     });
@@ -303,9 +301,6 @@
                     if (type.toLowerCase() === "urgent") {
                         container.style.backgroundColor = "#ef4444";
                         container.style.borderColor = "#ffffff";
-                    } else {
-                        container.style.backgroundColor = "rgba(197, 160, 89, 0.1)";
-                        container.style.borderColor = "#c5a059";
                     }
                     document.getElementById('tickerText').innerHTML = `⚠️ ${msg} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${msg}`;
                     container.style.display = 'flex';
