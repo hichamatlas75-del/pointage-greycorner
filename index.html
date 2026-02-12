@@ -1,525 +1,255 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <title>Grey Corner • Système Master</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background: radial-gradient(circle at top, #111827 0%, #020617 100%);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      touch-action: pan-y;
-    }
-    body::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image: url('https://www.transparenttextures.com/patterns/arabesque.png');
-      opacity: 0.10;
-      pointer-events: none;
-    }
-
-    .glass-card{
-      background: linear-gradient(180deg, rgba(11,14,20,.96), rgba(3,7,18,.96));
-      border: 1px solid rgba(212,175,55,.25);
-      width: 100%;
-      max-width: 420px;
-      height: 96vh;
-      border-radius: 2.75rem;
-      padding: 1.15rem;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      box-shadow: 0 0 60px rgba(212,175,55,.18), inset 0 0 40px rgba(245,215,118,.08);
-      z-index: 10;
-    }
-
-    .gold{ color:#f5d776; }
-    .gold-strong{ color:#d4af37; }
-
-    .custom-scroll{ -webkit-overflow-scrolling: touch; }
-    .custom-scroll::-webkit-scrollbar{ width:3px; height:3px; }
-    .custom-scroll::-webkit-scrollbar-thumb{ background:#d4af37; border-radius:10px; }
-
-    .info-ticker-container{
-      background: rgba(212,175,55,.08);
-      border: 1px solid rgba(212,175,55,.35);
-      border-radius: 12px;
-      margin-bottom: 10px;
-      height: 56px;
-      overflow: hidden;
-      white-space: nowrap;
-      display: none;
-      align-items: center;
-    }
-    .ticker-text{
-      display:inline-block;
-      padding-left:100%;
-      animation:ticker 22s linear infinite;
-      color:#fff;
-      font-size:16px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.5px;
-    }
-    @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
-
-    .drawer-header{
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(212,175,55,.18);
-      border-radius: 14px;
-      padding: 14px;
-      margin-top: 10px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      cursor:pointer;
-      user-select:none;
-    }
-    .drawer-header span{
-      font-size:10px;
-      font-weight:900;
-      color:#d4af37;
-      text-transform:uppercase;
-      letter-spacing:1px;
-    }
-    .drawer-content{ display:none; grid-template-columns: repeat(2, 1fr); gap:8px; padding:10px 0; }
-    .drawer-content.active{ display:grid; }
-
-    .btn-staff{
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(212,175,55,.12);
-      height: 46px;
-      font-size: 10px;
-      font-weight: 800;
-      border-radius: 12px;
-      text-transform: uppercase;
-      color: #f8fafc;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      padding: 8px;
-    }
-    .btn-staff:disabled{ opacity:.15; color:#64748b; }
-
-    #successOverlay{
-      display:none;
-      position:absolute;
-      inset:0;
-      background: linear-gradient(180deg, rgba(2,6,23,.98), rgba(3,7,18,.98));
-      z-index:200;
-      border-radius:2.75rem;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      padding: 18px;
-    }
-    .seal-anim{
-      width:110px;height:110px;
-      filter: drop-shadow(0 0 18px rgba(212,175,55,.8));
-      animation: sealScale .8s cubic-bezier(.175,.885,.32,1.275) forwards;
-    }
-    @keyframes sealScale{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
-
-    #adminPanel{
-      background: linear-gradient(180deg, rgba(2,6,23,.98), rgba(3,7,18,.98));
-      z-index:100;
-      border-radius:2.75rem;
-      display:none;
-      position:absolute;
-      inset:0;
-      padding:1.3rem;
-      flex-direction:column;
-    }
-
-    .refresh-spin{ animation: spin .8s linear; }
-    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-
-    .big-name{
-      font-size: 34px;
-      font-weight: 900;
-      color: #f5d776;
-      text-transform: uppercase;
-      letter-spacing: -1px;
-      line-height: 1;
-      margin: 14px 0;
-      text-shadow: 0 10px 20px rgba(0,0,0,.35);
-    }
-
-    .btn-main{
-      width:100%;
-      padding: 26px 16px;
-      border-radius: 2.5rem;
-      background: linear-gradient(180deg, #f5d776, #b8942e);
-      color: #0b0e14;
-      font-weight: 900;
-      font-size: 26px;
-      box-shadow: 0 12px 44px rgba(212,175,55,.35);
-      text-transform: uppercase;
-    }
-    .btn-main:disabled{ opacity:.25; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Grey Corner • Pointage</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(circle at top,#111827 0%,#020617 100%);font-family:'Plus Jakarta Sans',sans-serif;touch-action:pan-y}
+.card{width:100%;max-width:420px;height:96vh;background:linear-gradient(180deg,#0b0e14,#030712);border-radius:40px;padding:18px;box-shadow:0 0 60px rgba(212,175,55,.25), inset 0 0 40px rgba(255,215,120,.08);border:1px solid rgba(212,175,55,.25);position:relative}
+.gold{color:#d4af37}
+.btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:26px;font-size:26px;box-shadow:0 10px 40px rgba(212,175,55,.4)}
+.btn-main:disabled{opacity:.25}
+.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ticker{display:none;background:#7f1d1d;color:#fff;border-radius:12px;padding:10px;font-weight:700}
+.big-name{font-size:34px;font-weight:900;color:#f5d776;text-align:center;margin:20px 0}
+</style>
 </head>
-
 <body class="flex items-center justify-center p-4">
-  <div class="glass-card" id="mainCard">
-    <div id="successOverlay"></div>
+<div class="card flex flex-col">
+<div class="text-center mb-3">
+<img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto mb-2">
+<div class="gold font-extrabold text-xs uppercase">Système Master</div>
+</div>
+<div id="ticker" class="ticker text-center"></div>
+<div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
+<div id="status" class="text-center text-sm text-gray-300 mb-3">Choisi ton nom</div>
+<div id="selection" class="scroll flex-grow"></div>
+<div id="action" class="hidden text-center">
+<div id="username" class="big-name">--</div>
+<button id="btn" class="btn-main w-full" disabled>Pointer arrivée</button>
+<button onclick="resetUser()" class="mt-6 text-xs text-gray-500 underline">Changer profil</button>
+</div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+const firebaseConfig={databaseURL:"https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 
-    <div id="adminPanel">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="gold-strong font-extrabold text-sm uppercase">Administration</h2>
-        <button onclick="document.getElementById('adminPanel').style.display='none'"
-          class="text-white text-[10px] bg-white/10 px-4 py-2 rounded-full uppercase">Fermer</button>
-      </div>
-      <div id="presenceList" class="flex-grow overflow-y-auto custom-scroll space-y-3"></div>
-    </div>
+const CAFE_LAT=34.0343959,CAFE_LON=-5.0155941,RAYON_MAX=200;
 
-    <div class="text-center mb-3">
-      <img src="images/LOGO GREY CORNER.png" id="logoAdmin"
-        class="h-14 mx-auto mb-3 cursor-pointer transition-transform active:scale-90">
-      <a href="https://grey-corner-app.pages.dev/" target="_blank" class="inline-block w-full px-2">
-        <div class="bg-white/5 border border-white/10 text-white py-3 rounded-2xl text-sm font-black flex items-center justify-center gap-3 active:scale-95 transition-all">
-          <span class="text-xl">📅</span>
-          <div class="flex flex-col items-start">
-            <span class="leading-none text-[11px] opacity-70 uppercase">Consulter le</span>
-            <span class="leading-none">PLANNING : <span id="date-label" class="gold"></span></span>
-          </div>
-        </div>
-      </a>
-    </div>
+// Planning (heure prévue)
+const URL_PLANNING="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning";
 
-    <div id="tickerContainer" class="info-ticker-container">
-      <div id="tickerText" class="ticker-text"></div>
-    </div>
+// Personnel (à compléter si besoin)
+const staff=["BENKHADA ABDESLAM","ENNHAILI SOUMIA","SALIL HOUDA","CHKAIRI YOUSSEF","ELKOBBI MOSTAFA","FILALI ABDERAFI","KHALOUQ RACHID"];
 
-    <div id="liveCounter" class="bg-white/5 border border-white/10 rounded-2xl p-3 mb-3 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4af37] opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-[#d4af37]"></span>
-        </div>
-        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-300">
-          <span id="presentCount" class="gold text-sm">0</span> membres en poste
-        </div>
-      </div>
-      <button onclick="refreshData()" id="refreshBtn" class="gold p-1 active:scale-75 transition-transform" aria-label="Rafraîchir">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-        </svg>
-      </button>
-    </div>
+let selected=localStorage.getItem('gc_staff_name');
+let initDone=false;
 
-    <div id="statusLabel" class="text-center px-3 py-2 text-[10px] font-bold uppercase mb-4 bg-black/40 border border-white/5 rounded-xl min-h-[50px] flex items-center justify-center text-slate-300">
-      CHOISI TON NOM
-    </div>
+const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const parts=dateStr.split('-');
+const todayKey=parts[2]+"/"+parts[1]; // dd/mm
 
-    <div id="selectionZone" class="overflow-y-auto flex-grow custom-scroll hidden"></div>
+let plannedStart=null; // "HH:MM" ou null
 
-    <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-start pt-3">
-      <div id="userNameBig" class="big-name">--</div>
-      <button id="submitBtn" onclick="validerPresence()" disabled class="btn-main active:scale-95 transition-all">
-        Pointer Arrivée
-      </button>
-      <button onclick="resetUserMemory()" class="mt-8 text-[9px] text-slate-500 underline uppercase tracking-widest">Changer de profil</button>
-    </div>
-  </div>
+function keyStaff(n){
+  return String(n||'').trim().toUpperCase().split(' ').filter(Boolean).join('_');
+}
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+function safeCell(cell){
+  if(!cell) return null;
+  if(cell.f!=null) return cell.f;
+  if(cell.v!=null) return cell.v;
+  return null;
+}
 
-  <script>
-    const firebaseConfig = { databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+function parsePlannedStart(raw){
+  if(raw==null) return null;
+  const s=String(raw).trim();
+  if(!s) return null;
+  const up=s.toUpperCase();
+  if(up==="REPOS"||up==="R") return null;
 
-    const CAFE_LAT = 34.0343959, CAFE_LON = -5.0155941, RAYON_MAX = 200;
+  // Cherche le premier horaire dans la cellule
+  let i=0;
+  while(i<s.length && !(s[i]>='0'&&s[i]<='9')) i++;
+  if(i>=s.length) return null;
 
-    const equipeConfig = [
-      {n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"},
-      {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar"},
-      {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BOURAHMA ANAS", t: "cuisine"}, {n: "IDRISSI SAAD", t: "cuisine"},
-      {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"}, {n: "ZAIR FATIMA", t: "cuisine"},
-      {n: "ELGORRAMY ANISSA", t: "menage"}, {n: "ELGORRAMY SOUAD", t: "menage"}, {n: "ELMCHAOURI SOUAD", t: "menage"}, {n: "SBAI HAKIMA", t: "menage"},
-      {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"},
-      {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}
-    ];
+  // hour (1-2 digits)
+  let hStr="";
+  while(i<s.length && (s[i]>='0'&&s[i]<='9') && hStr.length<2){ hStr+=s[i]; i++; }
+  if(!hStr) return null;
 
-    let selectedUser = localStorage.getItem('gc_staff_name');
-    let staffRepos = [];
-
-    const dateStr = new Intl.DateTimeFormat('fr-CA', {
-      timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit'
-    }).format(new Date());
-
-    document.getElementById('date-label').innerText = dateStr.split('-').reverse().join('/');
-
-    let initDone = false;
-    let presRef = null;
-
-    function staffKey(name) {
-      return name.trim().replace(/\s+/g, '_').toUpperCase();
+  // optional separator ':' or 'h'
+  while(i<s.length && s[i]===' ') i++;
+  let minStr="00";
+  if(i<s.length && (s[i]===':' || s[i]==='h' || s[i]==='H')){
+    i++;
+    while(i<s.length && s[i]===' ') i++;
+    const d1=(i<s.length)?s[i]:'';
+    const d2=(i+1<s.length)?s[i+1]:'';
+    if(d1>='0'&&d1<='9'&&d2>='0'&&d2<='9'){
+      minStr=d1+d2;
+    }else{
+      minStr="00";
     }
+  }
 
-    async function refreshData() {
-      const btn = document.getElementById('refreshBtn');
-      btn.classList.add('refresh-spin');
-      await fetchRepos();
-      await chargerTicker();
-      if (selectedUser) checkPointageEtLancerGPS();
-      setTimeout(() => btn.classList.remove('refresh-spin'), 800);
+  let hh=parseInt(hStr,10);
+  let mm=parseInt(minStr,10);
+  if(Number.isNaN(hh)||Number.isNaN(mm)) return null;
+  hh=Math.max(0,Math.min(23,hh));
+  mm=Math.max(0,Math.min(59,mm));
+  const HH=String(hh).padStart(2,'0');
+  const MM=String(mm).padStart(2,'0');
+  return HH+":"+MM;
+}
+
+function toMinutes(hhmm){
+  if(!hhmm) return null;
+  const p=String(hhmm).split(':');
+  if(p.length!==2) return null;
+  const h=parseInt(p[0],10);
+  const m=parseInt(p[1],10);
+  if(Number.isNaN(h)||Number.isNaN(m)) return null;
+  return h*60+m;
+}
+
+async function loadPlannedTimeForSelected(){
+  plannedStart=null;
+  if(!selected) return null;
+
+  try{
+    const r=await fetch(URL_PLANNING,{cache:'no-store'});
+    const txt=await r.text();
+    const json=JSON.parse(txt.substr(47).slice(0,-2));
+
+    // col du jour
+    let colIdx=-1;
+    const header=(json.table && json.table.rows && json.table.rows[0] && json.table.rows[0].c) ? json.table.rows[0].c : [];
+    for(let idx=0; idx<header.length; idx++){
+      const v=safeCell(header[idx]);
+      if(v!=null && String(v).includes(todayKey)) { colIdx=idx; break; }
     }
+    if(colIdx===-1) return null;
 
-    async function fetchRepos() {
-      const URL_PLANNING = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning`;
-      try {
-        const r = await fetch(URL_PLANNING, { cache: "no-store" });
-        const txt = await r.text();
-        const json = JSON.parse(txt.substr(47).slice(0, -2));
+    const target=String(selected).trim().toUpperCase();
+    const rows=(json.table && json.table.rows) ? json.table.rows : [];
+    for(const row of rows){
+      const nameVal=safeCell(row.c ? row.c[0] : null);
+      if(!nameVal) continue;
+      if(String(nameVal).trim().toUpperCase()===target){
+        const shiftVal=safeCell(row.c ? row.c[colIdx] : null);
+        plannedStart=parsePlannedStart(shiftVal);
+        return plannedStart;
+      }
+    }
+  }catch(e){
+    // silence
+  }
+  return null;
+}
 
-        const todayFormatted = dateStr.split('-')[2] + "/" + dateStr.split('-')[1];
-        let colIdx = -1;
-        json.table.rows[0].c.forEach((cell, idx) => {
-          if (cell && cell.v && cell.v.toString().includes(todayFormatted)) colIdx = idx;
-        });
+// --- REMPLACEZ VOTRE FONCTION init() PAR CELLE-CI ---
+function init() {
+    if (!initDone) {
+        db.ref('presences/' + dateStr).on('value', s => {
+            let c = 0;
+            const data = s.val() || {};
+            Object.values(data).forEach(e => { if (e && e.on) c++ });
+            document.getElementById('presentCount').innerText = c;
 
-        staffRepos = [];
-        if (colIdx !== -1) {
-          json.table.rows.forEach(row => {
-            if (row.c[0] && row.c[colIdx] && (row.c[colIdx].v === "REPOS" || row.c[colIdx].v === "R")) {
-              staffRepos.push((row.c[0].v || "").trim().toUpperCase());
+            // Vérification automatique si l'utilisateur actuel est déjà pointé
+            if (selected) {
+                const myData = data[keyStaff(selected)];
+                if (myData && myData.hA) {
+                    const btn = document.getElementById('btn');
+                    btn.disabled = true;
+                    btn.innerText = "DÉJÀ POINTÉ (" + myData.hA + ") ✅";
+                    btn.style.background = "linear-gradient(180deg, #10b981, #059669)"; // Vert
+                    document.getElementById('status').innerHTML = '<span class="text-emerald-400 font-bold">Session validée pour aujourd\'hui</span>';
+                }
             }
-          });
-        }
-      } catch (e) {}
-      init();
-    }
-
-    function checkPointageEtLancerGPS() {
-      const key = staffKey(selectedUser);
-      database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
-        const data = snap.val();
-        if (data && data.hA) {
-          document.getElementById('statusLabel').innerHTML =
-            "SESSION ACTIVE<br><span class='text-emerald-400 font-black tracking-widest'>✓ POINTAGE EFFECTUÉ (" + data.hA + ")</span>";
-          const btn = document.getElementById('submitBtn');
-          btn.disabled = true;
-          btn.innerText = "DÉJÀ POINTÉ ✅";
-        } else {
-          lancerGPS();
-        }
-      });
-    }
-
-    function lancerGPS() {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const dist = getDistance(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
-        if (dist <= RAYON_MAX) {
-          document.getElementById('statusLabel').innerHTML =
-            "Bonjour " + selectedUser + "<br><span class='text-emerald-400 font-black tracking-widest'>✓ DANS LA ZONE</span>";
-          document.getElementById('submitBtn').disabled = false;
-        } else {
-          document.getElementById('statusLabel').innerHTML = `<span class="text-red-400">❌ HORS ZONE (${Math.round(dist)}m)</span>`;
-          document.getElementById('submitBtn').disabled = true;
-        }
-      }, (err) => {
-        if (err.code === 1) document.getElementById('statusLabel').innerHTML = "❌ Autorise le GPS pour pointer";
-        else document.getElementById('statusLabel').innerHTML = "❌ GPS REQUIS";
-      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-    }
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const dLat = (lat2 - lat1) * Math.PI/180;
-      const dLon = (lon2 - lon1) * Math.PI/180;
-      const a = Math.sin(dLat/2)**2 +
-        Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
-        Math.sin(dLon/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
-    function validerPresence() {
-      if (navigator.vibrate) navigator.vibrate(100);
-      const now = new Date();
-      const h = now.getHours().toString().padStart(2,'0');
-      const m = now.getMinutes().toString().padStart(2,'0');
-      const hReel = h + ":" + m;
-      const estEnRetard = (parseInt(h,10) > 9 || (parseInt(h,10) === 9 && parseInt(m,10) > 15));
-      const key = staffKey(selectedUser);
-
-      database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
-        const data = snap.val();
-        if (data && data.hA) {
-          const btn = document.getElementById('submitBtn');
-          btn.disabled = true;
-          btn.innerText = "DÉJÀ POINTÉ ✅";
-          return;
-        }
-        database.ref('presences/' + dateStr + '/' + key).update({
-          on: true,
-          hA: hReel,
-          retard: estEnRetard,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => afficherAnimationSucces(hReel, estEnRetard));
-      });
-    }
-
-    function afficherAnimationSucces(heure, retard) {
-      const overlay = document.getElementById('successOverlay');
-      const couleurTitre = retard ? 'text-red-400' : 'gold';
-      const msgTitre = retard ? '⚠️ POINTAGE TARDIF' : 'Pointage Réussi';
-      overlay.innerHTML = `
-        <img src="images/LOGO GREY CORNER.png" class="seal-anim mb-6">
-        <div class="${couleurTitre} font-black text-2xl tracking-tighter uppercase">${msgTitre}</div>
-        <div class="text-white text-6xl font-black my-4 tracking-tighter">${heure}</div>
-        <div class="text-emerald-400 font-black uppercase text-[10px] tracking-widest mb-10">Bon service à toute l'équipe</div>
-        <div class="text-slate-500 text-[9px] uppercase tracking-widest">Grey Corner Fès</div>
-      `;
-      overlay.style.display = 'flex';
-      setTimeout(() => location.reload(), 4000);
-    }
-
-    function init() {
-      const selection = document.getElementById('selectionZone');
-      const action = document.getElementById('actionZone');
-
-      if (!initDone) {
-        presRef = database.ref('presences/' + dateStr);
-        presRef.on('value', snap => {
-          let count = 0;
-          Object.values(snap.val() || {}).forEach(e => { if (e && e.on) count++; });
-          document.getElementById('presentCount').innerText = count;
         });
         initDone = true;
-      }
-
-      if (selectedUser) {
-        selection.classList.add('hidden');
-        action.classList.remove('hidden');
-        document.getElementById('userNameBig').innerText = selectedUser;
-        checkPointageEtLancerGPS();
-        return;
-      }
-
-      selection.classList.remove('hidden');
-      selection.innerHTML = "";
-      document.getElementById('statusLabel').innerText = "CHOISI TON NOM";
-
-      ["caisse","bar","cuisine","menage","service"].forEach(c => {
-        const header = document.createElement('div');
-        header.className = "drawer-header";
-        header.innerHTML = `<span>${c}</span> <i class="text-slate-400">▼</i>`;
-
-        const content = document.createElement('div');
-        content.className = "drawer-content";
-
-        let loaded = false;
-        header.onclick = () => {
-          content.classList.toggle('active');
-          if (!loaded) {
-            equipeConfig.filter(e => e.t === c).forEach(emp => {
-              const isRepos = staffRepos.includes(emp.n.toUpperCase());
-              const b = document.createElement('button');
-              b.className = "btn-staff";
-              b.innerText = isRepos ? emp.n + " (REPOS)" : emp.n;
-              b.disabled = isRepos;
-              b.onclick = () => {
-                if (confirm(emp.n + " ?")) {
-                  localStorage.setItem('gc_staff_name', emp.n);
-                  location.reload();
-                }
-              };
-              content.appendChild(b);
-            });
-            loaded = true;
-          }
-        };
-
-        selection.appendChild(header);
-        selection.appendChild(content);
-      });
     }
 
-    let logoClicks = 0;
-    document.getElementById('logoAdmin').onclick = () => {
-      logoClicks++;
-      if (logoClicks === 3) {
-        if (prompt("Code Admin :") === "2026") {
-          document.getElementById('adminPanel').style.display = 'flex';
-          database.ref('presences/' + dateStr).once('value', snap => {
-            const list = document.getElementById('presenceList');
-            list.innerHTML = "";
-            const data = snap.val() || {};
-            equipeConfig.forEach(m => {
-              const key = staffKey(m.n);
-              const p = data[key];
-              list.innerHTML += `
-                <div class="flex justify-between items-center text-[10px] bg-white/5 p-3 rounded-xl border border-white/5">
-                  <div class="flex flex-col">
-                    <span class="${p && p.hA ? 'text-emerald-400 font-bold' : 'text-slate-400'}">${m.n}</span>
-                    <span class="text-slate-500 uppercase tracking-widest text-[9px]">${m.t}</span>
-                  </div>
-                  <span class="gold font-black">${p && p.hA ? p.hA : '--:--'}</span>
-                </div>
-              `;
-            });
-          });
-        }
-        logoClicks = 0;
-      }
-      setTimeout(() => logoClicks = 0, 2000);
-    };
-
-    async function chargerTicker() {
-      const URL_TICKER = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent`;
-      try {
-        const r = await fetch(URL_TICKER, { cache: "no-store" });
-        const txt = await r.text();
-        const json = JSON.parse(txt.substr(47).slice(0, -2));
-        const active = json.table.rows.find(row => row.c[3] && row.c[3].v === "Actif");
-
-        const container = document.getElementById('tickerContainer');
-        container.style.backgroundColor = "rgba(212,175,55,.08)";
-        container.style.borderColor = "rgba(212,175,55,.35)";
-
-        if (active) {
-          const msg = active.c[1] ? active.c[1].v : "";
-          const type = active.c[2] ? active.c[2].v : "";
-          if (type && type.toLowerCase() === "urgent") {
-            container.style.backgroundColor = "#7f1d1d";
-            container.style.borderColor = "rgba(255,255,255,.35)";
-          }
-          document.getElementById('tickerText').innerHTML = `⚠️ ${msg} &nbsp;&nbsp; ✦ &nbsp;&nbsp; ${msg}`;
-          container.style.display = "flex";
-        } else {
-          container.style.display = "none";
-        }
-      } catch (e) {
-        console.error("Erreur Ticker:", e);
-      }
+    if (selected) {
+        document.getElementById('selection').classList.add('hidden');
+        document.getElementById('action').classList.remove('hidden');
+        document.getElementById('username').innerText = selected;
+        loadPlannedTimeForSelected().finally(() => checkGPS());
+    } else {
+        const sel = document.getElementById('selection');
+        sel.innerHTML = '';
+        staff.forEach(n => {
+            const b = document.createElement('button');
+            b.className = 'w-full mb-2 p-3 rounded-xl bg-white/5 text-white font-bold text-left flex justify-between';
+            b.innerHTML = `<span>${n}</span> <span class="gold">→</span>`;
+            b.onclick = () => { localStorage.setItem('gc_staff_name', n); location.reload() };
+            sel.appendChild(b);
+        });
     }
+}
 
-    function resetUserMemory() {
-      if (confirm("Changer de profil ?")) {
-        localStorage.clear();
-        location.reload();
-      }
+function checkGPS(){
+  navigator.geolocation.getCurrentPosition(p=>{
+    const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON);
+    if(d<=RAYON_MAX){
+      const plannedTxt=plannedStart?(' • Heure prévue: <span class="gold font-black">'+plannedStart+'</span>'):'';
+      document.getElementById('status').innerHTML='<span class="text-green-400">Dans la zone</span>'+plannedTxt;
+      document.getElementById('btn').disabled=false;
+    }else{
+      document.getElementById('status').innerHTML='<span class="text-red-400">Hors zone '+Math.round(d)+'m</span>';
+      document.getElementById('btn').disabled=true;
     }
+  },e=>{
+    document.getElementById('status').innerText='Autorise le GPS';
+  },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+}
 
-    window.onload = () => {
-      fetchRepos();
-      chargerTicker();
-    };
-  </script>
+function getDist(a,b,c,d){
+  const R=6371e3;
+  const dLat=(c-a)*Math.PI/180;
+  const dLon=(d-b)*Math.PI/180;
+  const q=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
+}
+
+document.getElementById('btn').onclick=()=>{
+  const t=new Date();
+  const h=String(t.getHours()).padStart(2,'0');
+  const m=String(t.getMinutes()).padStart(2,'0');
+  const actual=h+":"+m;
+
+  const plannedM=toMinutes(plannedStart);
+  const actualM=toMinutes(actual);
+
+  let retardMin=null;
+  let retard=false;
+  if(plannedM!==null && actualM!==null){
+    retardMin=Math.max(0, actualM-plannedM);
+    retard=retardMin>0;
+  }
+
+  db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
+    on:true,
+    hA: actual,
+    hP: plannedStart || null,
+    retard: retard,
+    retardMin: retardMin,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  }).then(()=>location.reload());
+};
+
+function resetUser(){localStorage.clear();location.reload();}
+
+init();
+</script>
 </body>
 </html>
