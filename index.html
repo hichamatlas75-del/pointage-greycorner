@@ -36,7 +36,6 @@
         .refresh-spin { animation: spin 0.8s linear; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* Style pour le nom géant */
         .big-name { font-size: 32px; font-weight: 900; color: #c5a059; text-transform: uppercase; letter-spacing: -1px; line-height: 1; margin: 15px 0; text-shadow: 0 10px 20px rgba(0,0,0,0.3); }
     </style>
 </head>
@@ -97,7 +96,7 @@
         <div id="actionZone" class="hidden text-center flex-grow flex flex-col justify-start pt-4">
             <div id="userNameBig" class="big-name">--</div>
             
-            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-12 rounded-[2.5rem] bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-black text-2xl shadow-2xl active:scale-95 disabled:opacity-10 transition-all uppercase">
+            <button id="submitBtn" onclick="validerPresence()" disabled class="w-full py-12 rounded-[2.5rem] bg-gradient-to-r from-[#c5a059] to-[#8a6d3b] text-slate-900 font-black text-2xl shadow-2xl active:scale-95 disabled:opacity-20 transition-all uppercase">
                 Pointer Arrivée
             </button>
             <button onclick="resetUserMemory()" class="mt-10 text-[9px] text-slate-500 underline uppercase tracking-widest">Changer de profil</button>
@@ -132,15 +131,9 @@
             btn.classList.add('refresh-spin');
             await fetchRepos();
             await chargerTicker();
-            if (selectedUser) lancerGPS();
+            if (selectedUser) checkPointageEtLancerGPS();
             setTimeout(() => { btn.classList.remove('refresh-spin'); }, 800);
         }
-
-        let touchStart = 0;
-        document.addEventListener('touchstart', e => { touchStart = e.touches[0].pageY; }, {passive: true});
-        document.addEventListener('touchend', e => {
-            if (e.changedTouches[0].pageY > touchStart + 150) refreshData();
-        }, {passive: true});
 
         async function fetchRepos() {
             const URL_PLANNING = `https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning`;
@@ -161,6 +154,26 @@
                 }
             } catch (e) {}
             init();
+        }
+
+        // --- NOUVELLE FONCTION DE SÉCURITÉ ---
+        function checkPointageEtLancerGPS() {
+            const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
+            database.ref('presences/' + dateStr + '/' + key).once('value', snap => {
+                const data = snap.val();
+                if (data && data.on === true) {
+                    // SI DÉJÀ POINTÉ
+                    document.getElementById('statusLabel').innerHTML = "SESSION ACTIVE<br><span class='text-emerald-400 font-black tracking-widest'>✓ DÉJÀ POINTÉ</span>";
+                    const btn = document.getElementById('submitBtn');
+                    btn.disabled = true;
+                    btn.innerText = "DÉJÀ POINTÉ ✅";
+                    btn.classList.add('from-slate-700', 'to-slate-800', 'text-slate-500');
+                    btn.classList.remove('from-[#c5a059]', 'to-[#8a6d3b]', 'text-slate-900');
+                } else {
+                    // SI PAS ENCORE POINTÉ -> LANCER GPS
+                    lancerGPS();
+                }
+            });
         }
 
         function lancerGPS() {
@@ -184,17 +197,12 @@
         }
 
         function validerPresence() {
-            // VIBRATION
             if (navigator.vibrate) navigator.vibrate(100);
-
             const maint = new Date();
-            const h = maint.getHours();
-            const m = maint.getMinutes();
-            const hReel = h.toString().padStart(2,'0') + ":" + m.toString().padStart(2,'0');
-            
-            // SEUIL DE RETARD (Exemple: 09:15)
-            const estEnRetard = (h > 9 || (h === 9 && m > 15));
-
+            const h = maint.getHours().toString().padStart(2,'0');
+            const m = maint.getMinutes().toString().padStart(2,'0');
+            const hReel = h + ":" + m;
+            const estEnRetard = (parseInt(h) > 9 || (parseInt(h) === 9 && parseInt(m) > 15));
             const key = selectedUser.trim().replace(/\s+/g, '_').toUpperCase();
 
             database.ref('presences/' + dateStr + '/' + key).update({
@@ -204,7 +212,6 @@
 
         function afficherAnimationSucces(heure, retard) {
             const overlay = document.getElementById('successOverlay');
-            
             const couleurTitre = retard ? 'text-red-500' : 'text-[#c5a059]';
             const msgTitre = retard ? '⚠️ POINTAGE TARDIF' : 'Pointage Réussi';
             const msgBadge = retard ? 'Vite ! L\'équipe t\'attend' : 'Bon service à toute l\'équipe';
@@ -235,7 +242,7 @@
                 selection.classList.add('hidden');
                 action.classList.remove('hidden');
                 document.getElementById('userNameBig').innerText = selectedUser;
-                lancerGPS();
+                checkPointageEtLancerGPS();
             } else {
                 selection.classList.remove('hidden');
                 selection.innerHTML = "";
