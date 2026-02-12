@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Grey Corner • Système Master</title>
+<title>Grey Corner • Pointage</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -13,23 +13,27 @@
     .btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:26px;font-size:26px;box-shadow:0 10px 40px rgba(212,175,55,.4)}
     .btn-main:disabled{opacity:.25}
     .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
-    .ticker{display:none;background:#7f1d1d;color:#fff;border-radius:12px;padding:12px;font-weight:700;font-size:13px;margin-bottom:12px;border:1px solid #ef4444}
+    
+    .ticker{display:none;border-radius:12px;padding:12px;font-weight:700;font-size:13px;margin-bottom:12px;text-align:center}
+    .msg-normal{background:rgba(255,255,255,.05);color:#f5d776;border:1px solid rgba(212,175,55,.3)}
+    .msg-urgent{background:#7f1d1d;color:#fff;border:1px solid #ef4444;animation:pulse 2s infinite}
+    
     .drawer-header{background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
     .drawer-header span{font-size:10px;font-weight:900;color:#d4af37;text-transform:uppercase;letter-spacing:1px}
     .drawer-content{display:none;grid-template-columns:repeat(2, 1fr);gap:8px;padding:10px 0}
     .drawer-content.active{display:grid}
     .btn-staff{background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.12);height:46px;font-size:10px;font-weight:800;border-radius:12px;text-transform:uppercase;color:#f8fafc;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
     .big-name{font-size:34px;font-weight:900;color:#f5d776;text-align:center;margin:20px 0}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
 </style>
 </head>
 <body class="flex items-center justify-center p-4">
 <div class="card flex flex-col">
-    <div class="text-center mb-3">
-        <img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto mb-2">
-        <div class="gold font-extrabold text-xs uppercase">Système Master</div>
+    <div class="text-center mb-6">
+        <img src="images/LOGO GREY CORNER.png" id="logoAdmin" class="h-16 mx-auto cursor-pointer">
     </div>
 
-    <div id="ticker" class="ticker text-center animate-pulse"></div>
+    <div id="ticker" class="ticker"></div>
 
     <div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
     <div id="status" class="text-center text-sm text-gray-300 mb-3 uppercase font-bold tracking-widest text-[10px]">Choisi ton nom</div>
@@ -39,7 +43,7 @@
     <div id="action" class="hidden text-center flex-grow flex flex-col justify-center">
         <div id="username" class="big-name">--</div>
         <button id="btn" class="btn-main w-full" disabled>Pointer arrivée</button>
-        <button onclick="resetUser()" class="mt-8 text-xs text-gray-500 underline uppercase tracking-widest">Changer profil</button>
+        <p class="mt-4 text-[9px] text-gray-500 uppercase tracking-widest">Zone Grey Corner Fès</p>
     </div>
 </div>
 
@@ -52,7 +56,8 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CAFE_LAT=34.0343959,CAFE_LON=-5.0155941,RAYON_MAX=200;
-const URL_MSG_SHEET = "https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
+const URL_PLANNING="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning";
+const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
 const equipe = [
     {n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"},
@@ -65,43 +70,62 @@ const equipe = [
 let selected=localStorage.getItem('gc_staff_name');
 let plannedStart=null;
 const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const todayKey=dateStr.split('-')[2]+"/"+dateStr.split('-')[1];
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
+// 3 TAPES SUR LOGO ADMIN
+let logoTaps = 0;
+document.getElementById('logoAdmin').onclick = () => {
+    logoTaps++;
+    if(logoTaps >= 3) {
+        if(confirm("Accéder au mode Admin ?")) { localStorage.clear(); location.reload(); }
+        logoTaps = 0;
+    }
+    setTimeout(() => { logoTaps = 0; }, 2000);
+};
+
 async function loadTickerMessage() {
     try {
-        const response = await fetch(URL_MSG_SHEET);
-        const text = await response.text();
-        const json = JSON.parse(text.substr(47).slice(0, -2));
-        const row = json.table.rows[0]; // Lit la ligne 2 du sheet (index 0 après header)
-        if (row && row.c[1]) {
-            const msg = row.c[1].v; // Colonne B : BIENVENUE TOUTE LA FAMILLE GREY CORNER
-            const ticker = document.getElementById('ticker');
-            if (msg && msg.trim() !== "") {
-                ticker.innerText = "⚠️ " + msg;
-                ticker.style.display = "block";
-            }
+        const r=await fetch(URL_MSG_SHEET);
+        const t=await r.text();
+        const json=JSON.parse(t.substr(47).slice(0,-2));
+        const msg=json.table.rows[0].c[1].v;
+        const tick=document.getElementById('ticker');
+        if(msg){
+            tick.innerText=msg; tick.style.display="block";
+            tick.className = msg.toUpperCase().startsWith("URGENT") ? "ticker msg-urgent" : "ticker msg-normal";
         }
-    } catch (e) { console.error("Erreur message sheet"); }
+    } catch(e){}
+}
+
+async function loadPlannedTime(){
+    if(!selected) return;
+    try {
+        const r=await fetch(URL_PLANNING);
+        const t=await r.text();
+        const json=JSON.parse(t.substr(47).slice(0,-2));
+        let colIdx=-1;
+        json.table.rows[0].c.forEach((cell, idx) => { if(cell && (cell.v||"").toString().includes(todayKey)) colIdx=idx; });
+        const row = json.table.rows.find(r => r.c[0] && r.c[0].v.trim().toUpperCase() === selected.toUpperCase());
+        if(row && row.c[colIdx]) plannedStart = row.c[colIdx].f || row.c[colIdx].v || "";
+    } catch(e){}
 }
 
 function init() {
     loadTickerMessage();
-
     db.ref('presences/'+dateStr).on('value', s => {
         const data = s.val() || {};
         let c=0; Object.values(data).forEach(e=>{if(e&&e.on)c++});
         document.getElementById('presentCount').innerText=c;
-
         if (selected) {
             const myData = data[keyStaff(selected)];
-            if (myData && myData.hP) plannedStart = myData.hP;
             if (myData && myData.hA) {
                 const btn = document.getElementById('btn');
                 btn.disabled = true;
                 btn.innerText = "POINTÉ À " + myData.hA + " ✅";
                 btn.style.background = "linear-gradient(180deg, #10b981, #059669)";
-                document.getElementById('status').innerHTML = '<span class="text-emerald-400 font-bold uppercase tracking-widest text-[10px]">Session Validée</span>';
+                document.getElementById('status').innerHTML = '<span class="text-emerald-400 font-bold uppercase text-[10px]">Session Validée</span>';
             }
         }
     });
@@ -110,7 +134,7 @@ function init() {
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
-        checkGPS();
+        loadPlannedTime().finally(() => checkGPS());
     } else {
         genererListeUI();
     }
@@ -154,27 +178,23 @@ function getDist(a,b,c,d){
 
 document.getElementById('btn').onclick=()=>{
     const t=new Date();
-    const actual=t.getHours().toString().padStart(2,'0')+":"+t.getMinutes().toString().padStart(2,'0');
+    const ah=t.getHours(), am=t.getMinutes();
+    const actual=ah.toString().padStart(2,'0')+":"+am.toString().padStart(2,'0');
+    
     let retard = false;
-    let retardMin = 0;
-
-    if(plannedStart && plannedStart !== "N/A" && plannedStart !== ""){
-        const [ph, pm] = plannedStart.split(':').map(Number);
-        const [ah, am] = actual.split(':').map(Number);
-        const totalP = ph * 60 + pm;
-        const totalA = ah * 60 + am;
-        if(totalA > totalP) {
-            retard = true;
-            retardMin = totalA - totalP;
+    if(plannedStart){
+        const m = plannedStart.match(/(\d{1,2})[h:](\d{2})/);
+        if(m){
+            const ph=parseInt(m[1]), pm=parseInt(m[2]);
+            if((ah*60+am) > (ph*60+pm)) retard = true;
         }
     }
 
     db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
-        on:true, hA:actual, retard:retard, retardMin:retardMin, timestamp:firebase.database.ServerValue.TIMESTAMP
+        on:true, hA:actual, hP:plannedStart||"N/A", retard:retard, timestamp:firebase.database.ServerValue.TIMESTAMP
     }).then(()=>location.reload());
 };
 
-function resetUser(){localStorage.clear();location.reload();}
 init();
 </script>
 </body>
