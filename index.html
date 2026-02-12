@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Grey Corner • Master Pro</title>
+<title>Grey Corner • Pointage</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -11,9 +11,12 @@
     .card{width:100%;max-width:420px;height:96vh;background:linear-gradient(180deg,#0b0e14,#030712);border-radius:40px;padding:18px;box-shadow:0 0 60px rgba(212,175,55,.25);border:1px solid rgba(212,175,55,.25);position:relative;display:flex;flex-direction:column;}
     .gold{color:#d4af37}
     .btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:25px;font-size:24px;box-shadow:0 10px 30px rgba(212,175,55,0.3)}
-    .status-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:30px;padding:25px;text-align:center;}
+    .scroll{overflow-y:auto;scrollbar-width:none;}
+    .scroll::-webkit-scrollbar{display:none}
     .ticker{display:none;border-radius:12px;padding:12px;font-weight:700;font-size:13px;margin-bottom:12px;text-align:center}
+    .msg-normal{background:rgba(255,255,255,.05);color:#f5d776;border:1px solid rgba(212,175,55,.3)}
     .msg-urgent{background:#7f1d1d;color:#fff;border:1px solid #ef4444;animation:pulse 2s infinite}
+    .drawer-header{background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;cursor:pointer}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
 </style>
 </head>
@@ -23,23 +26,35 @@
         <img src="images/LOGO GREY CORNER.png" onclick="askAdmin()" class="h-14 mx-auto cursor-pointer">
     </div>
 
+    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="bg-white/5 border border-white/10 text-gray-400 py-3 rounded-xl text-[10px] font-bold uppercase mb-4">
+        📅 Consulter le Planning
+    </button>
+
     <div id="ticker" class="ticker"></div>
 
     <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden">
-        <div id="selection" class="overflow-y-auto">
-             <div class="text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-4">Identification Staff</div>
-             </div>
+        <div id="selection" class="scroll flex-grow">
+             <div class="text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Choisi ton nom</div>
+        </div>
 
         <div id="action" class="hidden flex flex-col flex-grow justify-center">
             <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-8">--</div>
             
-            <div id="pointage-zone" class="status-box">
-                <div id="gps-status" class="text-[10px] mb-4 text-gray-500 uppercase tracking-widest italic">Localisation en cours...</div>
-                <button id="btn" class="btn-main w-full" disabled>Valider Présence</button>
+            <div id="pointage-zone">
+                <div id="status" class="text-center text-[10px] mb-4 text-gray-400 uppercase tracking-widest">Localisation GPS...</div>
+                <button id="btn" class="btn-main w-full" disabled>Valider mon Arrivée</button>
             </div>
 
-            <button onclick="localStorage.clear();location.reload();" class="mt-12 text-[9px] text-gray-600 uppercase tracking-widest">Changer d'utilisateur</button>
+            <button onclick="localStorage.clear();location.reload();" class="mt-12 text-[9px] text-gray-600 uppercase tracking-widest">Retour au menu</button>
         </div>
+    </div>
+
+    <div id="app-admin" class="hidden flex flex-col flex-grow overflow-hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="gold font-black uppercase text-sm italic">Supervision</h2>
+            <button onclick="location.reload()" class="text-white text-xs bg-red-900/50 px-3 py-1 rounded-full text-[10px]">Fermer</button>
+        </div>
+        <div id="adminList" class="scroll flex-grow bg-white/5 rounded-2xl p-2"></div>
     </div>
 </div>
 
@@ -52,18 +67,46 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
+const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
+
+const equipe = [
+    {n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"},
+    {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar"},
+    {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BOURAHMA ANAS", t: "cuisine"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"}, {n: "ZAIR FATIMA", t: "cuisine"},
+    {n: "ELGORRAMY ANISSA", t: "menage"}, {n: "ELGORRAMY SOUAD", t: "menage"}, {n: "ELMCHAOURI SOUAD", t: "menage"}, {n: "SBAI HAKIMA", t: "menage"},
+    {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}
+];
+
 let selected=localStorage.getItem('gc_staff_name');
 const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
-// Logique de calcul HA - HP
-function computeRetard(hA, hP) {
+function checkRetard(hA, hP) {
     if(!hP) return null;
     const [haH, haM] = hA.split(':').map(Number);
     const [hph, hpm] = hP.split(':').map(Number);
-    const diff = (haH * 60 + haM) - (hph * 60 + hpm);
-    return diff > 0; // Retard si la différence est positive
+    return (haH * 60 + haM) > (hph * 60 + hpm);
+}
+
+function askAdmin() {
+    if(prompt("Code Admin :") === "2026") {
+        document.getElementById('app-pointage').classList.add('hidden');
+        document.getElementById('app-admin').classList.remove('hidden');
+        db.ref('presences/'+dateStr).on('value', s => {
+            const data = s.val() || {};
+            const container = document.getElementById('adminList');
+            container.innerHTML = "";
+            equipe.sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+                const p = data[keyStaff(emp.n)];
+                const div = document.createElement('div');
+                div.className = "flex justify-between p-3 border-b border-white/5 text-[11px]";
+                const retardInfo = p?.retard ? '<span class="text-red-500 ml-2">⚠️ Retard</span>' : '';
+                div.innerHTML = `<span class="text-white">${emp.n}</span><span class="${p?'text-emerald-400 font-bold':'text-gray-600'}">${p ? p.hA + retardInfo : '---'}</span>`;
+                container.appendChild(div);
+            });
+        });
+    }
 }
 
 function init() {
@@ -73,27 +116,27 @@ function init() {
         document.getElementById('username').innerText = selected;
         checkGPS();
         
-        // Surveillance temps réel (Ecoute si Admin entre le HP manuel)
+        // Ecoute en temps réel du statut
         db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
             const val = s.val();
             if(val && val.hA) {
-                let html = `<p class="text-emerald-400 font-black text-2xl mb-1">POINTÉ ✅</p>
-                            <p class="text-white/60 text-[10px] uppercase mb-4">Arrivée : ${val.hA}</p>`;
+                let statusHTML = `<div class="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+                    <p class="text-emerald-400 font-black text-2xl mb-1">POINTÉ ✅</p>
+                    <p class="text-white/60 text-[10px] uppercase mb-4">Arrivée : ${val.hA}</p>`;
                 
                 if(val.hP) {
-                    const retard = computeRetard(val.hA, val.hP);
-                    html += retard 
-                        ? `<p class="text-red-500 font-bold text-sm bg-red-500/10 py-2 rounded-xl">⚠️ RETARD CONSTATÉ</p>`
-                        : `<p class="text-emerald-500 font-bold text-sm bg-emerald-500/10 py-2 rounded-xl">DANS LES TEMPS ✓</p>`;
-                    
-                    // On met à jour le statut retard dans Firebase automatiquement
-                    if(val.retard !== retard) {
-                        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({retard: retard});
-                    }
+                    const isRetard = checkRetard(val.hA, val.hP);
+                    statusHTML += isRetard 
+                        ? `<p class="text-red-500 font-bold text-sm">⚠️ RETARD CONSTATÉ</p>`
+                        : `<p class="text-emerald-500 font-bold text-sm">DANS LES TEMPS ✓</p>`;
+                    // Sync Firebase si admin a entré hP après le pointage
+                    if(val.retard !== isRetard) db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({retard: isRetard});
                 } else {
-                    html += `<p class="text-gray-500 italic text-[9px] border-t border-white/5 pt-4">En attente de validation du planning par la direction...</p>`;
+                    statusHTML += `<p class="text-gray-500 italic text-[9px]">Calcul retard en attente du planning...</p>`;
                 }
-                document.getElementById('pointage-zone').innerHTML = html;
+                
+                statusHTML += `</div>`;
+                document.getElementById('pointage-zone').innerHTML = statusHTML;
             }
         });
     } else {
@@ -101,23 +144,30 @@ function init() {
     }
 }
 
+// ... (fonctions loadTicker, genererListeUI, checkGPS, getDist identiques au précédent) ...
+
 document.getElementById('btn').onclick=()=>{
     const t=new Date();
     const hA = t.getHours().toString().padStart(2,'0')+":"+t.getMinutes().toString().padStart(2,'0');
     
-    // Premier enregistrement de HA
-    db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
-        on:true, 
-        hA:hA, 
-        timestamp:firebase.database.ServerValue.TIMESTAMP
+    // On vérifie si le HP est déjà là (entré par l'admin en avance)
+    db.ref('presences/'+dateStr+'/'+keyStaff(selected)).once('value', s => {
+        const hP = s.val()?.hP || null;
+        const isRetard = hP ? checkRetard(hA, hP) : false;
+        
+        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
+            on:true, hA:hA, retard:isRetard, timestamp:firebase.database.ServerValue.TIMESTAMP
+        });
     });
 };
 
-// ... (GPS et UI identiques pour la stabilité)
-function checkGPS(){ navigator.geolocation.getCurrentPosition(p=>{ const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON); if(d<=RAYON_MAX){ document.getElementById('gps-status').innerHTML=`<span class="text-green-400 font-bold">ZONE VALIDÉE ✓</span>`; document.getElementById('btn').disabled=false; } else { document.getElementById('gps-status').innerHTML=`<span class="text-red-400 font-bold">HORS ZONE (${Math.round(d)}m)</span>`; } }, null, {enableHighAccuracy:true}); }
+// Intégration des fonctions manquantes pour le bon fonctionnement
+async function loadTicker() { try { const r=await fetch(URL_MSG_SHEET); const t=await r.text(); const json=JSON.parse(t.substr(47).slice(0,-2)); const msg=json.table.rows[0].c[1].v; const tick=document.getElementById('ticker'); if(msg){ tick.innerText=msg; tick.style.display="block"; tick.className = msg.toUpperCase().startsWith("URGENT") ? "ticker msg-urgent" : "ticker msg-normal"; } } catch(e){} }
+function genererListeUI() { const sel = document.getElementById('selection'); ["caisse","bar","cuisine","menage","service"].forEach(cat => { const h = document.createElement('div'); h.className="drawer-header"; h.innerHTML=`<span class="text-[10px] font-black gold uppercase">${cat}</span><i class="gold text-[10px]">▼</i>`; const cont = document.createElement('div'); cont.className="hidden grid grid-cols-2 gap-2 py-3"; h.onclick=()=> cont.classList.toggle('hidden'); equipe.filter(e => e.t === cat).forEach(emp => { const b = document.createElement('button'); b.className="p-3 bg-white/5 border border-white/10 rounded-xl text-[10px] text-white"; b.innerText = emp.n; b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }}; cont.appendChild(b); }); sel.appendChild(h); sel.appendChild(cont); }); }
+function checkGPS(){ navigator.geolocation.getCurrentPosition(p=>{ const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON); if(d<=RAYON_MAX){ document.getElementById('status').innerHTML=`<span class="text-green-400 font-bold uppercase">Zone Grey Corner OK</span>`; document.getElementById('btn').disabled=false; } else { document.getElementById('status').innerHTML=`<span class="text-red-400 font-bold uppercase">Hors Zone (${Math.round(d)}m)</span>`; } }, null, {enableHighAccuracy:true}); }
 function getDist(a,b,c,d){ const R=6371e3; const dLat=(c-a)*Math.PI/180; const dLon=(d-b)*Math.PI/180; const q=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q)); }
-function genererListeUI() { const sel = document.getElementById('selection'); const equipe = [{n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"}, {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar"}, {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BOURAHMA ANAS", t: "cuisine"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"}, {n: "ZAIR FATIMA", t: "cuisine"}, {n: "ELGORRAMY ANISSA", t: "menage"}, {n: "ELGORRAMY SOUAD", t: "menage"}, {n: "ELMCHAOURI SOUAD", t: "menage"}, {n: "SBAI HAKIMA", t: "menage"}, {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}]; equipe.forEach(emp => { const b = document.createElement('button'); b.className="w-full p-4 mb-2 bg-white/5 border border-white/10 rounded-2xl text-left text-xs text-white"; b.innerText = emp.n; b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }}; sel.appendChild(b); }); }
 
+loadTicker();
 init();
 </script>
 </body>
