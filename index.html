@@ -13,17 +13,22 @@
     .btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:22px;font-size:22px;box-shadow:0 10px 30px rgba(212,175,55,.3)}
     .scroll{overflow-y:auto;scrollbar-width:none;}
     .scroll::-webkit-scrollbar{display:none}
+    
+    /* STYLE POUR L'IFRAME DU PLANNING */
+    .planning-container {width:100%; height:250px; border-radius:20px; border:1px solid rgba(212,175,55,0.2); overflow:hidden; margin-top:15px; background:#000;}
+    iframe {width:100%; height:100%; border:none;}
+
     .ticker{display:none;border-radius:12px;padding:12px;font-weight:700;font-size:13px;margin-bottom:12px;text-align:center}
     .msg-normal{background:rgba(255,255,255,.05);color:#f5d776;border:1px solid rgba(212,175,55,.3)}
     .msg-urgent{background:#7f1d1d;color:#fff;border:1px solid #ef4444;animation:pulse 2s infinite}
+    
     .drawer-header{background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;cursor:pointer}
-    .btn-staff{background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.12);height:44px;font-size:10px;font-weight:800;border-radius:12px;color:#f8fafc;display:flex;align-items:center;justify-content:center;text-align:center}
     .admin-row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
 </style>
 </head>
 <body class="flex items-center justify-center p-4">
-<div class="card flex flex-col" id="mainCard">
+<div class="card flex flex-col">
     <div class="text-center mb-4">
         <img src="images/LOGO GREY CORNER.png" onclick="askAdmin()" class="h-14 mx-auto cursor-pointer">
     </div>
@@ -33,21 +38,27 @@
     <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden">
         <div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
         <div id="status" class="text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Choisi ton nom</div>
+        
         <div id="selection" class="scroll flex-grow"></div>
-        <div id="action" class="hidden text-center flex-grow flex flex-col justify-center">
-            <div id="username" class="text-3xl font-black text-yellow-200 mb-6">--</div>
+
+        <div id="action" class="hidden flex flex-col flex-grow overflow-hidden">
+            <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-4">--</div>
             <button id="btn" class="btn-main w-full" disabled>Pointer arrivée</button>
-            <a href="https://grey-corner-app.pages.dev/" target="_blank" class="mt-6 text-[10px] text-gray-500 underline uppercase tracking-widest">Voir le planning complet</a>
+            
+            <div class="planning-container">
+                <iframe src="https://grey-corner-app.pages.dev/"></iframe>
+            </div>
+            
+            <button onclick="localStorage.clear();location.reload();" class="mt-4 text-[9px] text-gray-600 uppercase tracking-widest">Retour au menu</button>
         </div>
     </div>
 
     <div id="app-admin" class="hidden flex flex-col flex-grow overflow-hidden">
         <div class="flex justify-between items-center mb-4">
             <h2 class="gold font-black uppercase text-sm italic">Supervision Staff</h2>
-            <button onclick="closeAdmin()" class="text-white text-xs bg-red-900/50 px-3 py-1 rounded-full">Quitter</button>
+            <button onclick="location.reload()" class="text-white text-xs bg-red-900/50 px-3 py-1 rounded-full text-[10px]">Fermer</button>
         </div>
         <div id="adminList" class="scroll flex-grow bg-white/5 rounded-2xl p-2"></div>
-        <button onclick="localStorage.clear();location.reload();" class="mt-4 p-3 bg-white/10 text-white rounded-xl text-[10px] uppercase font-bold">Reset tous les profils</button>
     </div>
 </div>
 
@@ -78,7 +89,7 @@ const todayKey=dateStr.split('-')[2]+"/"+dateStr.split('-')[1];
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
-// --- MODE ADMIN ---
+// --- CODE ADMIN 2026 ---
 function askAdmin() {
     const code = prompt("Code Administrateur :");
     if(code === "2026") {
@@ -87,7 +98,6 @@ function askAdmin() {
         loadAdminData();
     }
 }
-function closeAdmin(){ location.reload(); }
 
 function loadAdminData() {
     db.ref('presences/'+dateStr).on('value', s => {
@@ -109,7 +119,6 @@ function loadAdminData() {
     });
 }
 
-// --- LOGIQUE TICKER ---
 async function loadTicker() {
     try {
         const r=await fetch(URL_MSG_SHEET);
@@ -170,11 +179,11 @@ function genererListeUI() {
     sel.innerHTML = '';
     ["caisse","bar","cuisine","menage","service"].forEach(cat => {
         const h = document.createElement('div'); h.className="drawer-header";
-        h.innerHTML=`<span class="text-[10px] font-black gold uppercase">${cat}</span><i class="gold">▼</i>`;
+        h.innerHTML=`<span class="text-[10px] font-black gold uppercase">${cat}</span><i class="gold text-[10px]">▼</i>`;
         const cont = document.createElement('div'); cont.className="hidden grid grid-cols-2 gap-2 py-3";
         h.onclick=()=> cont.classList.toggle('hidden');
         equipe.filter(e => e.t === cat).forEach(emp => {
-            const b = document.createElement('button'); b.className="btn-staff";
+            const b = document.createElement('button'); b.className="btn-staff text-[10px]";
             b.innerText = emp.n;
             b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
             cont.appendChild(b);
@@ -187,7 +196,7 @@ function checkGPS(){
     navigator.geolocation.getCurrentPosition(p=>{
         const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON);
         if(d<=RAYON_MAX){
-            document.getElementById('status').innerHTML=`<span class="text-green-400 font-bold">DANS LA ZONE</span> ${plannedStart?'<br><span class="text-[9px] gold italic">HORAIRE PRÉVU : '+plannedStart+'</span>':''}`;
+            document.getElementById('status').innerHTML=`<span class="text-green-400 font-bold">DANS LA ZONE</span> ${plannedStart?'<br><span class="text-[9px] gold italic">HORAIRE : '+plannedStart+'</span>':''}`;
             document.getElementById('btn').disabled=false;
         } else {
             document.getElementById('status').innerHTML=`<span class="text-red-400 font-bold">HORS ZONE (${Math.round(d)}m)</span>`;
