@@ -13,7 +13,8 @@
     .btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:26px;font-size:26px;box-shadow:0 10px 40px rgba(212,175,55,.4)}
     .btn-main:disabled{opacity:.25}
     .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
-    .drawer-header{background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+    .ticker{display:none;background:#7f1d1d;color:#fff;border-radius:12px;padding:12px;font-weight:700;font-size:13px;margin-bottom:12px;border:1px solid #ef4444}
+    .drawer-header{background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
     .drawer-header span{font-size:10px;font-weight:900;color:#d4af37;text-transform:uppercase;letter-spacing:1px}
     .drawer-content{display:none;grid-template-columns:repeat(2, 1fr);gap:8px;padding:10px 0}
     .drawer-content.active{display:grid}
@@ -27,6 +28,9 @@
         <img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto mb-2">
         <div class="gold font-extrabold text-xs uppercase">Système Master</div>
     </div>
+
+    <div id="ticker" class="ticker text-center animate-pulse"></div>
+
     <div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
     <div id="status" class="text-center text-sm text-gray-300 mb-3 uppercase font-bold tracking-widest text-[10px]">Choisi ton nom</div>
     
@@ -48,6 +52,7 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CAFE_LAT=34.0343959,CAFE_LON=-5.0155941,RAYON_MAX=200;
+const URL_MSG_SHEET = "https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
 const equipe = [
     {n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"},
@@ -63,25 +68,26 @@ const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
-function genererListeUI() {
-    const sel = document.getElementById('selection');
-    sel.innerHTML = '';
-    ["caisse","bar","cuisine","menage","service"].forEach(cat => {
-        const h = document.createElement('div'); h.className="drawer-header";
-        h.innerHTML=`<span>${cat}</span><i class="gold">▼</i>`;
-        const cont = document.createElement('div'); cont.className="drawer-content";
-        h.onclick=()=> cont.classList.toggle('active');
-        equipe.filter(e => e.t === cat).forEach(emp => {
-            const b = document.createElement('button'); b.className="btn-staff";
-            b.innerText = emp.n;
-            b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
-            cont.appendChild(b);
-        });
-        sel.appendChild(h); sel.appendChild(cont);
-    });
+async function loadTickerMessage() {
+    try {
+        const response = await fetch(URL_MSG_SHEET);
+        const text = await response.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const row = json.table.rows[0]; // Lit la ligne 2 du sheet (index 0 après header)
+        if (row && row.c[1]) {
+            const msg = row.c[1].v; // Colonne B : BIENVENUE TOUTE LA FAMILLE GREY CORNER
+            const ticker = document.getElementById('ticker');
+            if (msg && msg.trim() !== "") {
+                ticker.innerText = "⚠️ " + msg;
+                ticker.style.display = "block";
+            }
+        }
+    } catch (e) { console.error("Erreur message sheet"); }
 }
 
 function init() {
+    loadTickerMessage();
+
     db.ref('presences/'+dateStr).on('value', s => {
         const data = s.val() || {};
         let c=0; Object.values(data).forEach(e=>{if(e&&e.on)c++});
@@ -89,10 +95,7 @@ function init() {
 
         if (selected) {
             const myData = data[keyStaff(selected)];
-            // Récupération de l'heure prévue enregistrée en base
             if (myData && myData.hP) plannedStart = myData.hP;
-            
-            // Vérification si déjà pointé (hA existe)
             if (myData && myData.hA) {
                 const btn = document.getElementById('btn');
                 btn.disabled = true;
@@ -111,6 +114,24 @@ function init() {
     } else {
         genererListeUI();
     }
+}
+
+function genererListeUI() {
+    const sel = document.getElementById('selection');
+    sel.innerHTML = '';
+    ["caisse","bar","cuisine","menage","service"].forEach(cat => {
+        const h = document.createElement('div'); h.className="drawer-header";
+        h.innerHTML=`<span>${cat}</span><i class="gold">▼</i>`;
+        const cont = document.createElement('div'); cont.className="drawer-content";
+        h.onclick=()=> cont.classList.toggle('active');
+        equipe.filter(e => e.t === cat).forEach(emp => {
+            const b = document.createElement('button'); b.className="btn-staff";
+            b.innerText = emp.n;
+            b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
+            cont.appendChild(b);
+        });
+        sel.appendChild(h); sel.appendChild(cont);
+    });
 }
 
 function checkGPS(){
@@ -134,11 +155,9 @@ function getDist(a,b,c,d){
 document.getElementById('btn').onclick=()=>{
     const t=new Date();
     const actual=t.getHours().toString().padStart(2,'0')+":"+t.getMinutes().toString().padStart(2,'0');
-    
     let retard = false;
     let retardMin = 0;
 
-    // Calcul du retard SEULEMENT si hP est présent
     if(plannedStart && plannedStart !== "N/A" && plannedStart !== ""){
         const [ph, pm] = plannedStart.split(':').map(Number);
         const [ah, am] = actual.split(':').map(Number);
@@ -151,11 +170,7 @@ document.getElementById('btn').onclick=()=>{
     }
 
     db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
-        on:true, 
-        hA:actual, 
-        retard:retard, 
-        retardMin:retardMin, 
-        timestamp:firebase.database.ServerValue.TIMESTAMP
+        on:true, hA:actual, retard:retard, retardMin:retardMin, timestamp:firebase.database.ServerValue.TIMESTAMP
     }).then(()=>location.reload());
 };
 
