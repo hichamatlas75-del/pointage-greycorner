@@ -14,8 +14,8 @@
     .scroll{overflow-y:auto;scrollbar-width:none;}
     .scroll::-webkit-scrollbar{display:none}
     
-    /* STYLE POUR L'IFRAME DU PLANNING */
-    .planning-container {width:100%; height:250px; border-radius:20px; border:1px solid rgba(212,175,55,0.2); overflow:hidden; margin-top:15px; background:#000;}
+    /* PLANNING SOUS LE LOGO */
+    .planning-fixed {width:100%; height:180px; border-radius:20px; border:1px solid rgba(212,175,55,0.2); overflow:hidden; margin-bottom:15px; background:#000; flex-shrink:0;}
     iframe {width:100%; height:100%; border:none;}
 
     .ticker{display:none;border-radius:12px;padding:12px;font-weight:700;font-size:13px;margin-bottom:12px;text-align:center}
@@ -29,33 +29,34 @@
 </head>
 <body class="flex items-center justify-center p-4">
 <div class="card flex flex-col">
-    <div class="text-center mb-4">
+    <div class="text-center mb-4 flex-shrink-0">
         <img src="images/LOGO GREY CORNER.png" onclick="askAdmin()" class="h-14 mx-auto cursor-pointer">
+    </div>
+
+    <div class="planning-fixed">
+        <iframe src="https://grey-corner-app.pages.dev/"></iframe>
     </div>
 
     <div id="ticker" class="ticker"></div>
 
     <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden">
         <div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
-        <div id="status" class="text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Choisi ton nom</div>
         
-        <div id="selection" class="scroll flex-grow"></div>
+        <div id="selection" class="scroll flex-grow">
+            <div class="text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Choisi ton nom</div>
+        </div>
 
-        <div id="action" class="hidden flex flex-col flex-grow overflow-hidden">
-            <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-4">--</div>
+        <div id="action" class="hidden flex flex-col flex-grow justify-center">
+            <div id="status" class="text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Statut zone</div>
+            <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-6">--</div>
             <button id="btn" class="btn-main w-full" disabled>Pointer arrivée</button>
-            
-            <div class="planning-container">
-                <iframe src="https://grey-corner-app.pages.dev/"></iframe>
-            </div>
-            
-            <button onclick="localStorage.clear();location.reload();" class="mt-4 text-[9px] text-gray-600 uppercase tracking-widest">Retour au menu</button>
+            <button onclick="localStorage.clear();location.reload();" class="mt-8 text-[9px] text-gray-600 uppercase tracking-widest">Retour au menu</button>
         </div>
     </div>
 
     <div id="app-admin" class="hidden flex flex-col flex-grow overflow-hidden">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="gold font-black uppercase text-sm italic">Supervision Staff</h2>
+            <h2 class="gold font-black uppercase text-sm italic">Supervision</h2>
             <button onclick="location.reload()" class="text-white text-xs bg-red-900/50 px-3 py-1 rounded-full text-[10px]">Fermer</button>
         </div>
         <div id="adminList" class="scroll flex-grow bg-white/5 rounded-2xl p-2"></div>
@@ -89,7 +90,6 @@ const todayKey=dateStr.split('-')[2]+"/"+dateStr.split('-')[1];
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
-// --- CODE ADMIN 2026 ---
 function askAdmin() {
     const code = prompt("Code Administrateur :");
     if(code === "2026") {
@@ -108,12 +108,7 @@ function loadAdminData() {
             const p = data[keyStaff(emp.n)];
             const div = document.createElement('div');
             div.className = "admin-row";
-            div.innerHTML = `
-                <span class="text-gray-300">${emp.n}</span>
-                <span class="${p?.on?'text-emerald-400 font-bold':'text-gray-600'}">
-                    ${p?.hA ? p.hA : '---'}
-                </span>
-            `;
+            div.innerHTML = `<span class="text-gray-300">${emp.n}</span><span class="${p?.on?'text-emerald-400 font-bold':'text-gray-600'}">${p?.hA ? p.hA : '---'}</span>`;
             container.appendChild(div);
         });
     });
@@ -159,7 +154,6 @@ function init() {
                 btn.disabled = true;
                 btn.innerText = "POINTÉ À " + myData.hA + " ✅";
                 btn.style.background = "linear-gradient(180deg, #10b981, #059669)";
-                document.getElementById('status').innerHTML = '<span class="text-emerald-400 font-bold uppercase text-[10px]">Session Validée</span>';
             }
         }
     });
@@ -176,14 +170,13 @@ function init() {
 
 function genererListeUI() {
     const sel = document.getElementById('selection');
-    sel.innerHTML = '';
     ["caisse","bar","cuisine","menage","service"].forEach(cat => {
         const h = document.createElement('div'); h.className="drawer-header";
         h.innerHTML=`<span class="text-[10px] font-black gold uppercase">${cat}</span><i class="gold text-[10px]">▼</i>`;
         const cont = document.createElement('div'); cont.className="hidden grid grid-cols-2 gap-2 py-3";
         h.onclick=()=> cont.classList.toggle('hidden');
         equipe.filter(e => e.t === cat).forEach(emp => {
-            const b = document.createElement('button'); b.className="btn-staff text-[10px]";
+            const b = document.createElement('button'); b.className="btn-staff text-[10px] p-3 rounded-xl bg-white/5 border border-white/10";
             b.innerText = emp.n;
             b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
             cont.appendChild(b);
