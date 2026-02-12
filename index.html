@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Grey Corner • Pointage Master</title>
+<title>Grey Corner • Système Master</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -30,7 +30,7 @@
     <div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
     <div id="status" class="text-center text-sm text-gray-300 mb-3 uppercase font-bold tracking-widest text-[10px]">Choisi ton nom</div>
     
-    <div id="selection" class="scroll flex-grow custom-scroll"></div>
+    <div id="selection" class="scroll flex-grow"></div>
 
     <div id="action" class="hidden text-center flex-grow flex flex-col justify-center">
         <div id="username" class="big-name">--</div>
@@ -48,7 +48,6 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CAFE_LAT=34.0343959,CAFE_LON=-5.0155941,RAYON_MAX=200;
-const URL_PLANNING="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning";
 
 const equipe = [
     {n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"},
@@ -61,35 +60,25 @@ const equipe = [
 let selected=localStorage.getItem('gc_staff_name');
 let plannedStart=null;
 const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const todayKey=dateStr.split('-')[2]+"/"+dateStr.split('-')[1];
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
-async function loadPlannedTime(){
-    if(!selected) return;
-    try {
-        const r=await fetch(URL_PLANNING,{cache:'no-store'});
-        const txt=await r.text();
-        const json=JSON.parse(txt.substr(47).slice(0,-2));
-        let colIdx=-1;
-        const header = json.table.rows[0].c;
-        header.forEach((cell, idx) => { if(cell && (cell.v||cell.f||"").toString().includes(todayKey)) colIdx=idx; });
-        if(colIdx===-1) return;
-
-        const row = json.table.rows.find(r => r.c[0] && r.c[0].v.trim().toUpperCase() === selected.toUpperCase());
-        if(row && row.c[colIdx]) {
-            const val = row.c[colIdx].f || row.c[colIdx].v || "";
-            plannedStart = parseTime(val);
-        }
-    } catch(e) {}
-}
-
-function parseTime(s){
-    let m = String(s).match(/(\d{1,2})[h:](\d{2})/i) || String(s).match(/(\d{1,2})/);
-    if(!m) return null;
-    let h = m[1].padStart(2,'0');
-    let min = m[2] || "00";
-    return h + ":" + min;
+function genererListeUI() {
+    const sel = document.getElementById('selection');
+    sel.innerHTML = '';
+    ["caisse","bar","cuisine","menage","service"].forEach(cat => {
+        const h = document.createElement('div'); h.className="drawer-header";
+        h.innerHTML=`<span>${cat}</span><i class="gold">▼</i>`;
+        const cont = document.createElement('div'); cont.className="drawer-content";
+        h.onclick=()=> cont.classList.toggle('active');
+        equipe.filter(e => e.t === cat).forEach(emp => {
+            const b = document.createElement('button'); b.className="btn-staff";
+            b.innerText = emp.n;
+            b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
+            cont.appendChild(b);
+        });
+        sel.appendChild(h); sel.appendChild(cont);
+    });
 }
 
 function init() {
@@ -100,12 +89,16 @@ function init() {
 
         if (selected) {
             const myData = data[keyStaff(selected)];
+            // Récupération de l'heure prévue enregistrée en base
+            if (myData && myData.hP) plannedStart = myData.hP;
+            
+            // Vérification si déjà pointé (hA existe)
             if (myData && myData.hA) {
                 const btn = document.getElementById('btn');
                 btn.disabled = true;
                 btn.innerText = "POINTÉ À " + myData.hA + " ✅";
                 btn.style.background = "linear-gradient(180deg, #10b981, #059669)";
-                document.getElementById('status').innerHTML = '<span class="text-emerald-400">SESSION VALIDÉE</span>';
+                document.getElementById('status').innerHTML = '<span class="text-emerald-400 font-bold uppercase tracking-widest text-[10px]">Session Validée</span>';
             }
         }
     });
@@ -114,22 +107,9 @@ function init() {
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
-        loadPlannedTime().finally(() => checkGPS());
+        checkGPS();
     } else {
-        const sel = document.getElementById('selection');
-        ["caisse","bar","cuisine","menage","service"].forEach(cat => {
-            const h = document.createElement('div'); h.className="drawer-header";
-            h.innerHTML=`<span>${cat}</span><i class="gold">▼</i>`;
-            const cont = document.createElement('div'); cont.className="drawer-content";
-            h.onclick=()=> cont.classList.toggle('active');
-            equipe.filter(e => e.t === cat).forEach(emp => {
-                const b = document.createElement('button'); b.className="btn-staff";
-                b.innerText = emp.n;
-                b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
-                cont.appendChild(b);
-            });
-            sel.appendChild(h); sel.appendChild(cont);
-        });
+        genererListeUI();
     }
 }
 
@@ -137,10 +117,10 @@ function checkGPS(){
     navigator.geolocation.getCurrentPosition(p=>{
         const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON);
         if(d<=RAYON_MAX){
-            document.getElementById('status').innerHTML=`<span class="text-green-400">DANS LA ZONE</span> ${plannedStart?' • PRÉVU: '+plannedStart:''}`;
+            document.getElementById('status').innerHTML=`<span class="text-green-400 font-bold">DANS LA ZONE</span> ${plannedStart?'<br><span class="text-[9px] gold">PRÉVU : '+plannedStart+'</span>':''}`;
             document.getElementById('btn').disabled=false;
         } else {
-            document.getElementById('status').innerHTML=`<span class="text-red-400">HORS ZONE (${Math.round(d)}m)</span>`;
+            document.getElementById('status').innerHTML=`<span class="text-red-400 font-bold">HORS ZONE (${Math.round(d)}m)</span>`;
         }
     }, null, {enableHighAccuracy:true});
 }
@@ -154,14 +134,28 @@ function getDist(a,b,c,d){
 document.getElementById('btn').onclick=()=>{
     const t=new Date();
     const actual=t.getHours().toString().padStart(2,'0')+":"+t.getMinutes().toString().padStart(2,'0');
+    
     let retard = false;
-    if(plannedStart){
+    let retardMin = 0;
+
+    // Calcul du retard SEULEMENT si hP est présent
+    if(plannedStart && plannedStart !== "N/A" && plannedStart !== ""){
         const [ph, pm] = plannedStart.split(':').map(Number);
         const [ah, am] = actual.split(':').map(Number);
-        if((ah > ph) || (ah === ph && am > pm)) retard = true;
+        const totalP = ph * 60 + pm;
+        const totalA = ah * 60 + am;
+        if(totalA > totalP) {
+            retard = true;
+            retardMin = totalA - totalP;
+        }
     }
+
     db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
-        on:true, hA:actual, hP:plannedStart, retard:retard, timestamp:firebase.database.ServerValue.TIMESTAMP
+        on:true, 
+        hA:actual, 
+        retard:retard, 
+        retardMin:retardMin, 
+        timestamp:firebase.database.ServerValue.TIMESTAMP
     }).then(()=>location.reload());
 };
 
