@@ -14,31 +14,21 @@
     
     /* BOUTON PLANNING STYLE */
     .btn-planning-trigger {
-        background: rgba(212, 175, 55, 0.1);
+        background: linear-gradient(90deg, rgba(212,175,55,0.1), rgba(212,175,55,0.05));
         border: 1px solid rgba(212, 175, 55, 0.4);
         color: #d4af37;
-        padding: 12px;
-        border-radius: 15px;
+        padding: 14px;
+        border-radius: 18px;
         font-size: 11px;
         font-weight: 800;
         letter-spacing: 1px;
         text-transform: uppercase;
         margin-bottom: 15px;
-        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
     }
-
-    /* MODAL PLANNING */
-    #planningModal {
-        display: none;
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: #000;
-        z-index: 100;
-        border-radius: 38px;
-        flex-direction: column;
-    }
-    .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
-    iframe { width: 100%; flex-grow: 1; border: none; }
 
     .scroll{overflow-y:auto;scrollbar-width:none;}
     .scroll::-webkit-scrollbar{display:none}
@@ -52,20 +42,12 @@
 </head>
 <body class="flex items-center justify-center p-4">
 <div class="card">
-    <div id="planningModal">
-        <div class="modal-header">
-            <span class="gold font-bold text-xs uppercase">Planning Grey Corner</span>
-            <button onclick="togglePlanning(false)" class="bg-white/10 text-white px-4 py-1 rounded-full text-[10px] font-bold">FERMER</button>
-        </div>
-        <iframe src="https://grey-corner-app.pages.dev/"></iframe>
-    </div>
-
     <div class="text-center mb-4 flex-shrink-0">
         <img src="images/LOGO GREY CORNER.png" onclick="askAdmin()" class="h-14 mx-auto cursor-pointer">
     </div>
 
-    <button onclick="togglePlanning(true)" class="btn-planning-trigger">
-        📅 Consulter le planning
+    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning-trigger">
+        <span>📅</span> VOIR LE PLANNING SEMAINE
     </button>
 
     <div id="ticker" class="ticker"></div>
@@ -120,11 +102,6 @@ const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year
 const todayKey=dateStr.split('-')[2]+"/"+dateStr.split('-')[1];
 
 function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
-
-// --- GESTION PLANNING MODAL ---
-function togglePlanning(show) {
-    document.getElementById('planningModal').style.display = show ? 'flex' : 'none';
-}
 
 function askAdmin() {
     const code = prompt("Code Administrateur :");
