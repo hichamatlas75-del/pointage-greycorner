@@ -3,252 +3,169 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Grey Corner • Pointage</title>
+<title>Grey Corner • Pointage Master</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(circle at top,#111827 0%,#020617 100%);font-family:'Plus Jakarta Sans',sans-serif;touch-action:pan-y}
-.card{width:100%;max-width:420px;height:96vh;background:linear-gradient(180deg,#0b0e14,#030712);border-radius:40px;padding:18px;box-shadow:0 0 60px rgba(212,175,55,.25), inset 0 0 40px rgba(255,215,120,.08);border:1px solid rgba(212,175,55,.25);position:relative}
-.gold{color:#d4af37}
-.btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:26px;font-size:26px;box-shadow:0 10px 40px rgba(212,175,55,.4)}
-.btn-main:disabled{opacity:.25}
-.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
-.ticker{display:none;background:#7f1d1d;color:#fff;border-radius:12px;padding:10px;font-weight:700}
-.big-name{font-size:34px;font-weight:900;color:#f5d776;text-align:center;margin:20px 0}
+    html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(circle at top,#111827 0%,#020617 100%);font-family:'Plus Jakarta Sans',sans-serif;touch-action:pan-y}
+    .card{width:100%;max-width:420px;height:96vh;background:linear-gradient(180deg,#0b0e14,#030712);border-radius:40px;padding:18px;box-shadow:0 0 60px rgba(212,175,55,.25), inset 0 0 40px rgba(255,215,120,.08);border:1px solid rgba(212,175,55,.25);position:relative}
+    .gold{color:#d4af37}
+    .btn-main{background:linear-gradient(180deg,#f5d776,#b8942e);color:#111;font-weight:900;border-radius:28px;padding:26px;font-size:26px;box-shadow:0 10px 40px rgba(212,175,55,.4)}
+    .btn-main:disabled{opacity:.25}
+    .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .drawer-header{background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+    .drawer-header span{font-size:10px;font-weight:900;color:#d4af37;text-transform:uppercase;letter-spacing:1px}
+    .drawer-content{display:none;grid-template-columns:repeat(2, 1fr);gap:8px;padding:10px 0}
+    .drawer-content.active{display:grid}
+    .btn-staff{background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.12);height:46px;font-size:10px;font-weight:800;border-radius:12px;text-transform:uppercase;color:#f8fafc;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+    .big-name{font-size:34px;font-weight:900;color:#f5d776;text-align:center;margin:20px 0}
 </style>
 </head>
 <body class="flex items-center justify-center p-4">
 <div class="card flex flex-col">
-<div class="text-center mb-3">
-<img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto mb-2">
-<div class="gold font-extrabold text-xs uppercase">Système Master</div>
+    <div class="text-center mb-3">
+        <img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto mb-2">
+        <div class="gold font-extrabold text-xs uppercase">Système Master</div>
+    </div>
+    <div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
+    <div id="status" class="text-center text-sm text-gray-300 mb-3 uppercase font-bold tracking-widest text-[10px]">Choisi ton nom</div>
+    
+    <div id="selection" class="scroll flex-grow custom-scroll"></div>
+
+    <div id="action" class="hidden text-center flex-grow flex flex-col justify-center">
+        <div id="username" class="big-name">--</div>
+        <button id="btn" class="btn-main w-full" disabled>Pointer arrivée</button>
+        <button onclick="resetUser()" class="mt-8 text-xs text-gray-500 underline uppercase tracking-widest">Changer profil</button>
+    </div>
 </div>
-<div id="ticker" class="ticker text-center"></div>
-<div class="bg-white/5 rounded-xl p-2 text-center text-sm mb-3">Présents : <span id="presentCount" class="gold font-black">0</span></div>
-<div id="status" class="text-center text-sm text-gray-300 mb-3">Choisi ton nom</div>
-<div id="selection" class="scroll flex-grow"></div>
-<div id="action" class="hidden text-center">
-<div id="username" class="big-name">--</div>
-<button id="btn" class="btn-main w-full" disabled>Pointer arrivée</button>
-<button onclick="resetUser()" class="mt-6 text-xs text-gray-500 underline">Changer profil</button>
-</div>
-</div>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <script>
 const firebaseConfig={databaseURL:"https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CAFE_LAT=34.0343959,CAFE_LON=-5.0155941,RAYON_MAX=200;
-
-// Planning (heure prévue)
 const URL_PLANNING="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Planning";
 
-// Personnel (à compléter si besoin)
-const staff=["BENKHADA ABDESLAM","ENNHAILI SOUMIA","SALIL HOUDA","CHKAIRI YOUSSEF","ELKOBBI MOSTAFA","FILALI ABDERAFI","KHALOUQ RACHID"];
+const equipe = [
+    {n: "BENKHADA ABDESLAM", t: "caisse"}, {n: "ENNHAILI SOUMIA", t: "caisse"}, {n: "SALIL HOUDA", t: "caisse"},
+    {n: "CHKAIRI YOUSSEF", t: "bar"}, {n: "ELKOBBI MOSTAFA", t: "bar"}, {n: "FILALI ABDERAFI", t: "bar"}, {n: "KHALOUQ RACHID", t: "bar"},
+    {n: "BELQASSE KHAOULA", t: "cuisine"}, {n: "BOURAHMA ANAS", t: "cuisine"}, {n: "IDRISSI SAAD", t: "cuisine"}, {n: "LEMSSIEH JAWAD", t: "cuisine"}, {n: "MAJDOUB JIHANE", t: "cuisine"}, {n: "MOUJAHID IMANE", t: "cuisine"}, {n: "ZAIR FATIMA", t: "cuisine"},
+    {n: "ELGORRAMY ANISSA", t: "menage"}, {n: "ELGORRAMY SOUAD", t: "menage"}, {n: "ELMCHAOURI SOUAD", t: "menage"}, {n: "SBAI HAKIMA", t: "menage"},
+    {n: "ALAOUI LAZIZ", t: "service"}, {n: "GUETIBI AMINE", t: "service"}, {n: "HATTAF MOHAMED", t: "service"}, {n: "HIDARA YOUSSEF", t: "service"}, {n: "KAFOUNI ZAKARIAE", t: "service"}, {n: "MOHSINE YOUNESS", t: "service"}
+];
 
 let selected=localStorage.getItem('gc_staff_name');
-let initDone=false;
-
+let plannedStart=null;
 const dateStr=new Intl.DateTimeFormat('fr-CA',{timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const parts=dateStr.split('-');
-const todayKey=parts[2]+"/"+parts[1]; // dd/mm
+const todayKey=dateStr.split('-')[2]+"/"+dateStr.split('-')[1];
 
-let plannedStart=null; // "HH:MM" ou null
+function keyStaff(n){ return String(n||'').trim().replace(/\s+/g, '_').toUpperCase(); }
 
-function keyStaff(n){
-  return String(n||'').trim().toUpperCase().split(' ').filter(Boolean).join('_');
+async function loadPlannedTime(){
+    if(!selected) return;
+    try {
+        const r=await fetch(URL_PLANNING,{cache:'no-store'});
+        const txt=await r.text();
+        const json=JSON.parse(txt.substr(47).slice(0,-2));
+        let colIdx=-1;
+        const header = json.table.rows[0].c;
+        header.forEach((cell, idx) => { if(cell && (cell.v||cell.f||"").toString().includes(todayKey)) colIdx=idx; });
+        if(colIdx===-1) return;
+
+        const row = json.table.rows.find(r => r.c[0] && r.c[0].v.trim().toUpperCase() === selected.toUpperCase());
+        if(row && row.c[colIdx]) {
+            const val = row.c[colIdx].f || row.c[colIdx].v || "";
+            plannedStart = parseTime(val);
+        }
+    } catch(e) {}
 }
 
-function safeCell(cell){
-  if(!cell) return null;
-  if(cell.f!=null) return cell.f;
-  if(cell.v!=null) return cell.v;
-  return null;
+function parseTime(s){
+    let m = String(s).match(/(\d{1,2})[h:](\d{2})/i) || String(s).match(/(\d{1,2})/);
+    if(!m) return null;
+    let h = m[1].padStart(2,'0');
+    let min = m[2] || "00";
+    return h + ":" + min;
 }
 
-function parsePlannedStart(raw){
-  if(raw==null) return null;
-  const s=String(raw).trim();
-  if(!s) return null;
-  const up=s.toUpperCase();
-  if(up==="REPOS"||up==="R") return null;
-
-  // Cherche le premier horaire dans la cellule
-  let i=0;
-  while(i<s.length && !(s[i]>='0'&&s[i]<='9')) i++;
-  if(i>=s.length) return null;
-
-  // hour (1-2 digits)
-  let hStr="";
-  while(i<s.length && (s[i]>='0'&&s[i]<='9') && hStr.length<2){ hStr+=s[i]; i++; }
-  if(!hStr) return null;
-
-  // optional separator ':' or 'h'
-  while(i<s.length && s[i]===' ') i++;
-  let minStr="00";
-  if(i<s.length && (s[i]===':' || s[i]==='h' || s[i]==='H')){
-    i++;
-    while(i<s.length && s[i]===' ') i++;
-    const d1=(i<s.length)?s[i]:'';
-    const d2=(i+1<s.length)?s[i+1]:'';
-    if(d1>='0'&&d1<='9'&&d2>='0'&&d2<='9'){
-      minStr=d1+d2;
-    }else{
-      minStr="00";
-    }
-  }
-
-  let hh=parseInt(hStr,10);
-  let mm=parseInt(minStr,10);
-  if(Number.isNaN(hh)||Number.isNaN(mm)) return null;
-  hh=Math.max(0,Math.min(23,hh));
-  mm=Math.max(0,Math.min(59,mm));
-  const HH=String(hh).padStart(2,'0');
-  const MM=String(mm).padStart(2,'0');
-  return HH+":"+MM;
-}
-
-function toMinutes(hhmm){
-  if(!hhmm) return null;
-  const p=String(hhmm).split(':');
-  if(p.length!==2) return null;
-  const h=parseInt(p[0],10);
-  const m=parseInt(p[1],10);
-  if(Number.isNaN(h)||Number.isNaN(m)) return null;
-  return h*60+m;
-}
-
-async function loadPlannedTimeForSelected(){
-  plannedStart=null;
-  if(!selected) return null;
-
-  try{
-    const r=await fetch(URL_PLANNING,{cache:'no-store'});
-    const txt=await r.text();
-    const json=JSON.parse(txt.substr(47).slice(0,-2));
-
-    // col du jour
-    let colIdx=-1;
-    const header=(json.table && json.table.rows && json.table.rows[0] && json.table.rows[0].c) ? json.table.rows[0].c : [];
-    for(let idx=0; idx<header.length; idx++){
-      const v=safeCell(header[idx]);
-      if(v!=null && String(v).includes(todayKey)) { colIdx=idx; break; }
-    }
-    if(colIdx===-1) return null;
-
-    const target=String(selected).trim().toUpperCase();
-    const rows=(json.table && json.table.rows) ? json.table.rows : [];
-    for(const row of rows){
-      const nameVal=safeCell(row.c ? row.c[0] : null);
-      if(!nameVal) continue;
-      if(String(nameVal).trim().toUpperCase()===target){
-        const shiftVal=safeCell(row.c ? row.c[colIdx] : null);
-        plannedStart=parsePlannedStart(shiftVal);
-        return plannedStart;
-      }
-    }
-  }catch(e){
-    // silence
-  }
-  return null;
-}
-
-// --- REMPLACEZ VOTRE FONCTION init() PAR CELLE-CI ---
 function init() {
-    if (!initDone) {
-        db.ref('presences/' + dateStr).on('value', s => {
-            let c = 0;
-            const data = s.val() || {};
-            Object.values(data).forEach(e => { if (e && e.on) c++ });
-            document.getElementById('presentCount').innerText = c;
+    db.ref('presences/'+dateStr).on('value', s => {
+        const data = s.val() || {};
+        let c=0; Object.values(data).forEach(e=>{if(e&&e.on)c++});
+        document.getElementById('presentCount').innerText=c;
 
-            // Vérification automatique si l'utilisateur actuel est déjà pointé
-            if (selected) {
-                const myData = data[keyStaff(selected)];
-                if (myData && myData.hA) {
-                    const btn = document.getElementById('btn');
-                    btn.disabled = true;
-                    btn.innerText = "DÉJÀ POINTÉ (" + myData.hA + ") ✅";
-                    btn.style.background = "linear-gradient(180deg, #10b981, #059669)"; // Vert
-                    document.getElementById('status').innerHTML = '<span class="text-emerald-400 font-bold">Session validée pour aujourd\'hui</span>';
-                }
+        if (selected) {
+            const myData = data[keyStaff(selected)];
+            if (myData && myData.hA) {
+                const btn = document.getElementById('btn');
+                btn.disabled = true;
+                btn.innerText = "POINTÉ À " + myData.hA + " ✅";
+                btn.style.background = "linear-gradient(180deg, #10b981, #059669)";
+                document.getElementById('status').innerHTML = '<span class="text-emerald-400">SESSION VALIDÉE</span>';
             }
-        });
-        initDone = true;
-    }
+        }
+    });
 
     if (selected) {
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
-        loadPlannedTimeForSelected().finally(() => checkGPS());
+        loadPlannedTime().finally(() => checkGPS());
     } else {
         const sel = document.getElementById('selection');
-        sel.innerHTML = '';
-        staff.forEach(n => {
-            const b = document.createElement('button');
-            b.className = 'w-full mb-2 p-3 rounded-xl bg-white/5 text-white font-bold text-left flex justify-between';
-            b.innerHTML = `<span>${n}</span> <span class="gold">→</span>`;
-            b.onclick = () => { localStorage.setItem('gc_staff_name', n); location.reload() };
-            sel.appendChild(b);
+        ["caisse","bar","cuisine","menage","service"].forEach(cat => {
+            const h = document.createElement('div'); h.className="drawer-header";
+            h.innerHTML=`<span>${cat}</span><i class="gold">▼</i>`;
+            const cont = document.createElement('div'); cont.className="drawer-content";
+            h.onclick=()=> cont.classList.toggle('active');
+            equipe.filter(e => e.t === cat).forEach(emp => {
+                const b = document.createElement('button'); b.className="btn-staff";
+                b.innerText = emp.n;
+                b.onclick = () => { if(confirm(emp.n + " ?")) { localStorage.setItem('gc_staff_name', emp.n); location.reload(); }};
+                cont.appendChild(b);
+            });
+            sel.appendChild(h); sel.appendChild(cont);
         });
     }
 }
 
 function checkGPS(){
-  navigator.geolocation.getCurrentPosition(p=>{
-    const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON);
-    if(d<=RAYON_MAX){
-      const plannedTxt=plannedStart?(' • Heure prévue: <span class="gold font-black">'+plannedStart+'</span>'):'';
-      document.getElementById('status').innerHTML='<span class="text-green-400">Dans la zone</span>'+plannedTxt;
-      document.getElementById('btn').disabled=false;
-    }else{
-      document.getElementById('status').innerHTML='<span class="text-red-400">Hors zone '+Math.round(d)+'m</span>';
-      document.getElementById('btn').disabled=true;
-    }
-  },e=>{
-    document.getElementById('status').innerText='Autorise le GPS';
-  },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+    navigator.geolocation.getCurrentPosition(p=>{
+        const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON);
+        if(d<=RAYON_MAX){
+            document.getElementById('status').innerHTML=`<span class="text-green-400">DANS LA ZONE</span> ${plannedStart?' • PRÉVU: '+plannedStart:''}`;
+            document.getElementById('btn').disabled=false;
+        } else {
+            document.getElementById('status').innerHTML=`<span class="text-red-400">HORS ZONE (${Math.round(d)}m)</span>`;
+        }
+    }, null, {enableHighAccuracy:true});
 }
 
 function getDist(a,b,c,d){
-  const R=6371e3;
-  const dLat=(c-a)*Math.PI/180;
-  const dLon=(d-b)*Math.PI/180;
-  const q=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
+    const R=6371e3; const dLat=(c-a)*Math.PI/180; const dLon=(d-b)*Math.PI/180;
+    const q=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
 }
 
 document.getElementById('btn').onclick=()=>{
-  const t=new Date();
-  const h=String(t.getHours()).padStart(2,'0');
-  const m=String(t.getMinutes()).padStart(2,'0');
-  const actual=h+":"+m;
-
-  const plannedM=toMinutes(plannedStart);
-  const actualM=toMinutes(actual);
-
-  let retardMin=null;
-  let retard=false;
-  if(plannedM!==null && actualM!==null){
-    retardMin=Math.max(0, actualM-plannedM);
-    retard=retardMin>0;
-  }
-
-  db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
-    on:true,
-    hA: actual,
-    hP: plannedStart || null,
-    retard: retard,
-    retardMin: retardMin,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  }).then(()=>location.reload());
+    const t=new Date();
+    const actual=t.getHours().toString().padStart(2,'0')+":"+t.getMinutes().toString().padStart(2,'0');
+    let retard = false;
+    if(plannedStart){
+        const [ph, pm] = plannedStart.split(':').map(Number);
+        const [ah, am] = actual.split(':').map(Number);
+        if((ah > ph) || (ah === ph && am > pm)) retard = true;
+    }
+    db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
+        on:true, hA:actual, hP:plannedStart, retard:retard, timestamp:firebase.database.ServerValue.TIMESTAMP
+    }).then(()=>location.reload());
 };
 
 function resetUser(){localStorage.clear();location.reload();}
-
 init();
 </script>
 </body>
