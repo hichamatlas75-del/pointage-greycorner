@@ -298,41 +298,49 @@
       showRetardPanel();
     }
 
-    function getMonthRangeFromDateStr(dateStrYYYYMMDD){
-      const [Y, M] = dateStrYYYYMMDD.split('-'); // YYYY-MM-DD
-      const year = Number(Y);
-      const month = Number(M); // 1..12
-      const lastDay = new Date(year, month, 0).getDate();
-      const startKey = `${Y}-${M}-01`;
-      const endKey = `${Y}-${M}-${String(lastDay).padStart(2,'0')}`;
-      return { startKey, endKey };
+    // ✅ robuste: filtre par préfixe YYYY-MM- et compte uniquement les jours pointés (hA)
+    function getMonthPrefix(dateStrYYYYMMDD){
+      const [Y, M] = dateStrYYYYMMDD.split('-');
+      return `${Y}-${M}-`;
     }
 
     function setupMonthlyRetardListener(staffName){
       const staffKey = keyStaff(staffName);
-      const { startKey, endKey } = getMonthRangeFromDateStr(dateStr);
+      const prefix = getMonthPrefix(dateStr);
 
-      const q = db.ref('presences').orderByKey().startAt(startKey).endAt(endKey);
+      const q = db.ref('presences')
+        .orderByKey()
+        .startAt(prefix)
+        .endAt(prefix + "\uf8ff");
 
       q.on('value', snap => {
         let sum = 0;
+
         snap.forEach(daySnap => {
           const v = daySnap.child(staffKey).val();
-          if(v && typeof v.retardMin === 'number') sum += v.retardMin;
-          else if(v && v.retardMin != null){
-            const n = Number(v.retardMin);
-            if(!Number.isNaN(n)) sum += n;
-          }
+          if(!v) return;
+
+          // ✅ uniquement jours pointés
+          if(!v.hA) return;
+
+          const n = (typeof v.retardMin === 'number') ? v.retardMin : Number(v.retardMin);
+          if(!Number.isNaN(n) && n > 0) sum += n;
         });
+
         setMonthRetard(sum);
       });
     }
 
     function setupTodayRetardListener(staffName){
       const staffKey = keyStaff(staffName);
-      db.ref('presences/'+dateStr+'/'+staffKey+'/retardMin').on('value', s => {
-        const v = s.val();
-        setDayRetard(v || 0);
+      db.ref('presences/'+dateStr+'/'+staffKey).on('value', s => {
+        const v = s.val() || {};
+        // ✅ uniquement si pointé
+        if(!v.hA){
+          setDayRetard(0);
+          return;
+        }
+        setDayRetard(v.retardMin || 0);
       });
     }
 
@@ -502,7 +510,7 @@
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
 
-        // listeners retards (mois + jour)
+        // retards (mois + jour)
         setupMonthlyRetardListener(selected);
         setupTodayRetardListener(selected);
 
@@ -564,7 +572,7 @@
 
         // MODE NORMAL: déjà pointé => pas d'écrasement
         if(current.hA && !isAdminSession){
-          return; // annule commit
+          return;
         }
 
         const hP = current.hP || null;
