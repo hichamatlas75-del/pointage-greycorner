@@ -182,7 +182,15 @@
       </div>
 
       <div id="action" class="hidden flex flex-col flex-grow justify-center">
-        <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-8">--</div>
+        <!-- Retards (mois + jour) -->
+        <div id="retard-panel" class="text-center mb-2 hidden">
+          <div class="inline-flex flex-col gap-1 px-3 py-2 rounded-2xl border border-white/10 bg-white/5">
+            <div id="month-retard-text" class="text-[10px] font-black text-white/80">⏱️ Retard mois : --</div>
+            <div id="day-retard-text" class="text-[10px] font-black text-white/80">⏱️ Retard jour : --</div>
+          </div>
+        </div>
+
+        <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-6">--</div>
 
         <div id="pointage-zone">
           <div id="status" class="text-center text-[10px] mb-4 muted uppercase tracking-widest">Localisation GPS...</div>
@@ -265,6 +273,67 @@
       if(a === null || p === null) return null;
       const diff = a - p;
       return { late: diff > 0, minutesLate: Math.max(0, diff) };
+    }
+
+    // --- Panel retards (jour + mois) ---
+    function showRetardPanel(){
+      document.getElementById('retard-panel').classList.remove('hidden');
+    }
+
+    function setDayRetard(min){
+      const v = Number(min || 0);
+      const el = document.getElementById('day-retard-text');
+      if(v > 0){
+        el.innerHTML = `⏱️ Retard jour : <span class="text-red-300">+${v} min</span>`;
+      }else{
+        el.innerHTML = `⏱️ Retard jour : <span class="text-emerald-300">0 min</span>`;
+      }
+      showRetardPanel();
+    }
+
+    function setMonthRetard(min){
+      const v = Number(min || 0);
+      document.getElementById('month-retard-text').innerHTML =
+        `⏱️ Retard mois : <span class="text-yellow-200">${v} min</span>`;
+      showRetardPanel();
+    }
+
+    function getMonthRangeFromDateStr(dateStrYYYYMMDD){
+      const [Y, M] = dateStrYYYYMMDD.split('-'); // YYYY-MM-DD
+      const year = Number(Y);
+      const month = Number(M); // 1..12
+      const lastDay = new Date(year, month, 0).getDate();
+      const startKey = `${Y}-${M}-01`;
+      const endKey = `${Y}-${M}-${String(lastDay).padStart(2,'0')}`;
+      return { startKey, endKey };
+    }
+
+    function setupMonthlyRetardListener(staffName){
+      const staffKey = keyStaff(staffName);
+      const { startKey, endKey } = getMonthRangeFromDateStr(dateStr);
+
+      const q = db.ref('presences').orderByKey().startAt(startKey).endAt(endKey);
+
+      q.on('value', snap => {
+        let sum = 0;
+        snap.forEach(daySnap => {
+          const v = daySnap.child(staffKey).val();
+          if(v && typeof v.retardMin === 'number') sum += v.retardMin;
+          else if(v && v.retardMin != null){
+            const n = Number(v.retardMin);
+            if(!Number.isNaN(n)) sum += n;
+          }
+        });
+        setMonthRetard(sum);
+      });
+    }
+
+    function setupTodayRetardListener(staffName){
+      const staffKey = keyStaff(staffName);
+      db.ref('presences/'+dateStr+'/'+staffKey+'/retardMin').on('value', s => {
+        const v = s.val();
+        setDayRetard(v || 0);
+      });
     }
 
     // --- RESET ---
@@ -433,6 +502,10 @@
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
 
+        // listeners retards (mois + jour)
+        setupMonthlyRetardListener(selected);
+        setupTodayRetardListener(selected);
+
         checkGPS();
 
         db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
@@ -524,7 +597,7 @@
           return;
         }
 
-        btn.disabled = true; // laisse Firebase UI afficher POINTÉ
+        btn.disabled = true;
       });
     };
 
