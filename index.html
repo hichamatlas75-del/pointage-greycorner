@@ -182,10 +182,9 @@
       </div>
 
       <div id="action" class="hidden flex flex-col flex-grow justify-center">
-        <!-- Retards (mois + jour) -->
+        <!-- Retard du jour -->
         <div id="retard-panel" class="text-center mb-2 hidden">
-          <div class="inline-flex flex-col gap-1 px-3 py-2 rounded-2xl border border-white/10 bg-white/5">
-            <div id="month-retard-text" class="text-[10px] font-black text-white/80">⏱️ Retard mois : --</div>
+          <div class="inline-flex px-3 py-2 rounded-2xl border border-white/10 bg-white/5">
             <div id="day-retard-text" class="text-[10px] font-black text-white/80">⏱️ Retard jour : --</div>
           </div>
         </div>
@@ -275,7 +274,7 @@
       return { late: diff > 0, minutesLate: Math.max(0, diff) };
     }
 
-    // --- Panel retards (jour + mois) ---
+    // --- Panel retard jour ---
     function showRetardPanel(){
       document.getElementById('retard-panel').classList.remove('hidden');
     }
@@ -289,49 +288,6 @@
         el.innerHTML = `⏱️ Retard jour : <span class="text-emerald-300">0 min</span>`;
       }
       showRetardPanel();
-    }
-
-    function setMonthRetard(min){
-      const v = Number(min || 0);
-      document.getElementById('month-retard-text').innerHTML =
-        `⏱️ Retard mois : <span class="text-yellow-200">${v} min</span>`;
-      showRetardPanel();
-    }
-
-    // ✅ Cumul mois ROBUSTE: charge l'année puis filtre par mois en JS (accepte 2026-2-3 ou 2026-02-03)
-    // ✅ Ne compte que les jours pointés (hA)
-    function setupMonthlyRetardListener(staffName){
-      const staffKey = keyStaff(staffName);
-
-      const [Y, M] = dateStr.split('-'); // "YYYY-MM-DD"
-      const year = String(Y);
-      const monthNum = Number(M);
-
-      const q = db.ref('presences')
-        .orderByKey()
-        .startAt(year + '-')
-        .endAt(year + '-\uf8ff');
-
-      q.on('value', snap => {
-        let sum = 0;
-
-        snap.forEach(daySnap => {
-          const key = daySnap.key || ""; // ex "2026-2-3" ou "2026-02-03"
-          const parts = key.split('-');
-          if(parts.length < 3) return;
-
-          const m = Number(parts[1]);
-          if(m !== monthNum) return;
-
-          const v = daySnap.child(staffKey).val();
-          if(!v || !v.hA) return;
-
-          const n = (typeof v.retardMin === 'number') ? v.retardMin : Number(v.retardMin);
-          if(!Number.isNaN(n) && n > 0) sum += n;
-        });
-
-        setMonthRetard(sum);
-      });
     }
 
     // ✅ Retard jour: uniquement si pointé
@@ -513,8 +469,7 @@
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
 
-        // retards (mois + jour)
-        setupMonthlyRetardListener(selected);
+        // retard jour
         setupTodayRetardListener(selected);
 
         checkGPS();
