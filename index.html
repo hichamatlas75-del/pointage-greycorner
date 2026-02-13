@@ -298,30 +298,33 @@
       showRetardPanel();
     }
 
-    // ✅ robuste: filtre par préfixe YYYY-MM- et compte uniquement les jours pointés (hA)
-    function getMonthPrefix(dateStrYYYYMMDD){
-      const [Y, M] = dateStrYYYYMMDD.split('-');
-      return `${Y}-${M}-`;
-    }
-
+    // ✅ Cumul mois ROBUSTE: charge l'année puis filtre par mois en JS (accepte 2026-2-3 ou 2026-02-03)
+    // ✅ Ne compte que les jours pointés (hA)
     function setupMonthlyRetardListener(staffName){
       const staffKey = keyStaff(staffName);
-      const prefix = getMonthPrefix(dateStr);
+
+      const [Y, M] = dateStr.split('-'); // "YYYY-MM-DD"
+      const year = String(Y);
+      const monthNum = Number(M);
 
       const q = db.ref('presences')
         .orderByKey()
-        .startAt(prefix)
-        .endAt(prefix + "\uf8ff");
+        .startAt(year + '-')
+        .endAt(year + '-\uf8ff');
 
       q.on('value', snap => {
         let sum = 0;
 
         snap.forEach(daySnap => {
-          const v = daySnap.child(staffKey).val();
-          if(!v) return;
+          const key = daySnap.key || ""; // ex "2026-2-3" ou "2026-02-03"
+          const parts = key.split('-');
+          if(parts.length < 3) return;
 
-          // ✅ uniquement jours pointés
-          if(!v.hA) return;
+          const m = Number(parts[1]);
+          if(m !== monthNum) return;
+
+          const v = daySnap.child(staffKey).val();
+          if(!v || !v.hA) return;
 
           const n = (typeof v.retardMin === 'number') ? v.retardMin : Number(v.retardMin);
           if(!Number.isNaN(n) && n > 0) sum += n;
@@ -331,11 +334,11 @@
       });
     }
 
+    // ✅ Retard jour: uniquement si pointé
     function setupTodayRetardListener(staffName){
       const staffKey = keyStaff(staffName);
       db.ref('presences/'+dateStr+'/'+staffKey).on('value', s => {
         const v = s.val() || {};
-        // ✅ uniquement si pointé
         if(!v.hA){
           setDayRetard(0);
           return;
