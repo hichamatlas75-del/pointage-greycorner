@@ -44,6 +44,31 @@
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
+  /* ✅ Bouton planning (bleu nuit premium) */
+  .btn-secondary{
+    background: linear-gradient(180deg,#1C2A3A,#162230);
+    border:1px solid rgba(255,255,255,.08);
+    color:#E6EDF5;
+    padding:14px 14px;
+    border-radius:18px;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    transition:.25s;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.35);
+  }
+  .btn-secondary:hover{
+    background: linear-gradient(180deg,#24364B,#1C2A3A);
+    box-shadow:0 14px 30px rgba(0,0,0,.45);
+  }
+  .btn-secondary:active{ transform:scale(.99); }
+
   .btn-main{
     background: linear-gradient(180deg,#ffd68a,#ffb347);
     color:#1a1305;
@@ -62,39 +87,47 @@
     box-shadow:0 6px 12px rgba(0,0,0,.5) inset;
   }
 
-  .btn-secondary{
-  background: linear-gradient(180deg,#1C2A3A,#162230);
-  border:1px solid rgba(255,255,255,.08);
-  color:#E6EDF5;
-  padding:14px;
-  border-radius:18px;
-  font-size:11px;
-  font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  transition:.25s;
-}
-
-.btn-secondary:hover{
-  background: linear-gradient(180deg,#24364B,#1C2A3A);
-  box-shadow:0 8px 18px rgba(0,0,0,.45);
-}
-
-  /* --- Bandeau fixe (pas de défilement) --- */
-  .banner{
+  /* ✅ Bandeau fixe + bouton Actualiser */
+  .banner-wrap{
     display:none;
+    gap:10px;
+    align-items:stretch;
+    margin-bottom:12px;
+  }
+  .banner{
+    flex:1;
     border-radius:16px;
     padding:12px 14px;
-    margin-bottom:12px;
     font-weight:900;
     font-size:13px;
     line-height:1.25;
     text-align:center;
     border:1px solid rgba(255,255,255,.10);
-    transition: all .22s ease; /* élargit / rétrécit selon le contenu */
+    transition: all .22s ease;
     word-break:break-word;
     overflow-wrap:anywhere;
   }
+  .btn-refresh{
+    width:44px;
+    min-width:44px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.2s;
+    user-select:none;
+  }
+  .btn-refresh:hover{
+    background:rgba(255,255,255,.08);
+    border-color:rgba(255,204,115,.28);
+    box-shadow:0 10px 22px rgba(0,0,0,.35);
+  }
+  .btn-refresh:active{ transform:scale(.98); }
+  .spin{ animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
 
   .msg-info{
     background:rgba(255,200,120,.10);
@@ -106,15 +139,11 @@
     color:#fff;
     border:1px solid #ff5a5a;
   }
-
-  /* flash doré (info) */
   .flash-gold{ animation:flashGold 1.2s infinite; }
   @keyframes flashGold{
     0%,100%{ box-shadow:0 0 0 rgba(255,204,115,0); filter:saturate(1); opacity:1; }
     50%{ box-shadow:0 0 18px rgba(255,204,115,.35), 0 0 40px rgba(255,179,71,.18); filter:saturate(1.25); opacity:.88; }
   }
-
-  /* flash rouge brique (urgent) */
   .flash-brick{ animation:flashBrick .9s infinite; }
   @keyframes flashBrick{
     0%,100%{ box-shadow:0 0 0 rgba(255,90,90,0); opacity:1; }
@@ -182,11 +211,17 @@
     </div>
 
     <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-secondary mb-4">
-      📅 Consulter le Planning
+      <span style="font-size:16px; line-height:1">🗓️</span>
+      <span>CONSULTER LE PLANNING</span>
     </button>
 
-    <!-- ✅ Bandeau fixe -->
-    <div id="banner" class="banner"></div>
+    <!-- ✅ Bandeau + actualiser -->
+    <div id="banner-wrap" class="banner-wrap">
+      <div id="banner" class="banner"></div>
+      <div id="btn-refresh" class="btn-refresh" title="Actualiser le message">
+        <span id="refresh-ico" style="font-size:18px; line-height:1">⟳</span>
+      </div>
+    </div>
 
     <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden">
       <div id="selection" class="scroll flex-grow">
@@ -194,7 +229,6 @@
       </div>
 
       <div id="action" class="hidden flex flex-col flex-grow justify-center">
-        <!-- Retard du jour -->
         <div id="retard-panel" class="text-center mb-2 hidden">
           <div class="inline-flex px-3 py-2 rounded-2xl border border-white/10 bg-white/5">
             <div id="day-retard-text" class="text-[10px] font-black text-white/80">⏱️ Retard jour : --</div>
@@ -237,7 +271,6 @@
 
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
-    // ✅ Sheet fixe dédiée au bandeau
     // Ligne 1: A=TYPE (INFO/URGENT), B=MESSAGE
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
@@ -258,11 +291,9 @@
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
-    // --- Flags (admin + anti double clic) ---
     let isAdminSession = false;
     let isPunching = false;
 
-    // ---- Heure Casablanca + retard minutes ----
     function nowCasablancaHHMM(){
       const parts = new Intl.DateTimeFormat('fr-FR',{
         timeZone:'Africa/Casablanca',
@@ -289,7 +320,6 @@
       return { late: diff > 0, minutesLate: Math.max(0, diff) };
     }
 
-    // --- Panel retard jour ---
     function showRetardPanel(){
       document.getElementById('retard-panel').classList.remove('hidden');
     }
@@ -305,7 +335,6 @@
       showRetardPanel();
     }
 
-    // ✅ Retard jour: uniquement si pointé
     function setupTodayRetardListener(staffName){
       const staffKey = keyStaff(staffName);
       db.ref('presences/'+dateStr+'/'+staffKey).on('value', s => {
@@ -318,7 +347,6 @@
       });
     }
 
-    // --- RESET ---
     function triggerReset(target){
       const msg = target === 'all' ? "Réinitialiser TOUS les mobiles ?" : `Réinitialiser le mobile de ${target} ?`;
       if(confirm(msg)){
@@ -347,7 +375,6 @@
       });
     }
 
-    // --- Admin ---
     function askAdmin(){
       if(prompt("Code Admin :") === "2026"){
         isAdminSession = true;
@@ -377,45 +404,56 @@
       }
     }
 
-    // --- Bandeau (sheet fixe) - PAS de défilement ---
-    async function loadBanner(){
+    // ✅ Bandeau fixe (A=TYPE, B=MESSAGE) + refresh manuel
+    let bannerBusy = false;
+
+    async function loadBanner(force=false){
+      if(bannerBusy && !force) return;
+      bannerBusy = true;
+
+      const wrap = document.getElementById('banner-wrap');
+      const banner = document.getElementById('banner');
+      const ico = document.getElementById('refresh-ico');
+
       try{
+        ico.classList.add('spin');
+
         const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
         const t = await r.text();
         const json = JSON.parse(t.substr(47).slice(0,-2));
         const rows = json?.table?.rows || [];
 
-        // Ligne 1: A=type, B=message
         const typeRaw = rows[0]?.c?.[0]?.v || "";
         const msgRaw  = rows[0]?.c?.[1]?.v || "";
 
         const type = String(typeRaw || "").trim().toUpperCase();
         const msg  = String(msgRaw  || "").trim();
 
-        const banner = document.getElementById('banner');
-
         if(msg){
           banner.textContent = msg;
-          banner.style.display = "block";
+          wrap.style.display = "flex";
 
-          // reset classes
           banner.className = "banner";
-
           const isUrgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
+
           if(isUrgent){
             banner.classList.add("msg-urgent","flash-brick");
           }else{
             banner.classList.add("msg-info","flash-gold");
           }
         }else{
-          banner.style.display = "none";
+          wrap.style.display = "none";
         }
       }catch(e){
-        // non bloquant
+        // non bloquant : si erreur réseau, on garde l'ancien affichage
+      }finally{
+        ico.classList.remove('spin');
+        bannerBusy = false;
       }
     }
 
-    // --- UI Liste ---
+    document.getElementById('btn-refresh').onclick = () => loadBanner(true);
+
     function genererListeUI(){
       const sel = document.getElementById('selection');
       ["caisse","bar","cuisine","menage","service"].forEach(cat => {
@@ -448,7 +486,6 @@
       });
     }
 
-    // --- GPS ---
     function checkGPS(){
       const status = document.getElementById('status');
 
@@ -487,10 +524,9 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
-    // --- INIT ---
     function init(){
-      loadBanner();
-      setInterval(loadBanner, 30000); // refresh auto 30s
+      loadBanner(true);
+      setInterval(loadBanner, 30000);
 
       if(selected){
         document.getElementById('selection').classList.add('hidden');
@@ -540,7 +576,6 @@
       }
     }
 
-    // --- POINTAGE (anti double clic + pas d'écrasement hA sauf admin) ---
     document.getElementById('btn').onclick = () => {
       if(isPunching) return;
       isPunching = true;
