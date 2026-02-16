@@ -78,26 +78,22 @@
     border-color:rgba(255,180,60,.25);
   }
 
-  /* --- Ticker --- */
-  .ticker-container{
+  /* --- Bandeau fixe (pas de défilement) --- */
+  .banner{
     display:none;
-    overflow:hidden;
-    white-space:nowrap;
-    border-radius:14px;
-    padding:10px 12px;
+    border-radius:16px;
+    padding:12px 14px;
     margin-bottom:12px;
-    font-weight:800;
+    font-weight:900;
     font-size:13px;
-    position:relative;
+    line-height:1.25;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.10);
+    transition: all .22s ease; /* élargit / rétrécit selon le contenu */
+    word-break:break-word;
+    overflow-wrap:anywhere;
   }
-  .ticker-text{
-    display:inline-block;
-    padding-left:100%;
-    animation:scroll-left 15s linear infinite;
-  }
-  @keyframes scroll-left{ 0%{transform:translateX(0)} 100%{transform:translateX(-100%)} }
 
-  /* états */
   .msg-info{
     background:rgba(255,200,120,.10);
     color:#ffd68a;
@@ -110,35 +106,17 @@
   }
 
   /* flash doré (info) */
-  .flash-gold{
-    animation:flashGold 1.2s infinite;
-  }
+  .flash-gold{ animation:flashGold 1.2s infinite; }
   @keyframes flashGold{
-    0%,100%{
-      box-shadow:0 0 0 rgba(255,204,115,0);
-      filter:saturate(1);
-      opacity:1;
-    }
-    50%{
-      box-shadow:0 0 18px rgba(255,204,115,.35), 0 0 40px rgba(255,179,71,.18);
-      filter:saturate(1.25);
-      opacity:.85;
-    }
+    0%,100%{ box-shadow:0 0 0 rgba(255,204,115,0); filter:saturate(1); opacity:1; }
+    50%{ box-shadow:0 0 18px rgba(255,204,115,.35), 0 0 40px rgba(255,179,71,.18); filter:saturate(1.25); opacity:.88; }
   }
 
   /* flash rouge brique (urgent) */
-  .flash-brick{
-    animation:flashBrick .9s infinite;
-  }
+  .flash-brick{ animation:flashBrick .9s infinite; }
   @keyframes flashBrick{
-    0%,100%{
-      box-shadow:0 0 0 rgba(255,90,90,0);
-      opacity:1;
-    }
-    50%{
-      box-shadow:0 0 18px rgba(255,90,90,.35), 0 0 42px rgba(160,30,30,.25);
-      opacity:.75;
-    }
+    0%,100%{ box-shadow:0 0 0 rgba(255,90,90,0); opacity:1; }
+    50%{ box-shadow:0 0 18px rgba(255,90,90,.35), 0 0 42px rgba(160,30,30,.25); opacity:.78; }
   }
 
   .drawer-header{
@@ -205,9 +183,8 @@
       📅 Consulter le Planning
     </button>
 
-    <div id="ticker-container" class="ticker-container">
-      <div id="ticker-text" class="ticker-text"></div>
-    </div>
+    <!-- ✅ Bandeau fixe -->
+    <div id="banner" class="banner"></div>
 
     <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden">
       <div id="selection" class="scroll flex-grow">
@@ -259,7 +236,7 @@
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
     // ✅ Sheet fixe dédiée au bandeau
-    // Format recommandé (ligne 1): A=TYPE (INFO/URGENT), B=MESSAGE
+    // Ligne 1: A=TYPE (INFO/URGENT), B=MESSAGE
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
     const equipe = [
@@ -398,39 +375,38 @@
       }
     }
 
-    // --- Ticker (sheet fixe) ---
-    async function loadTicker(){
+    // --- Bandeau (sheet fixe) - PAS de défilement ---
+    async function loadBanner(){
       try{
         const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
         const t = await r.text();
         const json = JSON.parse(t.substr(47).slice(0,-2));
         const rows = json?.table?.rows || [];
 
-        // ✅ A=type, B=message (ligne 1)
+        // Ligne 1: A=type, B=message
         const typeRaw = rows[0]?.c?.[0]?.v || "";
         const msgRaw  = rows[0]?.c?.[1]?.v || "";
 
         const type = String(typeRaw || "").trim().toUpperCase();
         const msg  = String(msgRaw  || "").trim();
 
-        const container = document.getElementById('ticker-container');
-        const textElem = document.getElementById('ticker-text');
+        const banner = document.getElementById('banner');
 
         if(msg){
-          textElem.innerText = msg;
-          container.style.display = "block";
+          banner.textContent = msg;
+          banner.style.display = "block";
 
           // reset classes
-          container.className = "ticker-container";
+          banner.className = "banner";
 
           const isUrgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
           if(isUrgent){
-            container.classList.add("msg-urgent","flash-brick");   // 🔴 urgent + flash rouge brique
+            banner.classList.add("msg-urgent","flash-brick");
           }else{
-            container.classList.add("msg-info","flash-gold");      // 🟡 info + flash doré
+            banner.classList.add("msg-info","flash-gold");
           }
         }else{
-          container.style.display = "none";
+          banner.style.display = "none";
         }
       }catch(e){
         // non bloquant
@@ -511,17 +487,15 @@
 
     // --- INIT ---
     function init(){
-      loadTicker();                 // ✅ 1er chargement bandeau
-      setInterval(loadTicker, 30000); // ✅ refresh auto toutes les 30s
+      loadBanner();
+      setInterval(loadBanner, 30000); // refresh auto 30s
 
       if(selected){
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').innerText = selected;
 
-        // retard jour
         setupTodayRetardListener(selected);
-
         checkGPS();
 
         db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
@@ -578,7 +552,6 @@
       ref.transaction(current => {
         current = current || {};
 
-        // MODE NORMAL: déjà pointé => pas d'écrasement
         if(current.hA && !isAdminSession){
           return;
         }
