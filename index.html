@@ -11,7 +11,9 @@
   html,body{
     height:100%;
     margin:0;
-    overflow:hidden;
+    /* ✅ permettre scroll + bannière sticky visible même après pointage */
+    overflow-y:auto;
+    overflow-x:hidden;
     background:
       radial-gradient(1200px 600px at 50% -10%, rgba(255,180,60,0.08), transparent 60%),
       linear-gradient(180deg,#02040a,#050816 40%,#02040a);
@@ -22,7 +24,7 @@
   .card{
     width:100%;
     max-width:420px;
-    height:96vh;
+    min-height:96vh;
     border-radius:42px;
     padding:18px;
     display:flex;
@@ -44,30 +46,30 @@
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
-  /* ✅ Bouton planning (bleu nuit premium) */
-  .btn-secondary{
-    background: linear-gradient(180deg,#1C2A3A,#162230);
-    border:1px solid rgba(255,255,255,.08);
-    color:#E6EDF5;
-    padding:14px 14px;
-    border-radius:18px;
-    font-size:11px;
+  /* ✅ Bouton planning bleu vif (forcé) */
+  .btn-planning{
+    background: linear-gradient(180deg,#2F7BFF,#1A4ED8) !important;
+    border:1px solid rgba(255,255,255,.15) !important;
+    color:#ffffff !important;
+    padding:16px 14px;
+    border-radius:22px;
+    font-size:12px;
     font-weight:900;
     text-transform:uppercase;
-    letter-spacing:.05em;
-    transition:.25s;
+    letter-spacing:.06em;
     width:100%;
     display:flex;
     align-items:center;
     justify-content:center;
     gap:10px;
-    box-shadow: 0 10px 22px rgba(0,0,0,.35);
+    box-shadow:0 14px 30px rgba(0,0,0,.45), inset 0 -3px 0 rgba(0,0,0,.25);
+    transition:.25s;
   }
-  .btn-secondary:hover{
-    background: linear-gradient(180deg,#24364B,#1C2A3A);
-    box-shadow:0 14px 30px rgba(0,0,0,.45);
+  .btn-planning:hover{
+    background: linear-gradient(180deg,#4C90FF,#2F7BFF) !important;
+    box-shadow:0 18px 38px rgba(0,0,0,.55);
   }
-  .btn-secondary:active{ transform:scale(.99); }
+  .btn-planning:active{ transform:scale(.98); }
 
   .btn-main{
     background: linear-gradient(180deg,#ffd68a,#ffb347);
@@ -87,13 +89,24 @@
     box-shadow:0 6px 12px rgba(0,0,0,.5) inset;
   }
 
-  /* ✅ Bandeau fixe + bouton Actualiser */
+  /* ✅ Bandeau fixe + refresh manuel + sticky (visible partout) */
   .banner-wrap{
     display:none;
     gap:10px;
     align-items:stretch;
-    margin-bottom:12px;
+    margin:12px 0 12px 0;
+
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:linear-gradient(180deg,rgba(2,4,10,.95),rgba(2,4,10,.70));
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    padding-top:6px;
+    padding-bottom:6px;
+    border-radius:18px;
   }
+
   .banner{
     flex:1;
     border-radius:16px;
@@ -107,6 +120,7 @@
     word-break:break-word;
     overflow-wrap:anywhere;
   }
+
   .btn-refresh{
     width:44px;
     min-width:44px;
@@ -210,12 +224,13 @@
       <img src="images/LOGO GREY CORNER.png" onclick="askAdmin()" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
     </div>
 
-    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-secondary mb-4">
+    <!-- ✅ Planning bleu vif -->
+    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-3">
       <span style="font-size:16px; line-height:1">🗓️</span>
       <span>CONSULTER LE PLANNING</span>
     </button>
 
-    <!-- ✅ Bandeau + actualiser -->
+    <!-- ✅ Bandeau sticky (visible même après pointage) + refresh -->
     <div id="banner-wrap" class="banner-wrap">
       <div id="banner" class="banner"></div>
       <div id="btn-refresh" class="btn-refresh" title="Actualiser le message">
@@ -404,7 +419,7 @@
       }
     }
 
-    // ✅ Bandeau fixe (A=TYPE, B=MESSAGE) + refresh manuel
+    // ✅ Bandeau fixe + refresh manuel + auto 30s
     let bannerBusy = false;
 
     async function loadBanner(force=false){
@@ -435,7 +450,6 @@
 
           banner.className = "banner";
           const isUrgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
-
           if(isUrgent){
             banner.classList.add("msg-urgent","flash-brick");
           }else{
@@ -445,7 +459,7 @@
           wrap.style.display = "none";
         }
       }catch(e){
-        // non bloquant : si erreur réseau, on garde l'ancien affichage
+        // non bloquant
       }finally{
         ico.classList.remove('spin');
         bannerBusy = false;
