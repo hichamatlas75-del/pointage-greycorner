@@ -241,6 +241,32 @@
     width:100%;
     margin-top:10px;
   }
+
+  /* ✅ NEW: compteur "déjà pointé" (accueil) */
+  .punch-counter{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:0 0 10px 0;
+  }
+  .punch-counter .label{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:rgba(229,231,235,.70);
+    white-space:nowrap;
+  }
+  .punch-counter .val{
+    font-size:12px;
+    font-weight:900;
+    color:#ffd68a;
+  }
 </style>
 </head>
 
@@ -261,6 +287,12 @@
       <span style="font-size:16px; line-height:1">🌙</span>
       <span>MENU RAMADAN</span>
     </button>
+
+    <!-- ✅ NEW: Compteur accueil (visible uniquement avant sélection) -->
+    <div id="punch-counter" class="punch-counter hidden">
+      <div class="label">Déjà pointés</div>
+      <div class="val"><span id="punch-count">0</span> / <span id="punch-total">0</span></div>
+    </div>
 
     <!-- ✅ Bandeau sticky (visible même après pointage) + refresh -->
     <div id="banner-wrap" class="banner-wrap">
@@ -570,9 +602,43 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
+    // ✅ NEW: compteur "personnes déjà pointées" (accueil uniquement)
+    function setupPunchCounter(){
+      const wrap = document.getElementById('punch-counter');
+      const countEl = document.getElementById('punch-count');
+      const totalEl = document.getElementById('punch-total');
+
+      // Total = taille de l'équipe (ou filtrage spécifique si tu veux exclure quelqu’un)
+      totalEl.textContent = String(equipe.length);
+
+      // N'afficher que sur la page d'accueil (avant sélection)
+      if(selected){
+        wrap.classList.add('hidden');
+        return;
+      }else{
+        wrap.classList.remove('hidden');
+      }
+
+      db.ref('presences/'+dateStr).on('value', s => {
+        const data = s.val() || {};
+        let c = 0;
+
+        // Compte uniquement les personnes de "equipe" qui ont hA
+        equipe.forEach(emp => {
+          const p = data[keyStaff(emp.n)];
+          if(p && p.hA) c++;
+        });
+
+        countEl.textContent = String(c);
+      });
+    }
+
     function init(){
       loadBanner(true);
       setInterval(loadBanner, 30000);
+
+      // ✅ NEW: init compteur (ne touche pas aux autres fonctionnalités)
+      setupPunchCounter();
 
       if(selected){
         document.getElementById('selection').classList.add('hidden');
