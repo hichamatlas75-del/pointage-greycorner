@@ -71,6 +71,32 @@
   }
   .btn-planning:active{ transform:scale(.98); }
 
+  /* ✅ Bouton Menu Ramadan discret */
+  .btn-ramadan{
+    background: rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    color:rgba(229,231,235,.92);
+    padding:12px 14px;
+    border-radius:18px;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    box-shadow:0 10px 22px rgba(0,0,0,.35);
+    transition:.2s;
+  }
+  .btn-ramadan:hover{
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,204,115,.22);
+    box-shadow:0 14px 26px rgba(0,0,0,.42);
+  }
+  .btn-ramadan:active{ transform:scale(.99); }
+
   .btn-main{
     background: linear-gradient(180deg,#ffd68a,#ffb347);
     color:#1a1305;
@@ -225,9 +251,15 @@
     </div>
 
     <!-- ✅ Planning bleu vif -->
-    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-3">
+    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-2">
       <span style="font-size:16px; line-height:1">🗓️</span>
       <span>CONSULTER LE PLANNING</span>
+    </button>
+
+    <!-- ✅ Menu Ramadan (discret) -->
+    <button onclick="window.open('https://ramadan-greycorner.pages.dev/', '_blank')" class="btn-ramadan mb-3">
+      <span style="font-size:16px; line-height:1">🌙</span>
+      <span>MENU RAMADAN</span>
     </button>
 
     <!-- ✅ Bandeau sticky (visible même après pointage) + refresh -->
