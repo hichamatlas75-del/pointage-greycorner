@@ -288,13 +288,13 @@
       <span>MENU RAMADAN</span>
     </button>
 
-    <!-- ✅ NEW: Compteur accueil (visible uniquement avant sélection) -->
+    <!-- ✅ Compteur accueil (visible uniquement avant sélection) -->
     <div id="punch-counter" class="punch-counter hidden">
       <div class="label">Déjà pointés</div>
       <div class="val"><span id="punch-count">0</span> / <span id="punch-total">0</span></div>
     </div>
 
-    <!-- ✅ Bandeau sticky (visible même après pointage) + refresh -->
+    <!-- ✅ Bandeau sticky + refresh -->
     <div id="banner-wrap" class="banner-wrap">
       <div id="banner" class="banner"></div>
       <div id="btn-refresh" class="btn-refresh" title="Actualiser le message">
@@ -353,10 +353,15 @@
     // Ligne 1: A=TYPE (INFO/URGENT), B=MESSAGE
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
+    // ✅ MAJ: ajout BOUCHNAK NAOUAL (Chef cuisine) - en premier dans cuisine
     const equipe = [
       {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
       {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
-      {n:"BELQASSE KHAOULA",t:"cuisine"},{n:"BOURAHMA ANAS",t:"cuisine"},{n:"IDRISSI SAAD",t:"cuisine"},{n:"LEMSSIEH JAWAD",t:"cuisine"},{n:"MAJDOUB JIHANE",t:"cuisine"},{n:"MOUJAHID IMANE",t:"cuisine"},{n:"ZAIR FATIMA",t:"cuisine"},
+
+      {n:"BOUCHNAK NAOUAL",t:"cuisine"},  /* ✅ NEW Chef cuisine (hA sans hP OK) */
+      {n:"BELQASSE KHAOULA",t:"cuisine"},{n:"BOURAHMA ANAS",t:"cuisine"},{n:"IDRISSI SAAD",t:"cuisine"},
+      {n:"LEMSSIEH JAWAD",t:"cuisine"},{n:"MAJDOUB JIHANE",t:"cuisine"},{n:"MOUJAHID IMANE",t:"cuisine"},{n:"ZAIR FATIMA",t:"cuisine"},
+
       {n:"ELGORRAMY ANISSA",t:"menage"},{n:"ELGORRAMY SOUAD",t:"menage"},{n:"ELMCHAOURI SOUAD",t:"menage"},{n:"SBAI HAKIMA",t:"menage"},
       {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},{n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
     ];
@@ -546,6 +551,7 @@
         cont.className = "hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = ()=> cont.classList.toggle('hidden');
 
+        // ✅ garde l'ordre du tableau "equipe" (donc Chef en premier)
         equipe.filter(e => e.t === cat).forEach(emp => {
           const b = document.createElement('button');
           b.className = "staff-btn text-white";
@@ -602,16 +608,14 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
-    // ✅ NEW: compteur "personnes déjà pointées" (accueil uniquement)
+    // ✅ compteur "personnes déjà pointées" (accueil uniquement)
     function setupPunchCounter(){
       const wrap = document.getElementById('punch-counter');
       const countEl = document.getElementById('punch-count');
       const totalEl = document.getElementById('punch-total');
 
-      // Total = taille de l'équipe (ou filtrage spécifique si tu veux exclure quelqu’un)
       totalEl.textContent = String(equipe.length);
 
-      // N'afficher que sur la page d'accueil (avant sélection)
       if(selected){
         wrap.classList.add('hidden');
         return;
@@ -623,7 +627,6 @@
         const data = s.val() || {};
         let c = 0;
 
-        // Compte uniquement les personnes de "equipe" qui ont hA
         equipe.forEach(emp => {
           const p = data[keyStaff(emp.n)];
           if(p && p.hA) c++;
@@ -637,7 +640,6 @@
       loadBanner(true);
       setInterval(loadBanner, 30000);
 
-      // ✅ NEW: init compteur (ne touche pas aux autres fonctionnalités)
       setupPunchCounter();
 
       if(selected){
@@ -676,7 +678,7 @@
                 html += `<p class="text-gray-400 italic text-[10px]">Heures invalides (planning/arrivée).</p>`;
               }
             }else{
-              html += `<p class="text-gray-400 italic text-[10px]">Calcul retard en attente du planning...</p>`;
+              html += `<p class="text-gray-400 italic text-[10px]">Calcul retard non appliqué (pas de shift prévu).</p>`;
             }
 
             document.getElementById('pointage-zone').innerHTML = html + `</div>`;
