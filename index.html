@@ -373,6 +373,10 @@
       year:'numeric',month:'2-digit',day:'2-digit'
     }).format(new Date());
 
+    // ✅ Chemins (nouvelle séparation)
+    const PRES_ROOT = 'presences/' + dateStr;
+    const POIN_ROOT = 'pointages/' + dateStr;
+
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
     let isAdminSession = false;
@@ -419,15 +423,29 @@
       showRetardPanel();
     }
 
+    // ✅ Retard du jour = calculé en live via (pointages.hA + presences.hP)
     function setupTodayRetardListener(staffName){
       const staffKey = keyStaff(staffName);
-      db.ref('presences/'+dateStr+'/'+staffKey).on('value', s => {
+
+      let hpCache = "";
+      let haCache = "";
+
+      const tryCompute = () => {
+        if(!haCache){ setDayRetard(0); return; }
+        const r = computeRetard(haCache, hpCache);
+        setDayRetard(r ? r.minutesLate : 0);
+      };
+
+      db.ref(PRES_ROOT + '/' + staffKey).on('value', s => {
         const v = s.val() || {};
-        if(!v.hA){
-          setDayRetard(0);
-          return;
-        }
-        setDayRetard(v.retardMin || 0);
+        hpCache = v.hP || "";
+        tryCompute();
+      });
+
+      db.ref(POIN_ROOT + '/' + staffKey).on('value', s => {
+        const v = s.val() || {};
+        haCache = v.hA || "";
+        tryCompute();
       });
     }
 
@@ -466,7 +484,8 @@
         document.getElementById('app-pointage').classList.add('hidden');
         document.getElementById('app-admin').classList.remove('hidden');
 
-        db.ref('presences/'+dateStr).on('value', s => {
+        // ✅ Supervision: lire hA depuis pointages/
+        db.ref(POIN_ROOT).on('value', s => {
           const data = s.val() || {};
           const container = document.getElementById('adminList');
           container.innerHTML = "";
@@ -478,7 +497,7 @@
             div.innerHTML = `
               <span class="text-white font-extrabold">${emp.n}</span>
               <div class="flex items-center gap-2">
-                <span class="${p ? 'text-emerald-300 font-black' : 'text-gray-500'}">${p ? (p.hA || '---') : '---'}</span>
+                <span class="${p && p.hA ? 'text-emerald-300 font-black' : 'text-gray-500'}">${p && p.hA ? p.hA : '---'}</span>
                 <button onclick="triggerReset('${emp.n}')" class="btn-reset-indiv">🔄</button>
               </div>
             `;
@@ -608,7 +627,7 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
-    // ✅ compteur "personnes déjà pointées" (accueil uniquement)
+    // ✅ compteur "personnes déjà pointées" (accueil uniquement) => basé sur pointages/
     function setupPunchCounter(){
       const wrap = document.getElementById('punch-counter');
       const countEl = document.getElementById('punch-count');
@@ -623,7 +642,7 @@
         wrap.classList.remove('hidden');
       }
 
-      db.ref('presences/'+dateStr).on('value', s => {
+      db.ref(POIN_ROOT).on('value', s => {
         const data = s.val() || {};
         let c = 0;
 
@@ -650,39 +669,49 @@
         setupTodayRetardListener(selected);
         checkGPS();
 
-        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
-          const val = s.val();
-          if(val && val.hA){
-            let html = `
-              <div class="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-                <p class="text-emerald-300 font-black text-2xl mb-2">POINTÉ ✅</p>
-                <p class="text-3xl font-black text-white mb-3">${val.hA}</p>
-            `;
+        const staffKey = keyStaff(selected);
 
-            if(val.hP){
-              const r = computeRetard(val.hA, val.hP);
-              if(r){
-                if(r.late){
-                  html += `<p class="text-red-300 font-black text-sm">⚠️ RETARD : +${r.minutesLate} min</p>`;
-                }else{
-                  html += `<p class="text-emerald-300 font-black text-sm">DANS LES TEMPS ✓</p>`;
-                }
+        // ✅ Affichage "POINTÉ" : hA vient de pointages/, hP vient de presences/
+        let hpCache = "";
+        let haCache = "";
 
-                if(val.retard !== r.late || val.retardMin !== r.minutesLate){
-                  db.ref('presences/'+dateStr+'/'+keyStaff(selected)).update({
-                    retard: r.late,
-                    retardMin: r.minutesLate
-                  });
-                }
+        const renderPointageZone = () => {
+          if(!haCache) return;
+
+          let html = `
+            <div class="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+              <p class="text-emerald-300 font-black text-2xl mb-2">POINTÉ ✅</p>
+              <p class="text-3xl font-black text-white mb-3">${haCache}</p>
+          `;
+
+          if(hpCache){
+            const r = computeRetard(haCache, hpCache);
+            if(r){
+              if(r.late){
+                html += `<p class="text-red-300 font-black text-sm">⚠️ RETARD : +${r.minutesLate} min</p>`;
               }else{
-                html += `<p class="text-gray-400 italic text-[10px]">Heures invalides (planning/arrivée).</p>`;
+                html += `<p class="text-emerald-300 font-black text-sm">DANS LES TEMPS ✓</p>`;
               }
             }else{
-              html += `<p class="text-gray-400 italic text-[10px]">Calcul retard non appliqué (pas de shift prévu).</p>`;
+              html += `<p class="text-gray-400 italic text-[10px]">Heures invalides (planning/arrivée).</p>`;
             }
-
-            document.getElementById('pointage-zone').innerHTML = html + `</div>`;
+          }else{
+            html += `<p class="text-gray-400 italic text-[10px]">Calcul retard non appliqué (pas de shift prévu).</p>`;
           }
+
+          document.getElementById('pointage-zone').innerHTML = html + `</div>`;
+        };
+
+        db.ref(PRES_ROOT + '/' + staffKey).on('value', s => {
+          const v = s.val() || {};
+          hpCache = v.hP || "";
+          renderPointageZone();
+        });
+
+        db.ref(POIN_ROOT + '/' + staffKey).on('value', s => {
+          const v = s.val() || {};
+          haCache = v.hA || "";
+          renderPointageZone();
         });
 
       }else{
@@ -690,6 +719,7 @@
       }
     }
 
+    // ✅ Enregistrement : hA -> pointages/  +  on:true -> presences/
     document.getElementById('btn').onclick = () => {
       if(isPunching) return;
       isPunching = true;
@@ -697,29 +727,22 @@
       const btn = document.getElementById('btn');
       btn.disabled = true;
 
+      const staffKey = keyStaff(selected);
       const hA = nowCasablancaHHMM();
-      const ref = db.ref('presences/' + dateStr + '/' + keyStaff(selected));
 
-      ref.transaction(current => {
+      const refPointage = db.ref(POIN_ROOT + '/' + staffKey);
+
+      // 1) transaction sur pointages pour éviter double pointage
+      refPointage.transaction(current => {
         current = current || {};
 
+        // déjà pointé ? (sauf admin)
         if(current.hA && !isAdminSession){
           return;
         }
 
-        const hP = current.hP || null;
-        const r = hP ? computeRetard(hA, hP) : null;
-
-        return {
-          ...current,
-          on: true,
-          hA: hA,
-          retard: r ? r.late : false,
-          retardMin: r ? r.minutesLate : 0,
-          timestamp: firebase.database.ServerValue.TIMESTAMP,
-          lastEditByAdmin: !!isAdminSession,
-          lastEditAt: firebase.database.ServerValue.TIMESTAMP
-        };
+        // ✅ règles: equipe écrit uniquement {hA:"HH:MM"}
+        return { hA: hA };
       }, (error, committed) => {
         isPunching = false;
 
@@ -736,6 +759,9 @@
           btn.disabled = true;
           return;
         }
+
+        // 2) marquer présent dans presences (sans toucher hP, sans écrire hA)
+        db.ref(PRES_ROOT + '/' + staffKey).update({ on: true }).catch(()=>{ /* non bloquant */ });
 
         btn.disabled = true;
       });
