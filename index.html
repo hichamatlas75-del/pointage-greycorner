@@ -167,9 +167,9 @@
     50%{ box-shadow:0 0 18px rgba(255,90,90,.35), 0 0 42px rgba(160,30,30,.25); opacity:.78; }
   }
 
-  /* ✅ NOUVEAU: Message accueil (sous login) */
+  /* ✅ Message accueil (sous login) */
   .home-msg{
-    display:none; /* affiché seulement avant login */
+    display:none;
     margin:10px 0 12px 0;
     padding:12px 12px;
     border-radius:18px;
@@ -353,7 +353,7 @@
       </div>
     </div>
 
-    <!-- ✅ NOUVEAU: MSG SHEET EN PAGE D'ACCUEIL (SOUS LOGIN, AVANT CONNEXION) -->
+    <!-- ✅ MSG SHEET EN PAGE D'ACCUEIL (SOUS LOGIN, AVANT CONNEXION) -->
     <div id="homeMsg" class="home-msg">
       <div class="title">Message du jour</div>
       <div id="homeMsgContent" class="content">Chargement…</div>
@@ -479,6 +479,9 @@
     let role = null; // "gerant" | "equipe"
     let isPunching = false;
 
+    // ✅ NEW: email de l'utilisateur connecté (pour compte unique equipe@greycorner.com)
+    let currentUserEmail = null;
+
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
       timeZone:'Africa/Casablanca',
       year:'numeric',month:'2-digit',day:'2-digit'
@@ -540,7 +543,7 @@
 
     function showLoggedUI(){
       document.getElementById("loginWrap").classList.add("hidden");
-      document.getElementById("homeMsg").style.display = "none";   // ✅ cache msg accueil après login
+      document.getElementById("homeMsg").style.display = "none";
       document.getElementById("sessionBar").classList.remove("hidden");
       document.getElementById("roleLabel").textContent = role || "—";
       document.getElementById("app-pointage").classList.remove("hidden");
@@ -548,7 +551,7 @@
 
     function showLoginUI(){
       document.getElementById("loginWrap").classList.remove("hidden");
-      document.getElementById("homeMsg").style.display = "block";  // ✅ affiche msg accueil avant login
+      document.getElementById("homeMsg").style.display = "block";
       document.getElementById("sessionBar").classList.add("hidden");
       document.getElementById("app-pointage").classList.add("hidden");
       document.getElementById("app-admin").classList.add("hidden");
@@ -574,14 +577,19 @@
     auth.onAuthStateChanged(async (user) => {
       if(!user){
         role = null;
+        currentUserEmail = null; // ✅
         showLoginUI();
         return;
       }
+
+      // ✅ NEW: capture email connecté (ex: equipe@greycorner.com)
+      currentUserEmail = (user.email || "").toLowerCase();
 
       role = await fetchRole(user.uid);
       if(role !== "gerant" && role !== "equipe"){
         await auth.signOut();
         role = null;
+        currentUserEmail = null; // ✅
         showLoginUI();
         return;
       }
@@ -677,7 +685,6 @@
       return { type, msg };
     }
 
-    // ✅ Message accueil (sous login, avant connexion)
     async function loadHomeMsg(force=false){
       if(bannerBusy && !force) return;
       bannerBusy = true;
@@ -699,14 +706,12 @@
           box.style.display = "none";
         }
       }catch(e){
-        // non bloquant (on laisse "Chargement…" ou on masque)
-        // box.style.display = "none";
+        // non bloquant
       }finally{
         bannerBusy = false;
       }
     }
 
-    // ✅ Bandeau (après login)
     async function loadBanner(force=false){
       if(bannerBusy && !force) return;
       bannerBusy = true;
@@ -916,7 +921,8 @@
         const hP = current.hP || null;
         const r = hP ? computeRetard(hA, hP) : null;
 
-        return {
+        // ✅ NEW: on ajoute la clé employé dans l'objet (seulement si login = compte unique staff)
+        const payload = {
           ...current,
           on: true,
           hA: hA,
@@ -926,6 +932,14 @@
           lastEditByAdmin: (role === "gerant"),
           lastEditAt: firebase.database.ServerValue.TIMESTAMP
         };
+
+        // ✅ si la personne est connectée avec equipe@greycorner.com (compte unique)
+        if(currentUserEmail === "equipe@greycorner.com"){
+          payload.empKey = staffKey;        // identifiant employé (clé)
+          payload.punchBy = "equipe@";      // petit marqueur lisible (optionnel)
+        }
+
+        return payload;
       }, (error, committed) => {
         isPunching = false;
 
