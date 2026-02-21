@@ -3,189 +3,877 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Grey Corner • Master Pro</title>
+<title>Grey Corner • Pointage</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
 
 <style>
   html,body{
-    height:100%; margin:0; overflow:hidden;
-    background: radial-gradient(1200px 600px at 50% -10%, rgba(255,180,60,0.08), transparent 60%),
-                linear-gradient(180deg,#02040a,#050816 40%,#02040a);
+    height:100%; margin:0; overflow-y:auto; overflow-x:hidden;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(255,180,60,0.08), transparent 60%),
+      linear-gradient(180deg,#02040a,#050816 40%,#02040a);
     font-family:'Plus Jakarta Sans',sans-serif; color:#e5e7eb;
   }
   .card{
-    width:100%; max-width:420px; min-height:96vh; border-radius:42px; padding:20px;
+    width:100%; max-width:420px; min-height:96vh; border-radius:42px; padding:18px;
     display:flex; flex-direction:column; background:linear-gradient(145deg,rgba(20,23,35,.75),rgba(5,7,15,.85));
-    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.08);
-    box-shadow: 0 40px 80px rgba(0,0,0,.8); position:relative; margin:auto;
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.04),
+      0 40px 80px rgba(0,0,0,.8),
+      0 0 40px rgba(255,170,60,.08);
+    position:relative; margin:auto;
   }
-  .gold{ color:#ffcc73; }
-  .btn-blue{ background: linear-gradient(180deg,#2F7BFF,#1A4ED8); color:#fff; padding:16px; border-radius:22px; font-weight:900; width:100%; text-transform:uppercase; font-size:12px; }
-  .btn-dark{ background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:#fff; padding:16px; border-radius:22px; font-weight:900; width:100%; text-transform:uppercase; font-size:12px; }
-  .btn-main{ background: linear-gradient(180deg,#ffd68a,#ffb347); color:#1a1305; font-weight:900; border-radius:26px; padding:22px; width:100%; font-size:20px; }
-  .inpt{ width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:18px; padding:14px; color:#fff; font-size:13px; outline:none; }
-  .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#000; color:#fff; padding:10px 20px; border-radius:12px; font-size:12px; display:none; z-index:100; }
+  .gold{ color:#ffcc73; letter-spacing:.08em; }
+  .muted{ color:rgba(229,231,235,.65); }
+  .scroll{ overflow-y:auto; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar{ display:none }
+
+  .btn-planning{
+    background: linear-gradient(180deg,#2F7BFF,#1A4ED8) !important;
+    border:1px solid rgba(255,255,255,.15) !important;
+    color:#fff !important;
+    padding:16px 14px; border-radius:22px;
+    font-size:12px; font-weight:900; text-transform:uppercase;
+    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    box-shadow:0 14px 30px rgba(0,0,0,.45);
+    transition:.25s;
+  }
+  .btn-planning:active{ transform:scale(.98); }
+
+  .btn-ramadan{
+    background: rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    color:rgba(229,231,235,.92);
+    padding:12px 14px; border-radius:18px;
+    font-size:11px; font-weight:900; text-transform:uppercase;
+    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    transition:.2s;
+  }
+  .btn-ramadan:active{ transform:scale(.99); }
+
+  .btn-main{
+    background: linear-gradient(180deg,#ffd68a,#ffb347);
+    color:#1a1305;
+    font-weight:900;
+    border-radius:26px;
+    padding:26px;
+    font-size:26px;
+    box-shadow: 0 12px 25px rgba(255,170,60,.35);
+    transition:.25s;
+  }
+  .btn-main:disabled{ opacity:.45; filter:saturate(.7); }
+  .btn-main:active{ transform:scale(.97); }
+
+  /* Home message (Google Sheet) */
+  .home-msg{
+    display:none;
+    margin:10px 0 12px 0;
+    padding:12px 12px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+  }
+  .home-msg .title{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    color:rgba(229,231,235,.65);
+    margin-bottom:6px;
+  }
+  .home-msg .content{
+    font-size:12px;
+    font-weight:900;
+    line-height:1.25;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+  .home-info{
+    background:rgba(255,200,120,.10);
+    color:#ffd68a;
+    border:1px solid rgba(255,200,120,.28);
+  }
+  .home-urgent{
+    background:#3a0d0d;
+    color:#fff;
+    border:1px solid #ff5a5a;
+  }
+
+  /* Banner after login */
+  .banner-wrap{
+    display:none;
+    gap:10px;
+    align-items:stretch;
+    margin:12px 0;
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:linear-gradient(180deg,rgba(2,4,10,.95),rgba(2,4,10,.70));
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    padding:6px;
+    border-radius:18px;
+  }
+  .banner{
+    flex:1;
+    border-radius:16px;
+    padding:12px 14px;
+    font-weight:900;
+    font-size:13px;
+    line-height:1.25;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.10);
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+  .btn-refresh{
+    width:44px; min-width:44px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; user-select:none;
+    transition:.2s;
+  }
+  .btn-refresh:active{ transform:scale(.98); }
+  .spin{ animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+
+  .msg-info{ background:rgba(255,200,120,.10); color:#ffd68a; border:1px solid rgba(255,200,120,.28); }
+  .msg-urgent{ background:#3a0d0d; color:#fff; border:1px solid #ff5a5a; }
+
+  /* login */
+  .login-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:22px;
+    padding:14px;
+  }
+  .inpt{
+    width:100%;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:12px 12px;
+    color:#fff;
+    font-weight:800;
+    font-size:12px;
+    outline:none;
+  }
+  .inpt:focus{ border-color: rgba(255,204,115,.35); box-shadow: 0 0 0 3px rgba(255,204,115,.12); }
+  .btn-login{
+    width:100%;
+    border-radius:18px;
+    padding:12px 14px;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    background:rgba(255,204,115,.18);
+    border:1px solid rgba(255,204,115,.28);
+    color:#ffd68a;
+  }
+  .btn-login:active{ transform:scale(.99); }
+
+  /* setup (PIN + name) */
+  .setup-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .drawer-header{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;
+    padding:14px;
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    cursor:pointer;
+    user-select:none;
+  }
+  .staff-btn{
+    padding:14px;
+    border-radius:14px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.06);
+    font-size:11px;
+    font-weight:900;
+    text-align:center;
+    color:#fff;
+    transition:.15s;
+  }
+  .staff-btn:active{ transform:scale(.98); }
+
+  /* session */
+  .pill{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+    border-radius:999px;
+    padding:8px 10px;
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:18px;
+    z-index:9999;
+    background:rgba(0,0,0,.70);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    padding:10px 12px;
+    border-radius:14px;
+    font-size:12px;
+    font-weight:900;
+    display:none;
+    max-width:min(420px, calc(100vw - 24px));
+    text-align:center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 </style>
 </head>
 
 <body class="flex items-center justify-center p-4">
   <div class="card">
-    <div class="text-center mb-6">
-      <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" onclick="handleLogoClick()" />
+    <div class="text-center mb-4 flex-shrink-0">
+      <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
     </div>
 
-    <div id="view-login" class="space-y-4">
-      <div class="text-center mb-2">
-        <h2 class="text-sm font-black uppercase tracking-widest gold">Connexion Gérant</h2>
-      </div>
-      <input id="loginEmail" class="inpt" type="email" placeholder="Email" />
-      <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" />
-      <button onclick="login()" class="btn-blue">Se Connecter</button>
-      <div id="loginError" class="text-red-400 text-[10px] text-center font-bold"></div>
+    <!-- ✅ PAGE ACCUEIL (avant login) : Message Google Sheet -->
+    <div id="homeMsg" class="home-msg">
+      <div class="title">Message du jour</div>
+      <div id="homeMsgContent" class="content">Chargement…</div>
     </div>
 
-    <div id="view-setup" class="hidden flex flex-col flex-grow">
-      <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6">
-        <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
-        <div id="sheetMsg" class="text-xs font-bold leading-relaxed">Chargement du message...</div>
+    <!-- ✅ PAGE LOGIN -->
+    <div id="loginWrap" class="login-card">
+      <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
+      <div class="space-y-2">
+        <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
+        <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+        <button id="btnLogin" class="btn-login">Se connecter</button>
+        <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
+      </div>
+    </div>
+
+    <!-- ✅ BAR SESSION (après login) -->
+    <div id="sessionBar" class="hidden mb-3 flex items-center justify-between gap-2">
+      <div class="pill text-[10px] font-black uppercase tracking-widest muted">
+        Connecté : <span id="roleLabel" class="text-yellow-200">—</span>
+      </div>
+      <button id="btnLogout" class="pill text-[10px] font-black">Déconnexion</button>
+    </div>
+
+    <!-- Liens -->
+    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-2">
+      🗓️ CONSULTER LE PLANNING
+    </button>
+    <button onclick="window.open('https://ramadan-greycorner.pages.dev/', '_blank')" class="btn-ramadan mb-3">
+      🌙 MENU RAMADAN
+    </button>
+
+    <!-- ✅ BANDEAU (après login) -->
+    <div id="banner-wrap" class="banner-wrap">
+      <div id="banner" class="banner"></div>
+      <div id="btn-refresh" class="btn-refresh" title="Actualiser le message">
+        <span id="refresh-ico" style="font-size:18px; line-height:1">⟳</span>
+      </div>
+    </div>
+
+    <!-- ✅ SETUP 1ERE UTILISATION (après login si pas assigné) -->
+    <div id="setupWrap" class="setup-card hidden">
+      <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Première utilisation</div>
+      <div class="text-[11px] font-extrabold text-white/80 mb-3">
+        Crée un <span class="gold">PIN 4 chiffres</span>, puis choisis ton nom. Ensuite, ce téléphone s’ouvre directement sur toi ✅
       </div>
 
-      <div class="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-4">
-        <div class="text-center">
-          <h2 class="text-[11px] font-black uppercase tracking-widest gold">Première Utilisation</h2>
-          <p class="text-[10px] muted mt-1">Créez un PIN et liez un nom à ce mobile.</p>
+      <div class="space-y-2">
+        <input id="setupPin" class="inpt" type="password" maxlength="4" placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" />
+        <button id="btnSetupPin" class="btn-login">Valider le PIN</button>
+        <div id="setupMsg" class="text-[10px] font-black text-red-300"></div>
+      </div>
+
+      <div id="setupPickName" class="hidden mt-4">
+        <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Choisir votre nom</div>
+        <div id="setupList" class="scroll max-h-[52vh]"></div>
+      </div>
+    </div>
+
+    <!-- ✅ APP POINTAGE -->
+    <div id="app" class="hidden flex flex-col flex-grow overflow-hidden">
+      <div class="flex flex-col flex-grow justify-center">
+        <div class="text-center text-[10px] muted uppercase font-black tracking-widest mb-2">Appareil assigné à</div>
+        <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-4">--</div>
+
+        <div id="pointage-zone" class="text-center">
+          <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS...</div>
+          <button id="btnPunch" class="btn-main w-full" disabled>Valider mon Arrivée</button>
         </div>
-        
-        <input id="setupPin" class="inpt text-center text-xl tracking-[0.5em]" type="password" maxlength="4" placeholder="****" inputmode="numeric" />
-        
-        <select id="setupName" class="inpt">
-          <option value="">Choisir un nom...</option>
-        </select>
 
-        <button onclick="saveSetup()" class="btn-main !text-sm">Valider & Verrouiller ✅</button>
-      </div>
-
-      <div class="mt-auto space-y-2">
-        <button onclick="window.open('URL_PLANNING','_blank')" class="btn-blue">🗓️ Planning</button>
-        <button onclick="window.open('URL_RAMADAN','_blank')" class="btn-dark">🌙 Menu Ramadan</button>
+        <button id="btnLocalReset" class="mt-8 text-[9px] text-gray-500 uppercase tracking-widest">
+          Réinitialiser l'appareil (PIN)
+        </button>
       </div>
     </div>
 
-    <div id="view-main" class="hidden flex flex-col flex-grow justify-center text-center">
-      <div id="userName" class="text-3xl font-black text-yellow-200 mb-6">--</div>
-      
-      <div id="pinGate">
-        <input id="unlockPin" class="inpt text-center text-xl tracking-[0.5em] mb-4" type="password" maxlength="4" placeholder="PIN" inputmode="numeric" />
-        <button onclick="unlockApp()" class="btn-blue">Déverrouiller</button>
+    <!-- ✅ ADMIN (gerant) -->
+    <div id="adminWrap" class="hidden flex flex-col flex-grow overflow-hidden">
+      <div class="flex items-center justify-between mb-3">
+        <div class="gold font-black uppercase text-[12px]">Supervision (Gérant)</div>
+        <button id="btnCloseAdmin" class="pill text-[10px] font-black">Fermer</button>
       </div>
-
-      <div id="punchZone" class="hidden">
-        <div id="gpsStatus" class="text-[10px] mb-4 uppercase gold">Vérification GPS...</div>
-        <button id="btnPunch" class="btn-main" disabled>Valider Arrivée</button>
-      </div>
+      <div class="text-[10px] text-white/60 font-black uppercase tracking-widest mb-2">Reset à distance (par employé)</div>
+      <div id="adminList" class="scroll flex-grow bg-white/5 rounded-2xl p-2 border border-white/10"></div>
+      <button id="btnResetAll" class="mt-3 text-[11px] font-black w-full py-3 rounded-2xl bg-red-900/40 border border-white/10 text-red-200">
+        🔄 Reset Global (tous les mobiles)
+      </button>
     </div>
 
   </div>
 
   <div id="toast" class="toast"></div>
 
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // Config Firebase (Insérez votre config ici)
-    const firebaseConfig = { apiKey: "...", databaseURL: "..." }; 
+    // ===================== FIREBASE =====================
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
+      authDomain: "grey-corner-presence.firebaseapp.com",
+      databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "grey-corner-presence",
+      storageBucket: "grey-corner-presence.firebasestorage.app",
+      messagingSenderId: "730206093359",
+      appId: "1:730206093359:web:59e3c145120807f29e46da"
+    };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.database();
+    const auth = firebase.auth();
 
-    let clicks = 0;
-    const staffList = ["BENKHADA ABDESLAM", "ENNHAILI SOUMIA", "SALIL HOUDA", "CHKAIRI YOUSSEF"]; // etc...
+    // ===================== PARAMS =====================
+    const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
-    // --- INITIALISATION ---
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        showView('view-login');
-      } else {
-        checkBinding();
-        loadSheetMsg();
+    // Google Sheet: Ligne1 A=TYPE (INFO/URGENT), B=MESSAGE
+    const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
+
+    // Staff
+    const equipe = [
+      {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
+      {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
+      {n:"BOUCHNAK NAOUAL",t:"cuisine"},
+      {n:"BELQASSE KHAOULA",t:"cuisine"},{n:"BOURAHMA ANAS",t:"cuisine"},{n:"IDRISSI SAAD",t:"cuisine"},
+      {n:"LEMSSIEH JAWAD",t:"cuisine"},{n:"MAJDOUB JIHANE",t:"cuisine"},{n:"MOUJAHID IMANE",t:"cuisine"},{n:"ZAIR FATIMA",t:"cuisine"},
+      {n:"ELGORRAMY ANISSA",t:"menage"},{n:"ELGORRAMY SOUAD",t:"menage"},{n:"ELMCHAOURI SOUAD",t:"menage"},{n:"SBAI HAKIMA",t:"menage"},
+      {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},{n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
+    ];
+
+    // EXCLUS téléphone
+    const NO_PHONE_KEYS = new Set(["ELMCHAOURI_SOUAD","SBAI_HAKIMA"]);
+
+    // Date Maroc
+    const dateStr = new Intl.DateTimeFormat('fr-CA',{
+      timeZone:'Africa/Casablanca', year:'numeric', month:'2-digit', day:'2-digit'
+    }).format(new Date());
+
+    // ===================== LS KEYS =====================
+    const LS = {
+      staffName: "gc_staff_name",
+      staffKey:  "gc_staff_key",
+      pinHash:   "gc_pin_hash",
+      role:      "gc_role"
+    };
+
+    // ===================== HELPERS =====================
+    function $(id){ return document.getElementById(id); }
+
+    function toast(msg){
+      const t = $("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=> t.style.display="none", 2200);
+    }
+
+    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
+
+    async function sha256Hex(str){
+      const enc = new TextEncoder().encode(str);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function nowCasablancaHHMM(){
+      const parts = new Intl.DateTimeFormat('fr-FR',{
+        timeZone:'Africa/Casablanca', hour:'2-digit', minute:'2-digit', hour12:false
+      }).formatToParts(new Date());
+      const h = parts.find(p=>p.type==='hour')?.value ?? '00';
+      const m = parts.find(p=>p.type==='minute')?.value ?? '00';
+      return `${h}:${m}`;
+    }
+
+    // ===================== GOOGLE SHEET MSG =====================
+    let bannerBusy = false;
+
+    async function fetchSheetMessage(){
+      const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
+      const t = await r.text();
+      const json = JSON.parse(t.substr(47).slice(0,-2));
+      const rows = json?.table?.rows || [];
+      const typeRaw = rows[0]?.c?.[0]?.v || "";
+      const msgRaw  = rows[0]?.c?.[1]?.v || "";
+      const type = String(typeRaw || "").trim().toUpperCase();
+      const msg  = String(msgRaw  || "").trim();
+      return { type, msg };
+    }
+
+    async function loadHomeMsg(force=false){
+      if(bannerBusy && !force) return;
+      bannerBusy = true;
+      const box = $("homeMsg");
+      const content = $("homeMsgContent");
+      try{
+        const { type, msg } = await fetchSheetMessage();
+        if(msg){
+          box.style.display = "block"; // ✅ fixe sur page accueil
+          content.textContent = msg;
+          box.classList.remove("home-info","home-urgent");
+          const urgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
+          box.classList.add(urgent ? "home-urgent" : "home-info");
+        }else{
+          box.style.display = "none";
+        }
+      }catch(e){
+        // non bloquant
+      }finally{
+        bannerBusy = false;
       }
+    }
+
+    async function loadBanner(force=false){
+      if(bannerBusy && !force) return;
+      bannerBusy = true;
+
+      const wrap = $("banner-wrap");
+      const banner = $("banner");
+      const ico = $("refresh-ico");
+
+      try{
+        ico.classList.add("spin");
+        const { type, msg } = await fetchSheetMessage();
+
+        if(msg){
+          banner.textContent = msg;
+          wrap.style.display = "flex";
+          banner.className = "banner";
+          const urgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
+          banner.classList.add(urgent ? "msg-urgent" : "msg-info");
+        }else{
+          wrap.style.display = "none";
+        }
+      }catch(e){
+        // non bloquant
+      }finally{
+        ico.classList.remove("spin");
+        bannerBusy = false;
+      }
+    }
+
+    $("btn-refresh").onclick = () => loadBanner(true);
+
+    // ===================== AUTH / ROLE =====================
+    async function fetchRole(uid){
+      const snap = await db.ref("users/"+uid).once("value");
+      return snap.val() || null;
+    }
+
+    $("btnLogin").onclick = async () => {
+      const email = ($("loginEmail").value || "").trim();
+      const pass  = ($("loginPass").value  || "").trim();
+      $("loginMsg").textContent = "";
+      try{
+        await auth.signInWithEmailAndPassword(email, pass);
+      }catch(e){
+        $("loginMsg").textContent = "Identifiants invalides.";
+      }
+    };
+
+    $("btnLogout").onclick = async () => {
+      try{ await auth.signOut(); }catch(e){}
+      localStorage.removeItem(LS.staffName);
+      localStorage.removeItem(LS.staffKey);
+      localStorage.removeItem(LS.pinHash);
+      localStorage.removeItem(LS.role);
+      location.reload();
+    };
+
+    // ===================== SETUP FIRST TIME (PIN + NAME) =====================
+    $("btnSetupPin").onclick = async () => {
+      const pin = ($("setupPin").value || "").trim();
+      if(!/^\d{4}$/.test(pin)){
+        $("setupMsg").textContent = "PIN invalide (4 chiffres).";
+        return;
+      }
+      const hash = await sha256Hex(pin);
+      localStorage.setItem(LS.pinHash, hash);
+      $("setupMsg").textContent = "";
+      $("setupPickName").classList.remove("hidden");
+      renderSetupNameList();
+      toast("PIN enregistré ✅ Choisis ton nom.");
+    };
+
+    function renderSetupNameList(){
+      const container = $("setupList");
+      container.innerHTML = "";
+
+      const cats = ["caisse","bar","cuisine","menage","service"];
+      cats.forEach(cat => {
+        const names = equipe
+          .filter(e => e.t === cat)
+          .map(e => e.n)
+          .filter(nm => !NO_PHONE_KEYS.has(keyStaff(nm)))
+          .sort((a,b)=>a.localeCompare(b));
+
+        if(!names.length) return;
+
+        const h = document.createElement("div");
+        h.className = "drawer-header";
+        h.innerHTML = `<span class="gold text-[10px] font-black uppercase">${cat}</span><span class="gold text-[10px]">▼</span>`;
+
+        const cont = document.createElement("div");
+        cont.className = "hidden grid grid-cols-2 gap-2 py-3";
+        h.onclick = () => cont.classList.toggle("hidden");
+
+        names.forEach(nm=>{
+          const b = document.createElement("button");
+          b.className = "staff-btn";
+          b.textContent = nm;
+          b.onclick = () => {
+            if(!confirm(nm + " ?")) return;
+            const sk = keyStaff(nm);
+            localStorage.setItem(LS.staffName, nm);
+            localStorage.setItem(LS.staffKey, sk);
+            toast("Téléphone assigné ✅");
+            location.reload();
+          };
+          cont.appendChild(b);
+        });
+
+        container.appendChild(h);
+        container.appendChild(cont);
+      });
+    }
+
+    // ===================== GPS =====================
+    function getDist(a,b,c,d){
+      const R=6371e3;
+      const dLat=(c-a)*Math.PI/180;
+      const dLon=(d-b)*Math.PI/180;
+      const q=Math.sin(dLat/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
+    }
+
+    function checkGPS(){
+      const status = $("status");
+      if(!navigator.geolocation){
+        status.innerHTML = `<span class="text-red-300 font-black uppercase">GPS indisponible</span>`;
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        p => {
+          const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
+          if(d <= RAYON_MAX){
+            status.innerHTML = `<span class="text-emerald-300 font-black uppercase">Zone Grey Corner OK</span>`;
+            $("btnPunch").disabled = false;
+          }else{
+            status.innerHTML = `<span class="text-red-300 font-black uppercase">Hors Zone (${Math.round(d)}m)</span>`;
+            $("btnPunch").disabled = true;
+          }
+        },
+        err => {
+          status.innerHTML = `<span class="text-red-300 font-black uppercase">GPS refusé / erreur (${err.code})</span>`;
+          $("btnPunch").disabled = true;
+        },
+        { enableHighAccuracy:true, timeout:12000, maximumAge:0 }
+      );
+    }
+
+    // ===================== PUNCHES =====================
+    function listenPunch(staffKey){
+      db.ref('punches/'+dateStr+'/'+staffKey).on('value', s => {
+        const v = s.val();
+        if(v && v.hA){
+          $("pointage-zone").innerHTML = `
+            <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
+              <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
+              <div class="text-2xl font-black mt-1">${v.hA}</div>
+            </div>`;
+        }
+      });
+    }
+
+    let punching = false;
+    $("btnPunch").onclick = () => {
+      if(punching) return;
+      const staffKey = localStorage.getItem(LS.staffKey);
+      const staffName = localStorage.getItem(LS.staffName);
+      const role = localStorage.getItem(LS.role);
+
+      if(!staffKey || !staffName) return toast("Appareil non assigné.");
+      if(NO_PHONE_KEYS.has(staffKey)) return toast("Pointage non autorisé.");
+
+      punching = true;
+      $("btnPunch").disabled = true;
+
+      const hA = nowCasablancaHHMM();
+      const ref = db.ref('punches/'+dateStr+'/'+staffKey);
+
+      // tes rules: empKey == $emp + hA + timestamp
+      ref.transaction(cur=>{
+        cur = cur || {};
+        if(cur.hA && role !== "gerant") return; // 1 seul pointage équipe
+        return {
+          ...cur,
+          empKey: staffKey,
+          hA: hA,
+          retard: cur.retard || false,
+          retardMin: cur.retardMin || 0,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+      }, (err, committed)=>{
+        punching = false;
+        if(err){
+          toast("Erreur enregistrement ❌");
+          $("btnPunch").disabled = false;
+          return;
+        }
+        if(!committed){
+          toast("Déjà pointé ✅");
+          return;
+        }
+        toast("Pointage enregistré ✅");
+      });
+    };
+
+    // ===================== LOCAL RESET (PIN) =====================
+    $("btnLocalReset").onclick = async () => {
+      const pin = prompt("Entrez votre PIN (4 chiffres) :");
+      if(pin === null) return;
+
+      if(!/^\d{4}$/.test(pin)){
+        toast("PIN invalide");
+        return;
+      }
+
+      const stored = localStorage.getItem(LS.pinHash);
+      if(!stored){
+        toast("PIN non configuré.");
+        return;
+      }
+
+      const hash = await sha256Hex(pin);
+      if(hash !== stored){
+        toast("PIN incorrect ❌");
+        return;
+      }
+
+      localStorage.removeItem(LS.staffName);
+      localStorage.removeItem(LS.staffKey);
+      localStorage.removeItem(LS.pinHash);
+      // role sera relu après login
+      localStorage.removeItem(LS.role);
+      toast("Réinitialisé ✅");
+      location.reload();
+    };
+
+    // ===================== REMOTE RESET LISTENERS =====================
+    function attachRemoteResetListeners(staffKey){
+      db.ref(`system_control/resets/${staffKey}`).on('value', s => {
+        if(s.val()){
+          db.ref(`system_control/resets/${staffKey}`).remove();
+          localStorage.removeItem(LS.staffName);
+          localStorage.removeItem(LS.staffKey);
+          localStorage.removeItem(LS.pinHash);
+          localStorage.removeItem(LS.role);
+          location.reload();
+        }
+      });
+
+      db.ref('system_control/global_reset').on('value', s => {
+        if(s.val()){
+          db.ref('system_control/global_reset').remove();
+          localStorage.removeItem(LS.staffName);
+          localStorage.removeItem(LS.staffKey);
+          localStorage.removeItem(LS.pinHash);
+          localStorage.removeItem(LS.role);
+          location.reload();
+        }
+      });
+    }
+
+    // ===================== ADMIN (GERANT) TRIPLE CLIC LOGO =====================
+    let logoClicks = 0, logoTimer = null;
+
+    function isGerant(){
+      return localStorage.getItem(LS.role) === "gerant";
+    }
+
+    $("logo").onclick = () => {
+      logoClicks++;
+      clearTimeout(logoTimer);
+
+      if(logoClicks === 3){
+        logoClicks = 0;
+        if(isGerant()){
+          openAdmin();
+          toast("Mode Supervision ✅");
+        }else{
+          toast("Accès gérant requis");
+        }
+      }
+
+      logoTimer = setTimeout(()=> logoClicks = 0, 500);
+    };
+
+    $("btnCloseAdmin").onclick = () => {
+      $("adminWrap").classList.add("hidden");
+      $("app").classList.remove("hidden");
+    };
+
+    $("btnResetAll").onclick = () => {
+      if(!isGerant()) return;
+      if(confirm("Réinitialiser TOUS les mobiles ?")){
+        db.ref('system_control/global_reset').set(Date.now());
+        toast("Reset global envoyé ✅");
+      }
+    };
+
+    function openAdmin(){
+      $("app").classList.add("hidden");
+      $("adminWrap").classList.remove("hidden");
+
+      const container = $("adminList");
+      container.innerHTML = "";
+
+      const allowed = equipe
+        .map(e=>e.n)
+        .filter(nm => !NO_PHONE_KEYS.has(keyStaff(nm)))
+        .sort((a,b)=>a.localeCompare(b));
+
+      allowed.forEach(nm=>{
+        const div = document.createElement("div");
+        div.className = "flex items-center justify-between p-3 border-b border-white/5 text-[11px]";
+        div.innerHTML = `
+          <div class="font-extrabold text-white">${nm}</div>
+          <button class="px-3 py-2 rounded-xl bg-red-900/40 border border-white/10 text-red-200 font-black">🔄</button>
+        `;
+        div.querySelector("button").onclick = () => {
+          if(confirm("Réinitialiser le mobile de " + nm + " ?")){
+            db.ref(`system_control/resets/${keyStaff(nm)}`).set(Date.now());
+            toast("Signal envoyé ✅");
+          }
+        };
+        container.appendChild(div);
+      });
+    }
+
+    // ===================== UI FLOW =====================
+    function showLoginUI(){
+      $("loginWrap").classList.remove("hidden");
+      $("sessionBar").classList.add("hidden");
+      $("setupWrap").classList.add("hidden");
+      $("app").classList.add("hidden");
+      $("adminWrap").classList.add("hidden");
+
+      // ✅ message accueil visible (fixe) avant login
+      loadHomeMsg(true);
+      setInterval(()=>loadHomeMsg(false), 30000);
+    }
+
+    function showAfterLoginUI(role){
+      $("loginWrap").classList.add("hidden");
+      $("homeMsg").style.display = "none";
+      $("sessionBar").classList.remove("hidden");
+      $("roleLabel").textContent = role || "—";
+
+      // ✅ bandeau après login
+      loadBanner(true);
+      setInterval(()=>loadBanner(false), 30000);
+    }
+
+    function initAfterLogin(){
+      const staffName = localStorage.getItem(LS.staffName);
+      const staffKey  = localStorage.getItem(LS.staffKey);
+      const pinHash   = localStorage.getItem(LS.pinHash);
+
+      if(!pinHash || !staffName || !staffKey){
+        $("setupWrap").classList.remove("hidden");
+        $("app").classList.add("hidden");
+        return;
+      }
+
+      if(NO_PHONE_KEYS.has(staffKey)){
+        localStorage.removeItem(LS.staffName);
+        localStorage.removeItem(LS.staffKey);
+        localStorage.removeItem(LS.pinHash);
+        $("setupWrap").classList.remove("hidden");
+        return;
+      }
+
+      $("setupWrap").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      $("username").textContent = staffName;
+
+      attachRemoteResetListeners(staffKey);
+      checkGPS();
+      listenPunch(staffKey);
+
+      // disable si déjà pointé
+      db.ref('punches/'+dateStr+'/'+staffKey).once('value').then(s=>{
+        const v = s.val() || {};
+        if(v.hA) $("btnPunch").disabled = true;
+      }).catch(()=>{});
+    }
+
+    // ===================== BOOT =====================
+    auth.onAuthStateChanged(async (user) => {
+      if(!user){
+        localStorage.removeItem(LS.role);
+        showLoginUI();
+        return;
+      }
+
+      // role from /users/{uid}
+      let role = null;
+      try{
+        role = await fetchRole(user.uid);
+      }catch(e){}
+
+      if(role !== "gerant" && role !== "equipe"){
+        await auth.signOut();
+        showLoginUI();
+        $("loginMsg").textContent = "Compte non autorisé (rôle manquant).";
+        return;
+      }
+
+      localStorage.setItem(LS.role, role);
+      showAfterLoginUI(role);
+      initAfterLogin();
     });
 
-    function checkBinding() {
-      const boundName = localStorage.getItem('gc_name');
-      if (boundName) {
-        showView('view-main');
-        document.getElementById('userName').textContent = boundName;
-      } else {
-        showView('view-setup');
-        fillStaffSelect();
-      }
-    }
-
-    function showView(id) {
-      ['view-login', 'view-setup', 'view-main'].forEach(v => document.getElementById(v).classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
-    }
-
-    // --- LOGIQUE SHEET ---
-    function loadSheetMsg() {
-      // Simulé ici, liez à votre endpoint Google Script
-      db.ref('system/message_fixe').on('value', s => {
-        document.getElementById('sheetMsg').textContent = s.val() || "Bienvenue au Grey Corner.";
-      });
-    }
-
-    // --- AUTH ---
-    async function login() {
-      const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPass').value;
-      try { await auth.signInWithEmailAndPassword(e, p); } 
-      catch(err) { document.getElementById('loginError').textContent = "Erreur d'accès."; }
-    }
-
-    // --- SETUP ---
-    function fillStaffSelect() {
-      const sel = document.getElementById('setupName');
-      staffList.forEach(name => {
-        let opt = document.createElement('option'); opt.value = name; opt.textContent = name;
-        sel.appendChild(opt);
-      });
-    }
-
-    function saveSetup() {
-      const pin = document.getElementById('setupPin').value, name = document.getElementById('setupName').value;
-      if (pin.length === 4 && name) {
-        localStorage.setItem('gc_pin', pin);
-        localStorage.setItem('gc_name', name);
-        location.reload();
-      } else { alert("Veuillez remplir le PIN et le Nom."); }
-    }
-
-    // --- UNLOCK & POINTAGE ---
-    function unlockApp() {
-      const input = document.getElementById('unlockPin').value;
-      if (input === localStorage.getItem('gc_pin')) {
-        document.getElementById('pinGate').classList.add('hidden');
-        document.getElementById('punchZone').classList.remove('hidden');
-        startGps();
-      } else { alert("PIN Incorrect"); }
-    }
-
-    function handleLogoClick() {
-      clicks++;
-      if (clicks === 3) {
-        if (confirm("Réinitialiser l'appareil ?")) { localStorage.clear(); location.reload(); }
-        clicks = 0;
-      }
-      setTimeout(() => clicks = 0, 1000);
-    }
-
-    function startGps() {
-      // Logique GPS ici (déjà fournie précédemment)
-      document.getElementById('btnPunch').disabled = false; // Simulé pour test
-    }
+    // 🔁 refresh home msg immediately
+    loadHomeMsg(true);
   </script>
 </body>
 </html>
