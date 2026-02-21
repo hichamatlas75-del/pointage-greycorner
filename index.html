@@ -37,8 +37,10 @@
       0 0 40px rgba(255,170,60,.08);
     position:relative;
   }
+
   .gold{ color:#ffcc73; letter-spacing:.08em; }
   .muted{ color:rgba(229,231,235,.65); }
+
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
@@ -107,6 +109,7 @@
     z-index:20;
     background:linear-gradient(180deg,rgba(2,4,10,.95),rgba(2,4,10,.70));
     backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
     padding-top:6px;
     padding-bottom:6px;
     border-radius:18px;
@@ -122,6 +125,7 @@
     border:1px solid rgba(255,255,255,.10);
     transition: all .22s ease;
     word-break:break-word;
+    overflow-wrap:anywhere;
   }
   .btn-refresh{
     width:44px;
@@ -150,6 +154,16 @@
     background:#3a0d0d;
     color:#fff;
     border:1px solid #ff5a5a;
+  }
+  .flash-gold{ animation:flashGold 1.2s infinite; }
+  @keyframes flashGold{
+    0%,100%{ box-shadow:0 0 0 rgba(255,204,115,0); filter:saturate(1); opacity:1; }
+    50%{ box-shadow:0 0 18px rgba(255,204,115,.35), 0 0 40px rgba(255,179,71,.18); filter:saturate(1.25); opacity:.88; }
+  }
+  .flash-brick{ animation:flashBrick .9s infinite; }
+  @keyframes flashBrick{
+    0%,100%{ box-shadow:0 0 0 rgba(255,90,90,0); opacity:1; }
+    50%{ box-shadow:0 0 18px rgba(255,90,90,.35), 0 0 42px rgba(160,30,30,.25); opacity:.78; }
   }
 
   .drawer-header{
@@ -262,13 +276,34 @@
     color:#ffd68a;
   }
   .btn-login:active{ transform:scale(.99); }
+
+  /* Toast */
+  .toast{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:18px;
+    z-index:9999;
+    background:rgba(0,0,0,.70);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    padding:10px 12px;
+    border-radius:14px;
+    font-size:12px;
+    font-weight:900;
+    display:none;
+    max-width:min(420px, calc(100vw - 24px));
+    text-align:center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 </style>
 </head>
 
 <body class="flex items-center justify-center p-4">
   <div class="card">
     <div class="text-center mb-4 flex-shrink-0">
-      <img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto" alt="Grey Corner" />
+      <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
     </div>
 
     <!-- ✅ LOGIN -->
@@ -354,9 +389,11 @@
       </div>
 
       <div id="adminList" class="scroll flex-grow bg-white/5 rounded-2xl p-2 border border-white/10"></div>
-      <button onclick="triggerReset('all')" class="btn-reset-all">🔄 Reset Global (Tous les mobiles)</button>
+      <button id="btnResetAll" class="btn-reset-all">🔄 Reset Global (Tous les mobiles)</button>
     </div>
   </div>
+
+  <div id="toast" class="toast"></div>
 
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -364,15 +401,28 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    const firebaseConfig = { databaseURL:"https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
+    // ✅ Même config que "Présences"
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
+      authDomain: "grey-corner-presence.firebaseapp.com",
+      databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "grey-corner-presence",
+      storageBucket: "grey-corner-presence.firebasestorage.app",
+      messagingSenderId: "730206093359",
+      appId: "1:730206093359:web:59e3c145120807f29e46da",
+      measurementId: "G-4HCKPGNED7"
+    };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
+    // Ligne 1: A=TYPE (INFO/URGENT), B=MESSAGE
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
+    // ✅ Équipe
     const equipe = [
       {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
       {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
@@ -383,17 +433,30 @@
       {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},{n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
     ];
 
-    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
+    // ✅ Exceptions si tu veux autoriser hA manuel (côté pointage, normalement NON)
+    // Ici on garde : hA écrit seulement par pointage GPS (équipe) ou admin (gérant)
+    const HA_ONLY = ["BOUCHNAK_NAOUAL"]; // chef (utile pour le calcul sur presences/hP)
+
+    let selected = localStorage.getItem('gc_staff_name');
+    let role = null; // "gerant" | "equipe"
+    let isPunching = false;
 
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
       timeZone:'Africa/Casablanca',
       year:'numeric',month:'2-digit',day:'2-digit'
     }).format(new Date());
 
-    let selected = localStorage.getItem('gc_staff_name');
-    let role = null; // "gerant" | "equipe"
-    let isPunching = false;
+    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
+    function toast(msg){
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=> t.style.display="none", 2200);
+    }
+
+    // ========= TIME =========
     function nowCasablancaHHMM(){
       const parts = new Intl.DateTimeFormat('fr-FR',{
         timeZone:'Africa/Casablanca',
@@ -418,12 +481,16 @@
       return { late: diff > 0, minutesLate: Math.max(0, diff) };
     }
 
+    // ========= RETARD PANEL =========
     function showRetardPanel(){ document.getElementById('retard-panel').classList.remove('hidden'); }
     function setDayRetard(min){
       const v = Number(min || 0);
       const el = document.getElementById('day-retard-text');
-      if(v > 0) el.innerHTML = `⏱️ Retard jour : <span class="text-red-300">+${v} min</span>`;
-      else el.innerHTML = `⏱️ Retard jour : <span class="text-emerald-300">0 min</span>`;
+      if(v > 0){
+        el.innerHTML = `⏱️ Retard jour : <span class="text-red-300">+${v} min</span>`;
+      }else{
+        el.innerHTML = `⏱️ Retard jour : <span class="text-emerald-300">0 min</span>`;
+      }
       showRetardPanel();
     }
 
@@ -459,71 +526,36 @@
     };
 
     document.getElementById("btnLogout").onclick = async () => {
-      await auth.signOut();
+      try{ await auth.signOut(); }catch(e){}
       localStorage.clear();
       location.reload();
     };
 
     auth.onAuthStateChanged(async (user) => {
-      if(!user){ role = null; showLoginUI(); return; }
+      // stop if not logged
+      if(!user){
+        role = null;
+        showLoginUI();
+        return;
+      }
 
       role = await fetchRole(user.uid);
       if(role !== "gerant" && role !== "equipe"){
         await auth.signOut();
+        role = null;
         showLoginUI();
         return;
       }
 
       showLoggedUI();
-
-      // si gérant => supervision dispo (bouton via logo)
-      // on garde le design: clique logo pour ouvrir admin uniquement si gerant
+      attachResetListeners();
+      initAfterLogin();
     });
 
-    // ========= ADMIN (GERANT) =========
-    function openAdmin(){
-      if(role !== "gerant") return;
-      document.getElementById('app-pointage').classList.add('hidden');
-      document.getElementById('app-admin').classList.remove('hidden');
+    // ========= RESET LISTENERS =========
+    function attachResetListeners(){
+      if(!selected) return;
 
-      // On lit punches + presences pour afficher une heure visible (hA)
-      db.ref('punches/'+dateStr).on('value', sPunch => {
-        const punchData = sPunch.val() || {};
-        const container = document.getElementById('adminList');
-        container.innerHTML = "";
-
-        equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
-          const k = keyStaff(emp.n);
-          const p = punchData[k];
-          const div = document.createElement('div');
-          div.className = "flex justify-between items-center p-3 border-b border-white/5 text-[11px]";
-          div.innerHTML = `
-            <span class="text-white font-extrabold">${emp.n}</span>
-            <div class="flex items-center gap-2">
-              <span class="${p ? 'text-emerald-300 font-black' : 'text-gray-500'}">${p ? (p.hA || '---') : '---'}</span>
-              <button onclick="triggerReset('${emp.n}')" class="btn-reset-indiv">🔄</button>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      });
-    }
-
-    // clic logo => admin si gerant
-    document.querySelector("img[alt='Grey Corner']").onclick = () => openAdmin();
-
-    function triggerReset(target){
-      if(role !== "gerant") return;
-      const msg = target === 'all' ? "Réinitialiser TOUS les mobiles ?" : `Réinitialiser le mobile de ${target} ?`;
-      if(confirm(msg)){
-        const path = target === 'all'
-          ? 'system_control/global_reset'
-          : `system_control/resets/${keyStaff(target)}`;
-        db.ref(path).set(Date.now());
-      }
-    }
-
-    if(selected){
       db.ref(`system_control/resets/${keyStaff(selected)}`).on('value', s => {
         if(s.val()){
           db.ref(`system_control/resets/${keyStaff(selected)}`).remove();
@@ -541,8 +573,57 @@
       });
     }
 
+    // ========= ADMIN (GERANT) =========
+    function triggerReset(target){
+      if(role !== "gerant") return;
+
+      const msg = target === 'all' ? "Réinitialiser TOUS les mobiles ?" : `Réinitialiser le mobile de ${target} ?`;
+      if(confirm(msg)){
+        const path = target === 'all'
+          ? 'system_control/global_reset'
+          : `system_control/resets/${keyStaff(target)}`;
+        db.ref(path).set(Date.now());
+      }
+    }
+
+    document.getElementById("btnResetAll").onclick = () => triggerReset("all");
+
+    function openAdmin(){
+      if(role !== "gerant") return;
+
+      document.getElementById('app-pointage').classList.add('hidden');
+      document.getElementById('app-admin').classList.remove('hidden');
+
+      // Affiche hA depuis presences (même structure que "Présences")
+      db.ref('presences/'+dateStr).on('value', s => {
+        const data = s.val() || {};
+        const container = document.getElementById('adminList');
+        container.innerHTML = "";
+
+        equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+          const k = keyStaff(emp.n);
+          const p = data[k];
+          const div = document.createElement('div');
+          div.className = "flex justify-between items-center p-3 border-b border-white/5 text-[11px]";
+          div.innerHTML = `
+            <span class="text-white font-extrabold">${emp.n}</span>
+            <div class="flex items-center gap-2">
+              <span class="${p && p.hA ? 'text-emerald-300 font-black' : 'text-gray-500'}">${p && p.hA ? p.hA : '---'}</span>
+              <button class="btn-reset-indiv" onclick="triggerReset('${emp.n}')">🔄</button>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    document.getElementById("logo").onclick = () => {
+      if(role === "gerant") openAdmin();
+    };
+
     // ========= BANDEAU =========
     let bannerBusy = false;
+
     async function loadBanner(force=false){
       if(bannerBusy && !force) return;
       bannerBusy = true;
@@ -553,6 +634,7 @@
 
       try{
         ico.classList.add('spin');
+
         const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
         const t = await r.text();
         const json = JSON.parse(t.substr(47).slice(0,-2));
@@ -570,8 +652,11 @@
 
           banner.className = "banner";
           const isUrgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
-          if(isUrgent) banner.classList.add("msg-urgent");
-          else banner.classList.add("msg-info");
+          if(isUrgent){
+            banner.classList.add("msg-urgent","flash-brick");
+          }else{
+            banner.classList.add("msg-info","flash-gold");
+          }
         }else{
           wrap.style.display = "none";
         }
@@ -582,11 +667,14 @@
         bannerBusy = false;
       }
     }
+
     document.getElementById('btn-refresh').onclick = () => loadBanner(true);
 
-    // ========= UI LISTE =========
+    // ========= LISTE UI =========
     function genererListeUI(){
       const sel = document.getElementById('selection');
+      sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black tracking-widest mb-2">Choisi ton nom</div>`;
+
       ["caisse","bar","cuisine","menage","service"].forEach(cat => {
         const h = document.createElement('div');
         h.className = "drawer-header";
@@ -599,6 +687,7 @@
         cont.className = "hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = ()=> cont.classList.toggle('hidden');
 
+        // garde ordre equipe
         equipe.filter(e => e.t === cat).forEach(emp => {
           const b = document.createElement('button');
           b.className = "staff-btn text-white";
@@ -671,7 +760,7 @@
         wrap.classList.remove('hidden');
       }
 
-      db.ref('punches/'+dateStr).on('value', s => {
+      db.ref('presences/'+dateStr).on('value', s => {
         const data = s.val() || {};
         let c = 0;
         equipe.forEach(emp => {
@@ -682,31 +771,18 @@
       });
     }
 
-    // ========= RETARD PANEL =========
+    // ========= RETARD LISTENER =========
     function setupTodayRetardListener(staffName){
       const staffKey = keyStaff(staffName);
-
-      // On lit hP depuis presences et hA depuis punches
-      db.ref('presences/'+dateStr+'/'+staffKey).on('value', sP => {
-        const pres = sP.val() || {};
-        const hP = pres.hP || "";
-
-        db.ref('punches/'+dateStr+'/'+staffKey).on('value', sA => {
-          const pun = sA.val() || {};
-          if(!pun.hA){ setDayRetard(0); return; }
-
-          if(pun.retardMin != null){
-            setDayRetard(pun.retardMin);
-            return;
-          }
-          const r = hP ? computeRetard(pun.hA, hP) : null;
-          setDayRetard(r ? r.minutesLate : 0);
-        });
+      db.ref('presences/'+dateStr+'/'+staffKey).on('value', s => {
+        const v = s.val() || {};
+        if(!v.hA){ setDayRetard(0); return; }
+        setDayRetard(v.retardMin || 0);
       });
     }
 
-    // ========= INIT =========
-    function init(){
+    // ========= INIT (after login) =========
+    function initAfterLogin(){
       loadBanner(true);
       setInterval(loadBanner, 30000);
 
@@ -720,8 +796,8 @@
         setupTodayRetardListener(selected);
         checkGPS();
 
-        // Affichage "déjà pointé"
-        db.ref('punches/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
+        // Zone "déjà pointé"
+        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
           const val = s.val();
           if(val && val.hA){
             let html = `
@@ -736,61 +812,72 @@
           }
         });
 
+        // Si déjà pointé => disable
+        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).once('value').then(s=>{
+          const v = s.val() || {};
+          if(v.hA) document.getElementById("btn").disabled = true;
+        });
+
       }else{
         genererListeUI();
       }
     }
 
     // ========= PUNCH ACTION =========
-    document.getElementById('btn').onclick = async () => {
+    document.getElementById('btn').onclick = () => {
       if(isPunching) return;
       isPunching = true;
 
       const btn = document.getElementById('btn');
       btn.disabled = true;
 
-      try{
-        const staffKey = keyStaff(selected);
-        const hA = nowCasablancaHHMM();
+      const staffKey = keyStaff(selected);
+      const hA = nowCasablancaHHMM();
+      const ref = db.ref('presences/' + dateStr + '/' + staffKey);
 
-        // lire hP depuis presences
-        const presSnap = await db.ref('presences/'+dateStr+'/'+staffKey).once('value');
-        const pres = presSnap.val() || {};
-        const hP = pres.hP || null;
+      // ✅ Transaction: équipe ne peut pas écraser un hA existant
+      ref.transaction(current => {
+        current = current || {};
+
+        if(current.hA && role !== "gerant"){
+          return; // abort
+        }
+
+        const hP = current.hP || null;
         const r = hP ? computeRetard(hA, hP) : null;
 
-        const refPunch = db.ref('punches/'+dateStr+'/'+staffKey);
-
-        await refPunch.transaction(current => {
-          current = current || {};
-          // Équipe ne peut pas écraser un hA déjà existant (rules + transaction)
-          if(current.hA && role !== "gerant") return;
-          return {
-            hA: hA,
-            retard: r ? r.late : false,
-            retardMin: r ? r.minutesLate : 0,
-            timestamp: Date.now()
-          };
-        });
-
-        // marquer IN automatiquement dans presences (optionnel mais utile)
-        await db.ref('presences/'+dateStr+'/'+staffKey).transaction(cur => {
-          cur = cur || {};
-          return { ...cur, on: true };
-        });
-
-      } catch(e){
-        document.getElementById('status').innerHTML = `<span class="text-red-300 font-black uppercase">Erreur enregistrement</span>`;
-        btn.disabled = false;
-      } finally {
+        return {
+          ...current,
+          on: true,
+          hA: hA,
+          retard: r ? r.late : false,
+          retardMin: r ? r.minutesLate : 0,
+          timestamp: firebase.database.ServerValue.TIMESTAMP,
+          lastEditByAdmin: (role === "gerant"),
+          lastEditAt: firebase.database.ServerValue.TIMESTAMP
+        };
+      }, (error, committed) => {
         isPunching = false;
-      }
-    };
 
-    // Start UI seulement après login validé
-    auth.onAuthStateChanged(u => {
-      if(u) init();
-    });
+        if(error){
+          document.getElementById('status').innerHTML =
+            `<span class="text-red-300 font-black uppercase">Erreur enregistrement</span>`;
+          btn.disabled = false;
+          return;
+        }
+
+        if(!committed){
+          document.getElementById('status').innerHTML =
+            `<span class="text-emerald-300 font-black uppercase">Déjà pointé ✅</span>`;
+          btn.disabled = true;
+          toast("Déjà pointé ✅");
+          return;
+        }
+
+        toast("Pointage enregistré ✅");
+        btn.disabled = true;
+      });
+    };
   </script>
 </body>
 </html>
