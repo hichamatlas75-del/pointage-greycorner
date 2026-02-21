@@ -99,6 +99,7 @@
   .btn-main:disabled{ opacity:.45; filter:saturate(.7); }
   .btn-main:active{ transform:scale(.97); }
 
+  /* ✅ BANDEAU (utilisé après login) */
   .banner-wrap{
     display:none;
     gap:10px;
@@ -164,6 +165,41 @@
   @keyframes flashBrick{
     0%,100%{ box-shadow:0 0 0 rgba(255,90,90,0); opacity:1; }
     50%{ box-shadow:0 0 18px rgba(255,90,90,.35), 0 0 42px rgba(160,30,30,.25); opacity:.78; }
+  }
+
+  /* ✅ NOUVEAU: Message accueil (sous login) */
+  .home-msg{
+    display:none; /* affiché seulement avant login */
+    margin:10px 0 12px 0;
+    padding:12px 12px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+  }
+  .home-msg .title{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    color:rgba(229,231,235,.65);
+    margin-bottom:6px;
+  }
+  .home-msg .content{
+    font-size:12px;
+    font-weight:900;
+    line-height:1.25;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+  .home-info{
+    background:rgba(255,200,120,.10);
+    color:#ffd68a;
+    border:1px solid rgba(255,200,120,.28);
+  }
+  .home-urgent{
+    background:#3a0d0d;
+    color:#fff;
+    border:1px solid #ff5a5a;
   }
 
   .drawer-header{
@@ -249,7 +285,7 @@
     border:1px solid rgba(255,255,255,.10);
     border-radius:22px;
     padding:14px;
-    margin:0 0 12px 0;
+    margin:0 0 0 0;
   }
   .inpt{
     width:100%;
@@ -317,6 +353,12 @@
       </div>
     </div>
 
+    <!-- ✅ NOUVEAU: MSG SHEET EN PAGE D'ACCUEIL (SOUS LOGIN, AVANT CONNEXION) -->
+    <div id="homeMsg" class="home-msg">
+      <div class="title">Message du jour</div>
+      <div id="homeMsgContent" class="content">Chargement…</div>
+    </div>
+
     <!-- ✅ Barre session -->
     <div id="sessionBar" class="hidden mb-3 flex items-center justify-between gap-2">
       <div class="text-[10px] font-black uppercase tracking-widest muted">
@@ -345,7 +387,7 @@
       <div class="val"><span id="punch-count">0</span> / <span id="punch-total">0</span></div>
     </div>
 
-    <!-- ✅ Bandeau -->
+    <!-- ✅ Bandeau (après login) -->
     <div id="banner-wrap" class="banner-wrap">
       <div id="banner" class="banner"></div>
       <div id="btn-refresh" class="btn-refresh" title="Actualiser le message">
@@ -433,10 +475,6 @@
       {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},{n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
     ];
 
-    // ✅ Exceptions si tu veux autoriser hA manuel (côté pointage, normalement NON)
-    // Ici on garde : hA écrit seulement par pointage GPS (équipe) ou admin (gérant)
-    const HA_ONLY = ["BOUCHNAK_NAOUAL"]; // chef (utile pour le calcul sur presences/hP)
-
     let selected = localStorage.getItem('gc_staff_name');
     let role = null; // "gerant" | "equipe"
     let isPunching = false;
@@ -502,6 +540,7 @@
 
     function showLoggedUI(){
       document.getElementById("loginWrap").classList.add("hidden");
+      document.getElementById("homeMsg").style.display = "none";   // ✅ cache msg accueil après login
       document.getElementById("sessionBar").classList.remove("hidden");
       document.getElementById("roleLabel").textContent = role || "—";
       document.getElementById("app-pointage").classList.remove("hidden");
@@ -509,6 +548,7 @@
 
     function showLoginUI(){
       document.getElementById("loginWrap").classList.remove("hidden");
+      document.getElementById("homeMsg").style.display = "block";  // ✅ affiche msg accueil avant login
       document.getElementById("sessionBar").classList.add("hidden");
       document.getElementById("app-pointage").classList.add("hidden");
       document.getElementById("app-admin").classList.add("hidden");
@@ -532,7 +572,6 @@
     };
 
     auth.onAuthStateChanged(async (user) => {
-      // stop if not logged
       if(!user){
         role = null;
         showLoginUI();
@@ -594,7 +633,6 @@
       document.getElementById('app-pointage').classList.add('hidden');
       document.getElementById('app-admin').classList.remove('hidden');
 
-      // Affiche hA depuis presences (même structure que "Présences")
       db.ref('presences/'+dateStr).on('value', s => {
         const data = s.val() || {};
         const container = document.getElementById('adminList');
@@ -621,9 +659,54 @@
       if(role === "gerant") openAdmin();
     };
 
-    // ========= BANDEAU =========
+    // ========= MSG SHEET (ACCUEIL + BANDEAU) =========
     let bannerBusy = false;
 
+    async function fetchSheetMessage(){
+      const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
+      const t = await r.text();
+      const json = JSON.parse(t.substr(47).slice(0,-2));
+      const rows = json?.table?.rows || [];
+
+      const typeRaw = rows[0]?.c?.[0]?.v || "";
+      const msgRaw  = rows[0]?.c?.[1]?.v || "";
+
+      const type = String(typeRaw || "").trim().toUpperCase();
+      const msg  = String(msgRaw  || "").trim();
+
+      return { type, msg };
+    }
+
+    // ✅ Message accueil (sous login, avant connexion)
+    async function loadHomeMsg(force=false){
+      if(bannerBusy && !force) return;
+      bannerBusy = true;
+
+      const box = document.getElementById("homeMsg");
+      const content = document.getElementById("homeMsgContent");
+
+      try{
+        const { type, msg } = await fetchSheetMessage();
+
+        if(msg){
+          box.style.display = "block";
+          content.textContent = msg;
+
+          box.classList.remove("home-info","home-urgent");
+          const isUrgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
+          box.classList.add(isUrgent ? "home-urgent" : "home-info");
+        }else{
+          box.style.display = "none";
+        }
+      }catch(e){
+        // non bloquant (on laisse "Chargement…" ou on masque)
+        // box.style.display = "none";
+      }finally{
+        bannerBusy = false;
+      }
+    }
+
+    // ✅ Bandeau (après login)
     async function loadBanner(force=false){
       if(bannerBusy && !force) return;
       bannerBusy = true;
@@ -635,16 +718,7 @@
       try{
         ico.classList.add('spin');
 
-        const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
-        const t = await r.text();
-        const json = JSON.parse(t.substr(47).slice(0,-2));
-        const rows = json?.table?.rows || [];
-
-        const typeRaw = rows[0]?.c?.[0]?.v || "";
-        const msgRaw  = rows[0]?.c?.[1]?.v || "";
-
-        const type = String(typeRaw || "").trim().toUpperCase();
-        const msg  = String(msgRaw  || "").trim();
+        const { type, msg } = await fetchSheetMessage();
 
         if(msg){
           banner.textContent = msg;
@@ -687,7 +761,6 @@
         cont.className = "hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = ()=> cont.classList.toggle('hidden');
 
-        // garde ordre equipe
         equipe.filter(e => e.t === cat).forEach(emp => {
           const b = document.createElement('button');
           b.className = "staff-btn text-white";
@@ -796,7 +869,6 @@
         setupTodayRetardListener(selected);
         checkGPS();
 
-        // Zone "déjà pointé"
         db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
           const val = s.val();
           if(val && val.hA){
@@ -812,7 +884,6 @@
           }
         });
 
-        // Si déjà pointé => disable
         db.ref('presences/'+dateStr+'/'+keyStaff(selected)).once('value').then(s=>{
           const v = s.val() || {};
           if(v.hA) document.getElementById("btn").disabled = true;
@@ -835,7 +906,6 @@
       const hA = nowCasablancaHHMM();
       const ref = db.ref('presences/' + dateStr + '/' + staffKey);
 
-      // ✅ Transaction: équipe ne peut pas écraser un hA existant
       ref.transaction(current => {
         current = current || {};
 
@@ -878,6 +948,10 @@
         btn.disabled = true;
       });
     };
+
+    // ✅ Charger le message accueil dès l’ouverture (avant login)
+    loadHomeMsg(true);
+    setInterval(loadHomeMsg, 30000);
   </script>
 </body>
 </html>
