@@ -464,7 +464,7 @@
     // Ligne 1: A=TYPE (INFO/URGENT), B=MESSAGE
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
-    // ✅ Équipe
+    // ✅ Équipe (liste complète RH)
     const equipe = [
       {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
       {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
@@ -475,19 +475,26 @@
       {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},{n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
     ];
 
+    // ✅ EXCLUS DU POINTAGE (pas de téléphone -> pointage manuel sur feuille présence)
+    const NO_PHONE_KEYS = new Set(["ELMCHAOURI_SOUAD", "SBAI_HAKIMA"]);
+
+    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
+    const equipePointage = equipe.filter(e => !NO_PHONE_KEYS.has(keyStaff(e.n)));
+
+    // ✅ selected
     let selected = localStorage.getItem('gc_staff_name');
+    if(selected && NO_PHONE_KEYS.has(keyStaff(selected))){
+      localStorage.removeItem('gc_staff_name');
+      selected = null;
+    }
+
     let role = null; // "gerant" | "equipe"
     let isPunching = false;
-
-    // ✅ NEW: email de l'utilisateur connecté (pour compte unique equipe@greycorner.com)
-    let currentUserEmail = null;
 
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
       timeZone:'Africa/Casablanca',
       year:'numeric',month:'2-digit',day:'2-digit'
     }).format(new Date());
-
-    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
     function toast(msg){
       const t = document.getElementById("toast");
@@ -577,19 +584,14 @@
     auth.onAuthStateChanged(async (user) => {
       if(!user){
         role = null;
-        currentUserEmail = null; // ✅
         showLoginUI();
         return;
       }
-
-      // ✅ NEW: capture email connecté (ex: equipe@greycorner.com)
-      currentUserEmail = (user.email || "").toLowerCase();
 
       role = await fetchRole(user.uid);
       if(role !== "gerant" && role !== "equipe"){
         await auth.signOut();
         role = null;
-        currentUserEmail = null; // ✅
         showLoginUI();
         return;
       }
@@ -641,12 +643,13 @@
       document.getElementById('app-pointage').classList.add('hidden');
       document.getElementById('app-admin').classList.remove('hidden');
 
-      db.ref('presences/'+dateStr).on('value', s => {
+      // ✅ ADMIN lit la table punches (pas presences)
+      db.ref('punches/'+dateStr).on('value', s => {
         const data = s.val() || {};
         const container = document.getElementById('adminList');
         container.innerHTML = "";
 
-        equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+        equipePointage.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
           const k = keyStaff(emp.n);
           const p = data[k];
           const div = document.createElement('div');
@@ -766,7 +769,7 @@
         cont.className = "hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = ()=> cont.classList.toggle('hidden');
 
-        equipe.filter(e => e.t === cat).forEach(emp => {
+        equipePointage.filter(e => e.t === cat).forEach(emp => {
           const b = document.createElement('button');
           b.className = "staff-btn text-white";
           b.innerText = emp.n;
@@ -778,6 +781,9 @@
           };
           cont.appendChild(b);
         });
+
+        // si aucun employé dans la catégorie, ne pas afficher
+        if(cont.childElementCount === 0) return;
 
         sel.appendChild(h);
         sel.appendChild(cont);
@@ -823,13 +829,13 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
-    // ========= COUNTER =========
+    // ========= COUNTER (punches) =========
     function setupPunchCounter(){
       const wrap = document.getElementById('punch-counter');
       const countEl = document.getElementById('punch-count');
       const totalEl = document.getElementById('punch-total');
 
-      totalEl.textContent = String(equipe.length);
+      totalEl.textContent = String(equipePointage.length);
 
       if(selected){
         wrap.classList.add('hidden');
@@ -838,10 +844,10 @@
         wrap.classList.remove('hidden');
       }
 
-      db.ref('presences/'+dateStr).on('value', s => {
+      db.ref('punches/'+dateStr).on('value', s => {
         const data = s.val() || {};
         let c = 0;
-        equipe.forEach(emp => {
+        equipePointage.forEach(emp => {
           const p = data[keyStaff(emp.n)];
           if(p && p.hA) c++;
         });
@@ -849,10 +855,10 @@
       });
     }
 
-    // ========= RETARD LISTENER =========
+    // ========= RETARD LISTENER (punches) =========
     function setupTodayRetardListener(staffName){
       const staffKey = keyStaff(staffName);
-      db.ref('presences/'+dateStr+'/'+staffKey).on('value', s => {
+      db.ref('punches/'+dateStr+'/'+staffKey).on('value', s => {
         const v = s.val() || {};
         if(!v.hA){ setDayRetard(0); return; }
         setDayRetard(v.retardMin || 0);
@@ -874,7 +880,8 @@
         setupTodayRetardListener(selected);
         checkGPS();
 
-        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
+        // ✅ écoute punches
+        db.ref('punches/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
           const val = s.val();
           if(val && val.hA){
             let html = `
@@ -889,7 +896,8 @@
           }
         });
 
-        db.ref('presences/'+dateStr+'/'+keyStaff(selected)).once('value').then(s=>{
+        // ✅ disable si déjà pointé
+        db.ref('punches/'+dateStr+'/'+keyStaff(selected)).once('value').then(s=>{
           const v = s.val() || {};
           if(v.hA) document.getElementById("btn").disabled = true;
         });
@@ -899,47 +907,47 @@
       }
     }
 
-    // ========= PUNCH ACTION =========
+    // ========= PUNCH ACTION (writes to punches) =========
     document.getElementById('btn').onclick = () => {
       if(isPunching) return;
+      if(!selected) return;
+
+      const staffKey = keyStaff(selected);
+
+      // sécurité UI (Souad/Hakima bloquées)
+      if(NO_PHONE_KEYS.has(staffKey)){
+        toast("Pointage non autorisé pour ce profil.");
+        return;
+      }
+
       isPunching = true;
 
       const btn = document.getElementById('btn');
       btn.disabled = true;
 
-      const staffKey = keyStaff(selected);
       const hA = nowCasablancaHHMM();
-      const ref = db.ref('presences/' + dateStr + '/' + staffKey);
+      const ref = db.ref('punches/' + dateStr + '/' + staffKey);
 
       ref.transaction(current => {
         current = current || {};
 
+        // 1 seul pointage si role=equipe
         if(current.hA && role !== "gerant"){
           return; // abort
         }
 
-        const hP = current.hP || null;
+        const hP = current.hP || null; // optionnel si tu le mets plus tard
         const r = hP ? computeRetard(hA, hP) : null;
 
-        // ✅ NEW: on ajoute la clé employé dans l'objet (seulement si login = compte unique staff)
-        const payload = {
+        // ✅ empKey obligatoire (doit matcher les rules)
+        return {
           ...current,
-          on: true,
+          empKey: staffKey,
           hA: hA,
           retard: r ? r.late : false,
           retardMin: r ? r.minutesLate : 0,
-          timestamp: firebase.database.ServerValue.TIMESTAMP,
-          lastEditByAdmin: (role === "gerant"),
-          lastEditAt: firebase.database.ServerValue.TIMESTAMP
+          timestamp: firebase.database.ServerValue.TIMESTAMP
         };
-
-        // ✅ si la personne est connectée avec equipe@greycorner.com (compte unique)
-        if(currentUserEmail === "equipe@greycorner.com"){
-          payload.empKey = staffKey;        // identifiant employé (clé)
-          payload.punchBy = "equipe@";      // petit marqueur lisible (optionnel)
-        }
-
-        return payload;
       }, (error, committed) => {
         isPunching = false;
 
