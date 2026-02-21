@@ -11,7 +11,6 @@
   html,body{
     height:100%;
     margin:0;
-    /* ✅ permettre scroll + bannière sticky visible même après pointage */
     overflow-y:auto;
     overflow-x:hidden;
     background:
@@ -20,7 +19,6 @@
     font-family:'Plus Jakarta Sans',sans-serif;
     color:#e5e7eb;
   }
-
   .card{
     width:100%;
     max-width:420px;
@@ -39,14 +37,11 @@
       0 0 40px rgba(255,170,60,.08);
     position:relative;
   }
-
   .gold{ color:#ffcc73; letter-spacing:.08em; }
   .muted{ color:rgba(229,231,235,.65); }
-
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
-  /* ✅ Bouton planning bleu vif (forcé) */
   .btn-planning{
     background: linear-gradient(180deg,#2F7BFF,#1A4ED8) !important;
     border:1px solid rgba(255,255,255,.15) !important;
@@ -65,13 +60,9 @@
     box-shadow:0 14px 30px rgba(0,0,0,.45), inset 0 -3px 0 rgba(0,0,0,.25);
     transition:.25s;
   }
-  .btn-planning:hover{
-    background: linear-gradient(180deg,#4C90FF,#2F7BFF) !important;
-    box-shadow:0 18px 38px rgba(0,0,0,.55);
-  }
+  .btn-planning:hover{ background: linear-gradient(180deg,#4C90FF,#2F7BFF) !important; }
   .btn-planning:active{ transform:scale(.98); }
 
-  /* ✅ Bouton Menu Ramadan discret */
   .btn-ramadan{
     background: rgba(255,255,255,.05);
     border:1px solid rgba(255,255,255,.10);
@@ -90,11 +81,7 @@
     box-shadow:0 10px 22px rgba(0,0,0,.35);
     transition:.2s;
   }
-  .btn-ramadan:hover{
-    background: rgba(255,255,255,.08);
-    border-color: rgba(255,204,115,.22);
-    box-shadow:0 14px 26px rgba(0,0,0,.42);
-  }
+  .btn-ramadan:hover{ background: rgba(255,255,255,.08); border-color: rgba(255,204,115,.22); }
   .btn-ramadan:active{ transform:scale(.99); }
 
   .btn-main{
@@ -104,35 +91,26 @@
     border-radius:26px;
     padding:26px;
     font-size:26px;
-    box-shadow:
-      0 12px 25px rgba(255,170,60,.35),
-      inset 0 -3px 0 rgba(0,0,0,.25);
+    box-shadow: 0 12px 25px rgba(255,170,60,.35), inset 0 -3px 0 rgba(0,0,0,.25);
     transition:.25s;
   }
   .btn-main:disabled{ opacity:.45; filter:saturate(.7); }
-  .btn-main:active{
-    transform:scale(.97);
-    box-shadow:0 6px 12px rgba(0,0,0,.5) inset;
-  }
+  .btn-main:active{ transform:scale(.97); }
 
-  /* ✅ Bandeau fixe + refresh manuel + sticky (visible partout) */
   .banner-wrap{
     display:none;
     gap:10px;
     align-items:stretch;
     margin:12px 0 12px 0;
-
     position:sticky;
     top:0;
     z-index:20;
     background:linear-gradient(180deg,rgba(2,4,10,.95),rgba(2,4,10,.70));
     backdrop-filter:blur(8px);
-    -webkit-backdrop-filter:blur(8px);
     padding-top:6px;
     padding-bottom:6px;
     border-radius:18px;
   }
-
   .banner{
     flex:1;
     border-radius:16px;
@@ -144,9 +122,7 @@
     border:1px solid rgba(255,255,255,.10);
     transition: all .22s ease;
     word-break:break-word;
-    overflow-wrap:anywhere;
   }
-
   .btn-refresh{
     width:44px;
     min-width:44px;
@@ -160,11 +136,7 @@
     transition:.2s;
     user-select:none;
   }
-  .btn-refresh:hover{
-    background:rgba(255,255,255,.08);
-    border-color:rgba(255,204,115,.28);
-    box-shadow:0 10px 22px rgba(0,0,0,.35);
-  }
+  .btn-refresh:hover{ background:rgba(255,255,255,.08); border-color:rgba(255,204,115,.28); }
   .btn-refresh:active{ transform:scale(.98); }
   .spin{ animation:spin .8s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg) } }
@@ -178,16 +150,6 @@
     background:#3a0d0d;
     color:#fff;
     border:1px solid #ff5a5a;
-  }
-  .flash-gold{ animation:flashGold 1.2s infinite; }
-  @keyframes flashGold{
-    0%,100%{ box-shadow:0 0 0 rgba(255,204,115,0); filter:saturate(1); opacity:1; }
-    50%{ box-shadow:0 0 18px rgba(255,204,115,.35), 0 0 40px rgba(255,179,71,.18); filter:saturate(1.25); opacity:.88; }
-  }
-  .flash-brick{ animation:flashBrick .9s infinite; }
-  @keyframes flashBrick{
-    0%,100%{ box-shadow:0 0 0 rgba(255,90,90,0); opacity:1; }
-    50%{ box-shadow:0 0 18px rgba(255,90,90,.35), 0 0 42px rgba(160,30,30,.25); opacity:.78; }
   }
 
   .drawer-header{
@@ -242,7 +204,6 @@
     margin-top:10px;
   }
 
-  /* ✅ NEW: compteur "déjà pointé" (accueil) */
   .punch-counter{
     background:rgba(255,255,255,.05);
     border:1px solid rgba(255,255,255,.10);
@@ -267,34 +228,89 @@
     font-weight:900;
     color:#ffd68a;
   }
+
+  /* LOGIN */
+  .login-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:22px;
+    padding:14px;
+    margin:0 0 12px 0;
+  }
+  .inpt{
+    width:100%;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:12px 12px;
+    color:#fff;
+    font-weight:800;
+    font-size:12px;
+    outline:none;
+  }
+  .inpt:focus{ border-color: rgba(255,204,115,.35); box-shadow: 0 0 0 3px rgba(255,204,115,.12); }
+  .btn-login{
+    width:100%;
+    border-radius:18px;
+    padding:12px 14px;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    background:rgba(255,204,115,.18);
+    border:1px solid rgba(255,204,115,.28);
+    color:#ffd68a;
+  }
+  .btn-login:active{ transform:scale(.99); }
 </style>
 </head>
 
 <body class="flex items-center justify-center p-4">
   <div class="card">
     <div class="text-center mb-4 flex-shrink-0">
-      <img src="images/LOGO GREY CORNER.png" onclick="askAdmin()" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
+      <img src="images/LOGO GREY CORNER.png" class="h-14 mx-auto" alt="Grey Corner" />
     </div>
 
-    <!-- ✅ Planning bleu vif -->
+    <!-- ✅ LOGIN -->
+    <div id="loginWrap" class="login-card">
+      <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
+      <div class="space-y-2">
+        <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
+        <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+        <button id="btnLogin" class="btn-login">Se connecter</button>
+        <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
+      </div>
+    </div>
+
+    <!-- ✅ Barre session -->
+    <div id="sessionBar" class="hidden mb-3 flex items-center justify-between gap-2">
+      <div class="text-[10px] font-black uppercase tracking-widest muted">
+        Connecté : <span id="roleLabel" class="text-yellow-200">—</span>
+      </div>
+      <button id="btnLogout" class="text-[10px] font-black px-3 py-2 rounded-full border border-white/10 bg-white/5">
+        Déconnexion
+      </button>
+    </div>
+
+    <!-- ✅ Planning -->
     <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-2">
       <span style="font-size:16px; line-height:1">🗓️</span>
       <span>CONSULTER LE PLANNING</span>
     </button>
 
-    <!-- ✅ Menu Ramadan (discret) -->
+    <!-- ✅ Menu Ramadan -->
     <button onclick="window.open('https://ramadan-greycorner.pages.dev/', '_blank')" class="btn-ramadan mb-3">
       <span style="font-size:16px; line-height:1">🌙</span>
       <span>MENU RAMADAN</span>
     </button>
 
-    <!-- ✅ Compteur accueil (visible uniquement avant sélection) -->
+    <!-- ✅ Compteur -->
     <div id="punch-counter" class="punch-counter hidden">
       <div class="label">Déjà pointés</div>
       <div class="val"><span id="punch-count">0</span> / <span id="punch-total">0</span></div>
     </div>
 
-    <!-- ✅ Bandeau sticky + refresh -->
+    <!-- ✅ Bandeau -->
     <div id="banner-wrap" class="banner-wrap">
       <div id="banner" class="banner"></div>
       <div id="btn-refresh" class="btn-refresh" title="Actualiser le message">
@@ -302,7 +318,8 @@
       </div>
     </div>
 
-    <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden">
+    <!-- APP POINTAGE -->
+    <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
       <div id="selection" class="scroll flex-grow">
         <div class="text-center text-[10px] muted uppercase font-black tracking-widest mb-2">Choisi ton nom</div>
       </div>
@@ -327,9 +344,10 @@
       </div>
     </div>
 
+    <!-- APP ADMIN (GERANT) -->
     <div id="app-admin" class="hidden flex flex-col flex-grow overflow-hidden">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="gold font-black uppercase text-sm italic">Supervision</h2>
+        <h2 class="gold font-black uppercase text-sm italic">Supervision (Gérant)</h2>
         <button onclick="location.reload()" class="text-white text-xs bg-red-900/40 px-3 py-1 rounded-full text-[10px] font-black border border-white/10">
           Fermer
         </button>
@@ -340,54 +358,46 @@
     </div>
   </div>
 
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
     const firebaseConfig = { databaseURL:"https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
 
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
-    // Ligne 1: A=TYPE (INFO/URGENT), B=MESSAGE
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
-    // ✅ MAJ: ajout BOUCHNAK NAOUAL (Chef cuisine) - en premier dans cuisine
     const equipe = [
       {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
       {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
-
-      {n:"BOUCHNAK NAOUAL",t:"cuisine"},  /* ✅ NEW Chef cuisine (hA sans hP OK) */
+      {n:"BOUCHNAK NAOUAL",t:"cuisine"},
       {n:"BELQASSE KHAOULA",t:"cuisine"},{n:"BOURAHMA ANAS",t:"cuisine"},{n:"IDRISSI SAAD",t:"cuisine"},
       {n:"LEMSSIEH JAWAD",t:"cuisine"},{n:"MAJDOUB JIHANE",t:"cuisine"},{n:"MOUJAHID IMANE",t:"cuisine"},{n:"ZAIR FATIMA",t:"cuisine"},
-
       {n:"ELGORRAMY ANISSA",t:"menage"},{n:"ELGORRAMY SOUAD",t:"menage"},{n:"ELMCHAOURI SOUAD",t:"menage"},{n:"SBAI HAKIMA",t:"menage"},
       {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},{n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
     ];
 
-    let selected = localStorage.getItem('gc_staff_name');
+    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
       timeZone:'Africa/Casablanca',
       year:'numeric',month:'2-digit',day:'2-digit'
     }).format(new Date());
 
-    // ✅ Chemins (nouvelle séparation)
-    const PRES_ROOT = 'presences/' + dateStr;
-    const POIN_ROOT = 'pointages/' + dateStr;
-
-    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
-
-    let isAdminSession = false;
+    let selected = localStorage.getItem('gc_staff_name');
+    let role = null; // "gerant" | "equipe"
     let isPunching = false;
 
     function nowCasablancaHHMM(){
       const parts = new Intl.DateTimeFormat('fr-FR',{
         timeZone:'Africa/Casablanca',
-        hour:'2-digit',
-        minute:'2-digit',
-        hour12:false
+        hour:'2-digit', minute:'2-digit', hour12:false
       }).formatToParts(new Date());
       const h = parts.find(p=>p.type==='hour')?.value ?? '00';
       const m = parts.find(p=>p.type==='minute')?.value ?? '00';
@@ -408,48 +418,102 @@
       return { late: diff > 0, minutesLate: Math.max(0, diff) };
     }
 
-    function showRetardPanel(){
-      document.getElementById('retard-panel').classList.remove('hidden');
-    }
-
+    function showRetardPanel(){ document.getElementById('retard-panel').classList.remove('hidden'); }
     function setDayRetard(min){
       const v = Number(min || 0);
       const el = document.getElementById('day-retard-text');
-      if(v > 0){
-        el.innerHTML = `⏱️ Retard jour : <span class="text-red-300">+${v} min</span>`;
-      }else{
-        el.innerHTML = `⏱️ Retard jour : <span class="text-emerald-300">0 min</span>`;
-      }
+      if(v > 0) el.innerHTML = `⏱️ Retard jour : <span class="text-red-300">+${v} min</span>`;
+      else el.innerHTML = `⏱️ Retard jour : <span class="text-emerald-300">0 min</span>`;
       showRetardPanel();
     }
 
-    // ✅ Retard du jour = calculé en live via (pointages.hA + presences.hP)
-    function setupTodayRetardListener(staffName){
-      const staffKey = keyStaff(staffName);
+    // ========= AUTH =========
+    async function fetchRole(uid){
+      const snap = await db.ref("users/"+uid).once("value");
+      return snap.val() || null;
+    }
 
-      let hpCache = "";
-      let haCache = "";
+    function showLoggedUI(){
+      document.getElementById("loginWrap").classList.add("hidden");
+      document.getElementById("sessionBar").classList.remove("hidden");
+      document.getElementById("roleLabel").textContent = role || "—";
+      document.getElementById("app-pointage").classList.remove("hidden");
+    }
 
-      const tryCompute = () => {
-        if(!haCache){ setDayRetard(0); return; }
-        const r = computeRetard(haCache, hpCache);
-        setDayRetard(r ? r.minutesLate : 0);
-      };
+    function showLoginUI(){
+      document.getElementById("loginWrap").classList.remove("hidden");
+      document.getElementById("sessionBar").classList.add("hidden");
+      document.getElementById("app-pointage").classList.add("hidden");
+      document.getElementById("app-admin").classList.add("hidden");
+    }
 
-      db.ref(PRES_ROOT + '/' + staffKey).on('value', s => {
-        const v = s.val() || {};
-        hpCache = v.hP || "";
-        tryCompute();
-      });
+    document.getElementById("btnLogin").onclick = async () => {
+      const email = (document.getElementById("loginEmail").value || "").trim();
+      const pass  = (document.getElementById("loginPass").value || "").trim();
+      document.getElementById("loginMsg").textContent = "";
+      try{
+        await auth.signInWithEmailAndPassword(email, pass);
+      }catch(e){
+        document.getElementById("loginMsg").textContent = "Identifiants invalides.";
+      }
+    };
 
-      db.ref(POIN_ROOT + '/' + staffKey).on('value', s => {
-        const v = s.val() || {};
-        haCache = v.hA || "";
-        tryCompute();
+    document.getElementById("btnLogout").onclick = async () => {
+      await auth.signOut();
+      localStorage.clear();
+      location.reload();
+    };
+
+    auth.onAuthStateChanged(async (user) => {
+      if(!user){ role = null; showLoginUI(); return; }
+
+      role = await fetchRole(user.uid);
+      if(role !== "gerant" && role !== "equipe"){
+        await auth.signOut();
+        showLoginUI();
+        return;
+      }
+
+      showLoggedUI();
+
+      // si gérant => supervision dispo (bouton via logo)
+      // on garde le design: clique logo pour ouvrir admin uniquement si gerant
+    });
+
+    // ========= ADMIN (GERANT) =========
+    function openAdmin(){
+      if(role !== "gerant") return;
+      document.getElementById('app-pointage').classList.add('hidden');
+      document.getElementById('app-admin').classList.remove('hidden');
+
+      // On lit punches + presences pour afficher une heure visible (hA)
+      db.ref('punches/'+dateStr).on('value', sPunch => {
+        const punchData = sPunch.val() || {};
+        const container = document.getElementById('adminList');
+        container.innerHTML = "";
+
+        equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+          const k = keyStaff(emp.n);
+          const p = punchData[k];
+          const div = document.createElement('div');
+          div.className = "flex justify-between items-center p-3 border-b border-white/5 text-[11px]";
+          div.innerHTML = `
+            <span class="text-white font-extrabold">${emp.n}</span>
+            <div class="flex items-center gap-2">
+              <span class="${p ? 'text-emerald-300 font-black' : 'text-gray-500'}">${p ? (p.hA || '---') : '---'}</span>
+              <button onclick="triggerReset('${emp.n}')" class="btn-reset-indiv">🔄</button>
+            </div>
+          `;
+          container.appendChild(div);
+        });
       });
     }
 
+    // clic logo => admin si gerant
+    document.querySelector("img[alt='Grey Corner']").onclick = () => openAdmin();
+
     function triggerReset(target){
+      if(role !== "gerant") return;
       const msg = target === 'all' ? "Réinitialiser TOUS les mobiles ?" : `Réinitialiser le mobile de ${target} ?`;
       if(confirm(msg)){
         const path = target === 'all'
@@ -477,39 +541,8 @@
       });
     }
 
-    function askAdmin(){
-      if(prompt("Code Admin :") === "2026"){
-        isAdminSession = true;
-
-        document.getElementById('app-pointage').classList.add('hidden');
-        document.getElementById('app-admin').classList.remove('hidden');
-
-        // ✅ Supervision: lire hA depuis pointages/
-        db.ref(POIN_ROOT).on('value', s => {
-          const data = s.val() || {};
-          const container = document.getElementById('adminList');
-          container.innerHTML = "";
-
-          equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
-            const p = data[keyStaff(emp.n)];
-            const div = document.createElement('div');
-            div.className = "flex justify-between items-center p-3 border-b border-white/5 text-[11px]";
-            div.innerHTML = `
-              <span class="text-white font-extrabold">${emp.n}</span>
-              <div class="flex items-center gap-2">
-                <span class="${p && p.hA ? 'text-emerald-300 font-black' : 'text-gray-500'}">${p && p.hA ? p.hA : '---'}</span>
-                <button onclick="triggerReset('${emp.n}')" class="btn-reset-indiv">🔄</button>
-              </div>
-            `;
-            container.appendChild(div);
-          });
-        });
-      }
-    }
-
-    // ✅ Bandeau fixe + refresh manuel + auto 30s
+    // ========= BANDEAU =========
     let bannerBusy = false;
-
     async function loadBanner(force=false){
       if(bannerBusy && !force) return;
       bannerBusy = true;
@@ -520,7 +553,6 @@
 
       try{
         ico.classList.add('spin');
-
         const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
         const t = await r.text();
         const json = JSON.parse(t.substr(47).slice(0,-2));
@@ -538,11 +570,8 @@
 
           banner.className = "banner";
           const isUrgent = (type === "URGENT") || msg.toUpperCase().includes("URGENT");
-          if(isUrgent){
-            banner.classList.add("msg-urgent","flash-brick");
-          }else{
-            banner.classList.add("msg-info","flash-gold");
-          }
+          if(isUrgent) banner.classList.add("msg-urgent");
+          else banner.classList.add("msg-info");
         }else{
           wrap.style.display = "none";
         }
@@ -553,9 +582,9 @@
         bannerBusy = false;
       }
     }
-
     document.getElementById('btn-refresh').onclick = () => loadBanner(true);
 
+    // ========= UI LISTE =========
     function genererListeUI(){
       const sel = document.getElementById('selection');
       ["caisse","bar","cuisine","menage","service"].forEach(cat => {
@@ -570,7 +599,6 @@
         cont.className = "hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = ()=> cont.classList.toggle('hidden');
 
-        // ✅ garde l'ordre du tableau "equipe" (donc Chef en premier)
         equipe.filter(e => e.t === cat).forEach(emp => {
           const b = document.createElement('button');
           b.className = "staff-btn text-white";
@@ -589,6 +617,7 @@
       });
     }
 
+    // ========= GPS =========
     function checkGPS(){
       const status = document.getElementById('status');
 
@@ -627,7 +656,7 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
-    // ✅ compteur "personnes déjà pointées" (accueil uniquement) => basé sur pointages/
+    // ========= COUNTER =========
     function setupPunchCounter(){
       const wrap = document.getElementById('punch-counter');
       const countEl = document.getElementById('punch-count');
@@ -642,19 +671,41 @@
         wrap.classList.remove('hidden');
       }
 
-      db.ref(POIN_ROOT).on('value', s => {
+      db.ref('punches/'+dateStr).on('value', s => {
         const data = s.val() || {};
         let c = 0;
-
         equipe.forEach(emp => {
           const p = data[keyStaff(emp.n)];
           if(p && p.hA) c++;
         });
-
         countEl.textContent = String(c);
       });
     }
 
+    // ========= RETARD PANEL =========
+    function setupTodayRetardListener(staffName){
+      const staffKey = keyStaff(staffName);
+
+      // On lit hP depuis presences et hA depuis punches
+      db.ref('presences/'+dateStr+'/'+staffKey).on('value', sP => {
+        const pres = sP.val() || {};
+        const hP = pres.hP || "";
+
+        db.ref('punches/'+dateStr+'/'+staffKey).on('value', sA => {
+          const pun = sA.val() || {};
+          if(!pun.hA){ setDayRetard(0); return; }
+
+          if(pun.retardMin != null){
+            setDayRetard(pun.retardMin);
+            return;
+          }
+          const r = hP ? computeRetard(pun.hA, hP) : null;
+          setDayRetard(r ? r.minutesLate : 0);
+        });
+      });
+    }
+
+    // ========= INIT =========
     function init(){
       loadBanner(true);
       setInterval(loadBanner, 30000);
@@ -669,49 +720,20 @@
         setupTodayRetardListener(selected);
         checkGPS();
 
-        const staffKey = keyStaff(selected);
-
-        // ✅ Affichage "POINTÉ" : hA vient de pointages/, hP vient de presences/
-        let hpCache = "";
-        let haCache = "";
-
-        const renderPointageZone = () => {
-          if(!haCache) return;
-
-          let html = `
-            <div class="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-              <p class="text-emerald-300 font-black text-2xl mb-2">POINTÉ ✅</p>
-              <p class="text-3xl font-black text-white mb-3">${haCache}</p>
-          `;
-
-          if(hpCache){
-            const r = computeRetard(haCache, hpCache);
-            if(r){
-              if(r.late){
-                html += `<p class="text-red-300 font-black text-sm">⚠️ RETARD : +${r.minutesLate} min</p>`;
-              }else{
-                html += `<p class="text-emerald-300 font-black text-sm">DANS LES TEMPS ✓</p>`;
-              }
-            }else{
-              html += `<p class="text-gray-400 italic text-[10px]">Heures invalides (planning/arrivée).</p>`;
-            }
-          }else{
-            html += `<p class="text-gray-400 italic text-[10px]">Calcul retard non appliqué (pas de shift prévu).</p>`;
+        // Affichage "déjà pointé"
+        db.ref('punches/'+dateStr+'/'+keyStaff(selected)).on('value', s => {
+          const val = s.val();
+          if(val && val.hA){
+            let html = `
+              <div class="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+                <p class="text-emerald-300 font-black text-2xl mb-2">POINTÉ ✅</p>
+                <p class="text-3xl font-black text-white mb-3">${val.hA}</p>
+            `;
+            const min = Number(val.retardMin || 0);
+            if(min > 0) html += `<p class="text-red-300 font-black text-sm">⚠️ RETARD : +${min} min</p>`;
+            else html += `<p class="text-emerald-300 font-black text-sm">DANS LES TEMPS ✓</p>`;
+            document.getElementById('pointage-zone').innerHTML = html + `</div>`;
           }
-
-          document.getElementById('pointage-zone').innerHTML = html + `</div>`;
-        };
-
-        db.ref(PRES_ROOT + '/' + staffKey).on('value', s => {
-          const v = s.val() || {};
-          hpCache = v.hP || "";
-          renderPointageZone();
-        });
-
-        db.ref(POIN_ROOT + '/' + staffKey).on('value', s => {
-          const v = s.val() || {};
-          haCache = v.hA || "";
-          renderPointageZone();
         });
 
       }else{
@@ -719,55 +741,56 @@
       }
     }
 
-    // ✅ Enregistrement : hA -> pointages/  +  on:true -> presences/
-    document.getElementById('btn').onclick = () => {
+    // ========= PUNCH ACTION =========
+    document.getElementById('btn').onclick = async () => {
       if(isPunching) return;
       isPunching = true;
 
       const btn = document.getElementById('btn');
       btn.disabled = true;
 
-      const staffKey = keyStaff(selected);
-      const hA = nowCasablancaHHMM();
+      try{
+        const staffKey = keyStaff(selected);
+        const hA = nowCasablancaHHMM();
 
-      const refPointage = db.ref(POIN_ROOT + '/' + staffKey);
+        // lire hP depuis presences
+        const presSnap = await db.ref('presences/'+dateStr+'/'+staffKey).once('value');
+        const pres = presSnap.val() || {};
+        const hP = pres.hP || null;
+        const r = hP ? computeRetard(hA, hP) : null;
 
-      // 1) transaction sur pointages pour éviter double pointage
-      refPointage.transaction(current => {
-        current = current || {};
+        const refPunch = db.ref('punches/'+dateStr+'/'+staffKey);
 
-        // déjà pointé ? (sauf admin)
-        if(current.hA && !isAdminSession){
-          return;
-        }
+        await refPunch.transaction(current => {
+          current = current || {};
+          // Équipe ne peut pas écraser un hA déjà existant (rules + transaction)
+          if(current.hA && role !== "gerant") return;
+          return {
+            hA: hA,
+            retard: r ? r.late : false,
+            retardMin: r ? r.minutesLate : 0,
+            timestamp: Date.now()
+          };
+        });
 
-        // ✅ règles: equipe écrit uniquement {hA:"HH:MM"}
-        return { hA: hA };
-      }, (error, committed) => {
+        // marquer IN automatiquement dans presences (optionnel mais utile)
+        await db.ref('presences/'+dateStr+'/'+staffKey).transaction(cur => {
+          cur = cur || {};
+          return { ...cur, on: true };
+        });
+
+      } catch(e){
+        document.getElementById('status').innerHTML = `<span class="text-red-300 font-black uppercase">Erreur enregistrement</span>`;
+        btn.disabled = false;
+      } finally {
         isPunching = false;
-
-        if(error){
-          document.getElementById('status').innerHTML =
-            `<span class="text-red-300 font-black uppercase">Erreur enregistrement</span>`;
-          btn.disabled = false;
-          return;
-        }
-
-        if(!committed){
-          document.getElementById('status').innerHTML =
-            `<span class="text-emerald-300 font-black uppercase">Déjà pointé ✅</span>`;
-          btn.disabled = true;
-          return;
-        }
-
-        // 2) marquer présent dans presences (sans toucher hP, sans écrire hA)
-        db.ref(PRES_ROOT + '/' + staffKey).update({ on: true }).catch(()=>{ /* non bloquant */ });
-
-        btn.disabled = true;
-      });
+      }
     };
 
-    init();
+    // Start UI seulement après login validé
+    auth.onAuthStateChanged(u => {
+      if(u) init();
+    });
   </script>
 </body>
 </html>
