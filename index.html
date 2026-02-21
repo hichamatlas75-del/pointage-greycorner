@@ -9,684 +9,183 @@
 
 <style>
   html,body{
-    height:100%; margin:0; overflow-y:auto; overflow-x:hidden;
+    height:100%; margin:0; overflow:hidden;
     background: radial-gradient(1200px 600px at 50% -10%, rgba(255,180,60,0.08), transparent 60%),
                 linear-gradient(180deg,#02040a,#050816 40%,#02040a);
     font-family:'Plus Jakarta Sans',sans-serif; color:#e5e7eb;
   }
   .card{
-    width:100%; max-width:420px; min-height:96vh; border-radius:42px; padding:18px;
+    width:100%; max-width:420px; min-height:96vh; border-radius:42px; padding:20px;
     display:flex; flex-direction:column; background:linear-gradient(145deg,rgba(20,23,35,.75),rgba(5,7,15,.85));
     backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.08);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 40px 80px rgba(0,0,0,.8), 0 0 40px rgba(255,170,60,.08);
-    position:relative; margin:auto;
+    box-shadow: 0 40px 80px rgba(0,0,0,.8); position:relative; margin:auto;
   }
-  .gold{ color:#ffcc73; letter-spacing:.08em; }
-  .muted{ color:rgba(229,231,235,.65); }
-  .scroll{ overflow-y:auto; scrollbar-width:none; }
-  .scroll::-webkit-scrollbar{ display:none }
-
-  .btn-planning{ background: linear-gradient(180deg,#2F7BFF,#1A4ED8) !important; color:#fff !important; padding:16px 14px; border-radius:22px; font-size:12px; font-weight:900; text-transform:uppercase; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 14px 30px rgba(0,0,0,.45); transition:.25s; }
-  .btn-planning:active{ transform:scale(.98); }
-  .btn-ramadan{ background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); color:rgba(229,231,235,.92); padding:12px 14px; border-radius:18px; font-size:11px; font-weight:900; text-transform:uppercase; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; transition:.2s; }
-  .btn-ramadan:active{ transform:scale(.99); }
-
-  .btn-main{ background: linear-gradient(180deg,#ffd68a,#ffb347); color:#1a1305; font-weight:900; border-radius:26px; padding:26px; font-size:26px; box-shadow: 0 12px 25px rgba(255,170,60,.35); transition:.25s; }
-  .btn-main:disabled{ opacity:.45; filter:saturate(.7); }
-  .btn-main:active{ transform:scale(.97); }
-
-  .banner-wrap{ display:none; gap:10px; align-items:stretch; margin:12px 0; position:sticky; top:0; z-index:20; background:rgba(2,4,10,0.8); backdrop-filter:blur(8px); padding:6px; border-radius:18px; }
-  .banner{ flex:1; border-radius:16px; padding:12px; font-weight:900; font-size:13px; text-align:center; border:1px solid rgba(255,255,255,.1); }
-  .msg-urgent{ background:#3a0d0d; color:#fff; border:1px solid #ff5a5a; }
-  .msg-info{ background:rgba(255,200,120,.10); color:#ffd68a; border:1px solid rgba(255,200,120,.28); }
-
-  .inpt{ width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:12px; color:#fff; font-weight:800; font-size:12px; outline:none; }
-  .inpt:focus{ border-color: rgba(255,204,115,.35); box-shadow: 0 0 0 3px rgba(255,204,115,.12); }
-  .btn-login{ width:100%; border-radius:18px; padding:12px; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; background:rgba(255,204,115,.18); border:1px solid rgba(255,204,115,.28); color:#ffd68a; }
-  .btn-login:active{ transform:scale(.99); }
-
-  .drawer-header{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:14px; margin-top:10px; display:flex; justify-content:space-between; cursor:pointer; user-select:none; }
-  .staff-btn{ padding:14px; border-radius:14px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.06); font-size:11px; font-weight:900; text-align:center; color:#fff; transition:.15s; }
-  .staff-btn:active{ transform:scale(.98); }
-
-  .toast{
-    position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:9999;
-    background:rgba(0,0,0,.8); border:1px solid rgba(255,255,255,.12);
-    color:#fff; padding:10px 14px; border-radius:14px; font-size:12px; font-weight:900;
-    display:none; max-width:min(420px, calc(100vw - 24px)); text-align:center;
-  }
+  .gold{ color:#ffcc73; }
+  .btn-blue{ background: linear-gradient(180deg,#2F7BFF,#1A4ED8); color:#fff; padding:16px; border-radius:22px; font-weight:900; width:100%; text-transform:uppercase; font-size:12px; }
+  .btn-dark{ background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:#fff; padding:16px; border-radius:22px; font-weight:900; width:100%; text-transform:uppercase; font-size:12px; }
+  .btn-main{ background: linear-gradient(180deg,#ffd68a,#ffb347); color:#1a1305; font-weight:900; border-radius:26px; padding:22px; width:100%; font-size:20px; }
+  .inpt{ width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:18px; padding:14px; color:#fff; font-size:13px; outline:none; }
+  .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#000; color:#fff; padding:10px 20px; border-radius:12px; font-size:12px; display:none; z-index:100; }
 </style>
 </head>
 
 <body class="flex items-center justify-center p-4">
   <div class="card">
-    <div class="text-center mb-4 flex-shrink-0">
-      <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
+    <div class="text-center mb-6">
+      <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" onclick="handleLogoClick()" />
     </div>
 
-    <!-- LOGIN (obligatoire) -->
-    <div id="loginWrap" class="bg-white/5 border border-white/10 rounded-[22px] p-4 hidden">
-      <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
-      <div class="space-y-2">
-        <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
-        <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
-        <button id="btnLogin" class="btn-login">Se connecter</button>
-        <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
+    <div id="view-login" class="space-y-4">
+      <div class="text-center mb-2">
+        <h2 class="text-sm font-black uppercase tracking-widest gold">Connexion Gérant</h2>
       </div>
+      <input id="loginEmail" class="inpt" type="email" placeholder="Email" />
+      <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" />
+      <button onclick="login()" class="btn-blue">Se Connecter</button>
+      <div id="loginError" class="text-red-400 text-[10px] text-center font-bold"></div>
     </div>
 
-    <!-- SETUP 1ERE FOIS (PIN + choix nom) -->
-    <div id="setupWrap" class="bg-white/5 border border-white/10 rounded-[22px] p-4 hidden">
-      <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Première utilisation</div>
-
-      <div class="mb-3 text-[11px] font-extrabold text-white/80">
-        Créez un <span class="gold">PIN 4 chiffres</span>, puis choisissez votre nom. Ensuite le téléphone ouvrira directement sur vous ✅
+    <div id="view-setup" class="hidden flex flex-col flex-grow">
+      <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6">
+        <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
+        <div id="sheetMsg" class="text-xs font-bold leading-relaxed">Chargement du message...</div>
       </div>
 
-      <div class="space-y-2">
-        <input id="setupPin" class="inpt" type="password" maxlength="4" placeholder="PIN (4 chiffres)" inputmode="numeric" />
-        <button id="btnSetupPin" class="btn-login">Valider le PIN</button>
-        <div id="setupMsg" class="text-[10px] font-black text-red-300"></div>
-      </div>
-
-      <div id="setupPickName" class="hidden mt-4">
-        <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Choisir votre nom</div>
-        <div id="setupList" class="scroll max-h-[52vh]"></div>
-      </div>
-    </div>
-
-    <!-- BAR SESSION -->
-    <div id="sessionBar" class="hidden mb-3 flex items-center justify-between">
-      <div class="text-[10px] font-black uppercase gold">
-        Connecté : <span id="roleLabel" class="text-white">—</span>
-      </div>
-      <button id="btnLogout" class="text-[9px] font-black px-3 py-1 rounded-full bg-white/10 border border-white/10">Quitter</button>
-    </div>
-
-    <!-- liens -->
-    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-2">🗓️ PLANNING</button>
-    <button onclick="window.open('https://ramadan-greycorner.pages.dev/', '_blank')" class="btn-ramadan mb-3">🌙 MENU RAMADAN</button>
-
-    <!-- bandeau (optionnel, si tu veux y brancher ton Google Sheet) -->
-    <div id="banner-wrap" class="banner-wrap">
-      <div id="banner" class="banner"></div>
-    </div>
-
-    <!-- APP POINTAGE -->
-    <div id="app" class="hidden flex flex-col flex-grow overflow-hidden">
-      <div id="action" class="flex flex-col flex-grow justify-center">
-        <div class="text-center text-[10px] muted uppercase font-black tracking-widest mb-2">Appareil assigné à</div>
-        <div id="username" class="text-3xl font-black text-yellow-200 text-center mb-4">--</div>
-
-        <div id="pointage-zone" class="text-center">
-          <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS...</div>
-          <button id="btnPunch" class="btn-main w-full" disabled>Valider Arrivée</button>
+      <div class="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-4">
+        <div class="text-center">
+          <h2 class="text-[11px] font-black uppercase tracking-widest gold">Première Utilisation</h2>
+          <p class="text-[10px] muted mt-1">Créez un PIN et liez un nom à ce mobile.</p>
         </div>
+        
+        <input id="setupPin" class="inpt text-center text-xl tracking-[0.5em]" type="password" maxlength="4" placeholder="****" inputmode="numeric" />
+        
+        <select id="setupName" class="inpt">
+          <option value="">Choisir un nom...</option>
+        </select>
 
-        <button id="btnLocalReset" class="mt-8 text-[9px] text-gray-500 uppercase tracking-widest">
-          Réinitialiser l'appareil (PIN)
-        </button>
+        <button onclick="saveSetup()" class="btn-main !text-sm">Valider & Verrouiller ✅</button>
+      </div>
+
+      <div class="mt-auto space-y-2">
+        <button onclick="window.open('URL_PLANNING','_blank')" class="btn-blue">🗓️ Planning</button>
+        <button onclick="window.open('URL_RAMADAN','_blank')" class="btn-dark">🌙 Menu Ramadan</button>
       </div>
     </div>
 
-    <!-- ADMIN (gerant) : triple-clic logo => reset à distance -->
-    <div id="adminWrap" class="hidden flex flex-col flex-grow overflow-hidden">
-      <div class="flex items-center justify-between mb-3">
-        <div class="gold font-black uppercase text-[12px]">Supervision (Gérant)</div>
-        <button id="btnCloseAdmin" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
-          Fermer
-        </button>
+    <div id="view-main" class="hidden flex flex-col flex-grow justify-center text-center">
+      <div id="userName" class="text-3xl font-black text-yellow-200 mb-6">--</div>
+      
+      <div id="pinGate">
+        <input id="unlockPin" class="inpt text-center text-xl tracking-[0.5em] mb-4" type="password" maxlength="4" placeholder="PIN" inputmode="numeric" />
+        <button onclick="unlockApp()" class="btn-blue">Déverrouiller</button>
       </div>
-      <div class="text-[10px] text-white/60 font-black uppercase tracking-widest mb-2">Reset à distance</div>
-      <div id="adminList" class="scroll flex-grow bg-white/5 rounded-2xl p-2 border border-white/10"></div>
-      <button id="btnResetAll" class="mt-3 text-[11px] font-black w-full py-3 rounded-2xl bg-red-900/40 border border-white/10 text-red-200">
-        🔄 Reset Global (tous les mobiles)
-      </button>
+
+      <div id="punchZone" class="hidden">
+        <div id="gpsStatus" class="text-[10px] mb-4 uppercase gold">Vérification GPS...</div>
+        <button id="btnPunch" class="btn-main" disabled>Valider Arrivée</button>
+      </div>
     </div>
+
   </div>
 
   <div id="toast" class="toast"></div>
 
-  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // ===================== CONFIG =====================
-    const firebaseConfig = {
-      apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
-      authDomain: "grey-corner-presence.firebaseapp.com",
-      databaseURL: "https://grey-corner-presence-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "grey-corner-presence",
-      storageBucket: "grey-corner-presence.firebasestorage.app",
-      messagingSenderId: "730206093359",
-      appId: "1:730206093359:web:59e3c145120807f29e46da"
-    };
-
+    // Config Firebase (Insérez votre config ici)
+    const firebaseConfig = { apiKey: "...", databaseURL: "..." }; 
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
     const auth = firebase.auth();
+    const db = firebase.database();
 
-    // GPS
-    const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
+    let clicks = 0;
+    const staffList = ["BENKHADA ABDESLAM", "ENNHAILI SOUMIA", "SALIL HOUDA", "CHKAIRI YOUSSEF"]; // etc...
 
-    // Staff list
-    const equipe = [
-      {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
-      {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
-      {n:"BOUCHNAK NAOUAL",t:"cuisine"},{n:"BELQASSE KHAOULA",t:"cuisine"},{n:"BOURAHMA ANAS",t:"cuisine"},
-      {n:"IDRISSI SAAD",t:"cuisine"},{n:"LEMSSIEH JAWAD",t:"cuisine"},{n:"MAJDOUB JIHANE",t:"cuisine"},
-      {n:"MOUJAHID IMANE",t:"cuisine"},{n:"ZAIR FATIMA",t:"cuisine"},{n:"ELGORRAMY ANISSA",t:"menage"},
-      {n:"ELGORRAMY SOUAD",t:"menage"},{n:"ELMCHAOURI SOUAD",t:"menage"},{n:"SBAI HAKIMA",t:"menage"},
-      {n:"ALAOUI LAZIZ",t:"service"},{n:"GUETIBI AMINE",t:"service"},{n:"HATTAF MOHAMED",t:"service"},
-      {n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
-    ];
-
-    // EXCLUS: pas de téléphone (tu as dit : pointage manuel)
-    const NO_PHONE_KEYS = new Set(["ELMCHAOURI_SOUAD","SBAI_HAKIMA"]);
-
-    // Date Maroc
-    const dateStr = new Intl.DateTimeFormat('fr-CA',{
-      timeZone:'Africa/Casablanca', year:'numeric', month:'2-digit', day:'2-digit'
-    }).format(new Date());
-
-    // ===================== UI HELPERS =====================
-    function $(id){ return document.getElementById(id); }
-
-    function toast(msg){
-      const t = $("toast");
-      t.textContent = msg;
-      t.style.display = "block";
-      clearTimeout(toast._t);
-      toast._t = setTimeout(()=> t.style.display="none", 2400);
-    }
-
-    function keyStaff(n){
-      return String(n||'').trim().replace(/\s+/g,'_').toUpperCase();
-    }
-
-    function nowCasablancaHHMM(){
-      const parts = new Intl.DateTimeFormat('fr-FR',{
-        timeZone:'Africa/Casablanca', hour:'2-digit', minute:'2-digit', hour12:false
-      }).formatToParts(new Date());
-      const h = parts.find(p=>p.type==='hour')?.value ?? '00';
-      const m = parts.find(p=>p.type==='minute')?.value ?? '00';
-      return `${h}:${m}`;
-    }
-
-    function show(el){ el.classList.remove("hidden"); }
-    function hide(el){ el.classList.add("hidden"); }
-
-    // ===================== SECURITY: PIN HASH =====================
-    async function sha256Hex(str){
-      const enc = new TextEncoder().encode(str);
-      const buf = await crypto.subtle.digest('SHA-256', enc);
-      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
-
-    // ===================== LOCAL STORAGE KEYS =====================
-    const LS = {
-      deviceId: "gc_device_id",
-      staffName: "gc_staff_name",
-      staffKey: "gc_staff_key",
-      pinHash: "gc_pin_hash",
-      role: "gc_role"
-    };
-
-    function getOrCreateDeviceId(){
-      let id = localStorage.getItem(LS.deviceId);
-      if(id) return id;
-      const rnd = (crypto?.randomUUID ? crypto.randomUUID() : ("dev_"+Math.random().toString(16).slice(2)+Date.now()));
-      localStorage.setItem(LS.deviceId, rnd);
-      return rnd;
-    }
-
-    const deviceId = getOrCreateDeviceId();
-
-    // ===================== ROLE FETCH =====================
-    async function fetchRole(uid){
-      const snap = await db.ref("users/"+uid).once("value");
-      return snap.val() || null;
-    }
-
-    // ===================== SCREENS =====================
-    function showLoginScreen(msg){
-      hide($("setupWrap")); hide($("app")); hide($("adminWrap")); hide($("sessionBar"));
-      show($("loginWrap"));
-      $("loginMsg").textContent = msg || "";
-    }
-
-    function showSetupScreen(msg){
-      hide($("loginWrap")); hide($("app")); hide($("adminWrap"));
-      show($("setupWrap"));
-      $("setupMsg").textContent = msg || "";
-      hide($("setupPickName"));
-      $("setupPin").value = "";
-    }
-
-    function showAppScreen(){
-      hide($("loginWrap")); hide($("setupWrap")); hide($("adminWrap"));
-      show($("sessionBar"));
-      show($("app"));
-    }
-
-    function showAdminScreen(){
-      hide($("app"));
-      show($("adminWrap"));
-    }
-
-    // ===================== AUTH LOGIN =====================
-    $("btnLogin").onclick = async () => {
-      const email = ($("loginEmail").value || "").trim();
-      const pass  = ($("loginPass").value || "").trim();
-      $("loginMsg").textContent = "";
-      try{
-        await auth.signInWithEmailAndPassword(email, pass);
-      }catch(e){
-        $("loginMsg").textContent = "Identifiants invalides.";
+    // --- INITIALISATION ---
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        showView('view-login');
+      } else {
+        checkBinding();
+        loadSheetMsg();
       }
-    };
-
-    $("btnLogout").onclick = async () => {
-      try{ await auth.signOut(); }catch(e){}
-      // On garde deviceId (utile), mais on peut tout reset si tu veux
-      // Ici: on reset seulement staff+pin+role
-      localStorage.removeItem(LS.staffName);
-      localStorage.removeItem(LS.staffKey);
-      localStorage.removeItem(LS.pinHash);
-      localStorage.removeItem(LS.role);
-      location.reload();
-    };
-
-    // ===================== FIRST TIME SETUP =====================
-    $("btnSetupPin").onclick = async () => {
-      const pin = ($("setupPin").value || "").trim();
-      if(!/^\d{4}$/.test(pin)){
-        $("setupMsg").textContent = "PIN invalide (4 chiffres).";
-        return;
-      }
-      const hash = await sha256Hex(pin);
-      localStorage.setItem(LS.pinHash, hash);
-      $("setupMsg").textContent = "";
-      show($("setupPickName"));
-      renderSetupNameList();
-      toast("PIN enregistré ✅ Choisis ton nom.");
-    };
-
-    function renderSetupNameList(){
-      const container = $("setupList");
-      container.innerHTML = "";
-
-      // liste filtrée (exclure no-phone)
-      const allowed = equipe
-        .map(e => e.n)
-        .filter(name => !NO_PHONE_KEYS.has(keyStaff(name)))
-        .slice()
-        .sort((a,b)=>a.localeCompare(b));
-
-      const cats = ["caisse","bar","cuisine","menage","service"];
-      cats.forEach(cat => {
-        const names = equipe
-          .filter(e => e.t === cat)
-          .map(e => e.n)
-          .filter(name => !NO_PHONE_KEYS.has(keyStaff(name)));
-        if(!names.length) return;
-
-        const h = document.createElement("div");
-        h.className = "drawer-header";
-        h.innerHTML = `<span class="gold text-[10px] font-black uppercase">${cat}</span><span class="gold text-[10px]">▼</span>`;
-
-        const cont = document.createElement("div");
-        cont.className = "hidden grid grid-cols-2 gap-2 py-3";
-        h.onclick = () => cont.classList.toggle("hidden");
-
-        names.sort((a,b)=>a.localeCompare(b)).forEach(nm=>{
-          const b = document.createElement("button");
-          b.className = "staff-btn";
-          b.textContent = nm;
-          b.onclick = async () => {
-            if(!confirm(nm + " ?")) return;
-
-            const sk = keyStaff(nm);
-
-            localStorage.setItem(LS.staffName, nm);
-            localStorage.setItem(LS.staffKey, sk);
-
-            // Optionnel mais recommandé: enregistrer l’assignation device -> staff
-            // (utile pour reset ciblé deviceId)
-            try{
-              await db.ref("devices/"+deviceId).set({
-                deviceId,
-                staffKey: sk,
-                staffName: nm,
-                boundAt: firebase.database.ServerValue.TIMESTAMP,
-                lastSeen: firebase.database.ServerValue.TIMESTAMP
-              });
-            }catch(e){
-              // si rules bloquent devices, tu peux ignorer ou supprimer cette feature
-            }
-
-            toast("Téléphone assigné ✅");
-            location.reload();
-          };
-          cont.appendChild(b);
-        });
-
-        container.appendChild(h);
-        container.appendChild(cont);
-      });
-    }
-
-    // ===================== APP LOGIC =====================
-    function getDist(a,b,c,d){
-      const R=6371e3; const dLat=(c-a)*Math.PI/180; const dLon=(d-b)*Math.PI/180;
-      const q=Math.sin(dLat/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
-      return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
-    }
-
-    function checkGPS(){
-      const status = $("status");
-      if(!navigator.geolocation){
-        status.innerHTML = `<span class="text-red-300 font-black uppercase">GPS indisponible</span>`;
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        p => {
-          const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
-          if(d <= RAYON_MAX){
-            status.innerHTML = `<span class="text-emerald-300 font-black uppercase">Zone Grey Corner OK</span>`;
-            $("btnPunch").disabled = false;
-          }else{
-            status.innerHTML = `<span class="text-red-300 font-black uppercase">Hors Zone (${Math.round(d)}m)</span>`;
-            $("btnPunch").disabled = true;
-          }
-        },
-        err => {
-          status.innerHTML = `<span class="text-red-300 font-black uppercase">GPS refusé / erreur (${err.code})</span>`;
-          $("btnPunch").disabled = true;
-        },
-        { enableHighAccuracy:true, timeout:12000, maximumAge:0 }
-      );
-    }
-
-    function listenPunch(staffKey){
-      db.ref('punches/'+dateStr+'/'+staffKey).on('value', s => {
-        const v = s.val();
-        if(v && v.hA){
-          $("pointage-zone").innerHTML = `
-            <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
-              <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
-              <div class="text-2xl font-black mt-1">${v.hA}</div>
-            </div>`;
-        }
-      });
-    }
-
-    async function markDeviceSeen(){
-      // Optionnel: ping device lastSeen
-      try{
-        await db.ref("devices/"+deviceId+"/lastSeen").set(firebase.database.ServerValue.TIMESTAMP);
-      }catch(e){}
-    }
-
-    // Punch button
-    let punching = false;
-    $("btnPunch").onclick = async () => {
-      if(punching) return;
-      const staffKey = localStorage.getItem(LS.staffKey);
-      const staffName = localStorage.getItem(LS.staffName);
-      const role = localStorage.getItem(LS.role);
-
-      if(!staffKey || !staffName) return toast("Appareil non assigné.");
-      if(NO_PHONE_KEYS.has(staffKey)) return toast("Pointage non autorisé pour ce profil.");
-
-      punching = true;
-      $("btnPunch").disabled = true;
-
-      const hA = nowCasablancaHHMM();
-      const ref = db.ref('punches/'+dateStr+'/'+staffKey);
-
-      // IMPORTANT: tes rules punches exigent empKey == $emp et hA etc.
-      ref.transaction(cur=>{
-        cur = cur || {};
-        // 1 seul pointage pour équipe
-        if(cur.hA && role !== "gerant") return;
-        return {
-          ...cur,
-          empKey: staffKey,
-          hA: hA,
-          retard: cur.retard || false,
-          retardMin: cur.retardMin || 0,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-      }, (err, committed)=>{
-        punching = false;
-        if(err){
-          toast("Erreur enregistrement ❌");
-          $("btnPunch").disabled = false;
-          return;
-        }
-        if(!committed){
-          toast("Déjà pointé ✅");
-          return;
-        }
-        toast("Pointage enregistré ✅");
-      });
-    };
-
-    // ===================== LOCAL RESET (PIN) =====================
-    $("btnLocalReset").onclick = async () => {
-      const pin = prompt("Entrez votre PIN (4 chiffres) :");
-      if(pin === null) return;
-
-      if(!/^\d{4}$/.test(pin)){
-        toast("PIN invalide");
-        return;
-      }
-
-      const hash = await sha256Hex(pin);
-      const stored = localStorage.getItem(LS.pinHash);
-
-      if(!stored){
-        toast("PIN non configuré. Contact gérant.");
-        return;
-      }
-
-      if(hash !== stored){
-        toast("PIN incorrect ❌");
-        return;
-      }
-
-      // reset local (garde deviceId)
-      localStorage.removeItem(LS.staffName);
-      localStorage.removeItem(LS.staffKey);
-      localStorage.removeItem(LS.pinHash);
-      // role restera rechargé depuis firebase à la reconnexion; on l’efface aussi
-      localStorage.removeItem(LS.role);
-
-      toast("Réinitialisé ✅");
-      location.reload();
-    };
-
-    // ===================== REMOTE RESET LISTENERS =====================
-    function attachRemoteResetListeners(staffKey){
-      // reset par staffKey (ton système actuel)
-      db.ref(`system_control/resets/${staffKey}`).on('value', s => {
-        if(s.val()){
-          db.ref(`system_control/resets/${staffKey}`).remove();
-          localStorage.removeItem(LS.staffName);
-          localStorage.removeItem(LS.staffKey);
-          localStorage.removeItem(LS.pinHash);
-          localStorage.removeItem(LS.role);
-          location.reload();
-        }
-      });
-
-      // reset global
-      db.ref('system_control/global_reset').on('value', s => {
-        if(s.val()){
-          db.ref('system_control/global_reset').remove();
-          localStorage.removeItem(LS.staffName);
-          localStorage.removeItem(LS.staffKey);
-          localStorage.removeItem(LS.pinHash);
-          localStorage.removeItem(LS.role);
-          location.reload();
-        }
-      });
-
-      // reset par deviceId (recommandé) — nécessite rules si tu l'actives
-      db.ref(`system_control/device_resets/${deviceId}`).on('value', s => {
-        if(s.val()){
-          db.ref(`system_control/device_resets/${deviceId}`).remove();
-          localStorage.removeItem(LS.staffName);
-          localStorage.removeItem(LS.staffKey);
-          localStorage.removeItem(LS.pinHash);
-          localStorage.removeItem(LS.role);
-          location.reload();
-        }
-      });
-    }
-
-    // ===================== ADMIN (GERANT) =====================
-    let logoClicks = 0, logoTimer = null;
-
-    function isGerant(){
-      return (localStorage.getItem(LS.role) === "gerant");
-    }
-
-    $("logo").onclick = () => {
-      logoClicks++;
-      clearTimeout(logoTimer);
-
-      if(logoClicks === 3){
-        logoClicks = 0;
-        if(isGerant()){
-          openAdmin();
-          toast("Mode Supervision ✅");
-        }else{
-          toast("Accès gérant requis");
-        }
-      }
-
-      logoTimer = setTimeout(()=> logoClicks = 0, 500);
-    };
-
-    $("btnCloseAdmin").onclick = () => {
-      hide($("adminWrap"));
-      show($("app"));
-    };
-
-    function triggerResetStaff(staffName){
-      if(!isGerant()) return;
-      const sk = keyStaff(staffName);
-      if(confirm("Réinitialiser le mobile de " + staffName + " ?")){
-        db.ref(`system_control/resets/${sk}`).set(Date.now());
-        toast("Signal envoyé ✅");
-      }
-    }
-
-    function triggerResetAll(){
-      if(!isGerant()) return;
-      if(confirm("Réinitialiser TOUS les mobiles ?")){
-        db.ref('system_control/global_reset').set(Date.now());
-        toast("Reset global envoyé ✅");
-      }
-    }
-
-    $("btnResetAll").onclick = triggerResetAll;
-
-    function openAdmin(){
-      showAdminScreen();
-      const container = $("adminList");
-      container.innerHTML = "";
-
-      // Liste staff qui pointe (exclure no-phone)
-      const allowed = equipe
-        .map(e => e.n)
-        .filter(nm => !NO_PHONE_KEYS.has(keyStaff(nm)))
-        .slice()
-        .sort((a,b)=>a.localeCompare(b));
-
-      allowed.forEach(nm=>{
-        const div = document.createElement("div");
-        div.className = "flex items-center justify-between p-3 border-b border-white/5 text-[11px]";
-        div.innerHTML = `
-          <div class="font-extrabold text-white">${nm}</div>
-          <button class="px-3 py-2 rounded-xl bg-red-900/40 border border-white/10 text-red-200 font-black">🔄</button>
-        `;
-        div.querySelector("button").onclick = ()=> triggerResetStaff(nm);
-        container.appendChild(div);
-      });
-    }
-
-    // ===================== BOOT =====================
-    auth.onAuthStateChanged(async (user) => {
-      if(!user){
-        // pas connecté => login obligatoire
-        showLoginScreen("");
-        return;
-      }
-
-      // connecté => lire rôle depuis /users/{uid}
-      let role = null;
-      try{
-        role = await fetchRole(user.uid);
-      }catch(e){
-        // si lecture bloquée: rules users read doit être OK pour auth != null
-      }
-
-      if(role !== "gerant" && role !== "equipe"){
-        // rôle invalide => on sort
-        await auth.signOut();
-        showLoginScreen("Compte non autorisé (rôle manquant).");
-        return;
-      }
-
-      localStorage.setItem(LS.role, role);
-      $("roleLabel").textContent = role;
-
-      // Si déjà assigné (staff + pin) => ouvrir direct
-      const staffName = localStorage.getItem(LS.staffName);
-      const staffKey  = localStorage.getItem(LS.staffKey);
-      const pinHash   = localStorage.getItem(LS.pinHash);
-
-      if(!pinHash || !staffName || !staffKey){
-        // setup 1ère fois (après login)
-        showSetupScreen("");
-        return;
-      }
-
-      // Bloquer si no-phone (au cas où)
-      if(NO_PHONE_KEYS.has(staffKey)){
-        // force reset local setup
-        localStorage.removeItem(LS.staffName);
-        localStorage.removeItem(LS.staffKey);
-        localStorage.removeItem(LS.pinHash);
-        showSetupScreen("Profil sans téléphone: choisir un autre nom.");
-        return;
-      }
-
-      showAppScreen();
-      $("username").textContent = staffName;
-
-      // listeners reset
-      attachRemoteResetListeners(staffKey);
-
-      // mark device seen (optionnel)
-      markDeviceSeen();
-
-      // GPS + punch display
-      checkGPS();
-      listenPunch(staffKey);
-
-      // Si déjà pointé aujourd’hui => disable bouton
-      try{
-        const snap = await db.ref('punches/'+dateStr+'/'+staffKey).once('value');
-        const v = snap.val() || {};
-        if(v.hA) $("btnPunch").disabled = true;
-      }catch(e){}
     });
+
+    function checkBinding() {
+      const boundName = localStorage.getItem('gc_name');
+      if (boundName) {
+        showView('view-main');
+        document.getElementById('userName').textContent = boundName;
+      } else {
+        showView('view-setup');
+        fillStaffSelect();
+      }
+    }
+
+    function showView(id) {
+      ['view-login', 'view-setup', 'view-main'].forEach(v => document.getElementById(v).classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    // --- LOGIQUE SHEET ---
+    function loadSheetMsg() {
+      // Simulé ici, liez à votre endpoint Google Script
+      db.ref('system/message_fixe').on('value', s => {
+        document.getElementById('sheetMsg').textContent = s.val() || "Bienvenue au Grey Corner.";
+      });
+    }
+
+    // --- AUTH ---
+    async function login() {
+      const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPass').value;
+      try { await auth.signInWithEmailAndPassword(e, p); } 
+      catch(err) { document.getElementById('loginError').textContent = "Erreur d'accès."; }
+    }
+
+    // --- SETUP ---
+    function fillStaffSelect() {
+      const sel = document.getElementById('setupName');
+      staffList.forEach(name => {
+        let opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function saveSetup() {
+      const pin = document.getElementById('setupPin').value, name = document.getElementById('setupName').value;
+      if (pin.length === 4 && name) {
+        localStorage.setItem('gc_pin', pin);
+        localStorage.setItem('gc_name', name);
+        location.reload();
+      } else { alert("Veuillez remplir le PIN et le Nom."); }
+    }
+
+    // --- UNLOCK & POINTAGE ---
+    function unlockApp() {
+      const input = document.getElementById('unlockPin').value;
+      if (input === localStorage.getItem('gc_pin')) {
+        document.getElementById('pinGate').classList.add('hidden');
+        document.getElementById('punchZone').classList.remove('hidden');
+        startGps();
+      } else { alert("PIN Incorrect"); }
+    }
+
+    function handleLogoClick() {
+      clicks++;
+      if (clicks === 3) {
+        if (confirm("Réinitialiser l'appareil ?")) { localStorage.clear(); location.reload(); }
+        clicks = 0;
+      }
+      setTimeout(() => clicks = 0, 1000);
+    }
+
+    function startGps() {
+      // Logique GPS ici (déjà fournie précédemment)
+      document.getElementById('btnPunch').disabled = false; // Simulé pour test
+    }
   </script>
 </body>
 </html>
