@@ -273,7 +273,7 @@
       box.textContent = msg || '';
       box.classList.remove('hidden');
       clearTimeout(debug._t);
-      debug._t = setTimeout(()=> box.classList.add('hidden'), 5000);
+      debug._t = setTimeout(()=> box.classList.add('hidden'), 5500);
     }
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
@@ -284,6 +284,17 @@
 
     let role = null;
     let selected = localStorage.getItem('gc_staff_name') || null;
+
+    // ===== Local lock "déjà pointé aujourd'hui" (sans lecture DB) =====
+    function punchLockKey(staffKey){
+      return `gc_punch_done__${dateStr}__${staffKey}`;
+    }
+    function isPunchedTodayLocal(staffKey){
+      return localStorage.getItem(punchLockKey(staffKey)) === "1";
+    }
+    function setPunchedTodayLocal(staffKey){
+      localStorage.setItem(punchLockKey(staffKey), "1");
+    }
 
     // ===== Role fetch =====
     async function fetchRole(uid){
@@ -316,9 +327,7 @@
         box.classList.remove("msg-urgent","msg-info");
         const urgent = (type==="URGENT") || msg.toUpperCase().includes("URGENT");
         box.classList.add(urgent ? "msg-urgent" : "msg-info");
-      }catch(e){
-        // non bloquant
-      }
+      }catch(e){}
     }
 
     async function loadBanner(){
@@ -363,11 +372,10 @@
       window.__homeMsgInt = setInterval(loadHomeMsg, 30000);
     }
 
-    // ===== First-use PIN logic =====
+    // ===== PIN device =====
     function hasDevicePin(){
       return !!localStorage.getItem('gc_device_pin');
     }
-
     function showPinBlockIfNeeded(){
       const pinBlock = document.getElementById('pinBlock');
       if(!pinBlock) return;
@@ -420,15 +428,28 @@
 
     document.getElementById("btnLogout").onclick = async () => {
       try{ await auth.signOut(); }catch(e){}
-      // Important: on garde PIN + staff (appareil reconnu) et on relance
       location.reload();
     };
 
-    // Reset device (PIN)
+    // ✅ Reset device (PIN) — actif même si PIN manquant (propose de créer)
     document.getElementById("btnResetDevice").onclick = () => {
+      const currentPin = localStorage.getItem('gc_device_pin');
+
+      if(!currentPin){
+        const newPin = prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
+        if(newPin === null) return;
+        if(!/^\d{4}$/.test(newPin)){
+          toast("PIN invalide ❌");
+          return;
+        }
+        localStorage.setItem('gc_device_pin', newPin);
+        toast("PIN créé ✅");
+        return;
+      }
+
       const pin = prompt("Entrez votre PIN (4 chiffres) :");
       if(pin === null) return;
-      if(pin === localStorage.getItem('gc_device_pin')){
+      if(pin === currentPin){
         localStorage.clear();
         toast("Appareil réinitialisé ✅");
         setTimeout(()=>location.reload(), 400);
@@ -496,7 +517,13 @@
         const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
         if(d <= RAYON_MAX){
           status.innerHTML = `<span class="text-emerald-300 font-black uppercase">Zone Grey Corner OK</span>`;
-          btn.disabled = false;
+          // ⚠️ On n'active le bouton que si pas déjà pointé localement
+          if(selected){
+            const staffKey = keyStaff(selected);
+            btn.disabled = isPunchedTodayLocal(staffKey);
+          }else{
+            btn.disabled = true;
+          }
         }else{
           status.innerHTML = `<span class="text-red-300 font-black uppercase">Hors zone (${Math.round(d)}m)</span>`;
           btn.disabled = true;
@@ -507,37 +534,47 @@
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ===== Punch listen (warning: equipe can't read punches with your rules) =====
-    // Cette écoute marche pour le gérant (read allowed). Pour l’équipe, elle peut échouer (permission),
-    // mais ce n'est pas bloquant pour écrire.
-    function listenPointage(){
+    // ===== Pour gérant: écoute possible / pour équipe: ignore erreurs =====
+    function listenPointageIfAllowed(){
+      if(!selected) return;
       const staffKey = keyStaff(selected);
       db.ref('punches/'+dateStr+'/'+staffKey).on('value', s => {
         const v = s.val();
         if(v && v.hA){
-          document.getElementById('pointage-zone').innerHTML = `
-            <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
-              <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
-              <div class="text-2xl font-black mt-1">${v.hA}</div>
-            </div>`;
-          document.getElementById('btn').disabled = true;
+          setPunchedTodayLocal(staffKey);
+          renderPointedUI(v.hA);
         }
-      }, err => {
-        // équipe: read denied -> ignore
-      });
+      }, err => {});
     }
 
-    // ===== Punch action (FIX: no transaction, no read) =====
+    function renderPointedUI(hA){
+      document.getElementById('pointage-zone').innerHTML = `
+        <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
+          <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
+          <div class="text-2xl font-black mt-1">${hA}</div>
+          <div class="text-[10px] font-black text-white/40 mt-2">(${dateStr})</div>
+        </div>`;
+      const btn = document.getElementById('btn');
+      if(btn) btn.disabled = true;
+    }
+
+    // ===== Punch action (clé de la correction) =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
       const staffKey = keyStaff(selected);
 
+      // ✅ Bloque si déjà pointé localement
+      if(isPunchedTodayLocal(staffKey)){
+        toast("Déjà pointé aujourd’hui ✅");
+        renderPointedUI("—");
+        return;
+      }
+
       const hA = new Intl.DateTimeFormat('fr-FR',{
         timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
       }).format(new Date());
 
-      // ✅ conforme rules punches (champs obligatoires)
       const payload = {
         empKey: staffKey,
         hA: hA,
@@ -549,20 +586,22 @@
       const ref = db.ref('punches/'+dateStr+'/'+staffKey);
 
       try{
-        await ref.set(payload); // ✅ pas de read => OK pour "equipe"
+        await ref.set(payload); // ✅ autorisé 1 seule fois pour equipe
+        setPunchedTodayLocal(staffKey);
         toast("Pointage enregistré ✅");
-        document.getElementById('btn').disabled = true;
-
-        // UI immédiate même si read est bloqué pour "equipe"
-        document.getElementById('pointage-zone').innerHTML = `
-          <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
-            <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
-            <div class="text-2xl font-black mt-1">${hA}</div>
-          </div>`;
+        renderPointedUI(hA);
       }catch(e){
         const code = e?.code || "unknown";
-        const msg  = e?.message || "";
-        console.log("PUNCH ERROR:", code, msg, e);
+        console.log("PUNCH ERROR:", code, e?.message, e);
+
+        // ✅ si PERMISSION_DENIED c'est très souvent: déjà pointé (2ème tentative)
+        if(code === "PERMISSION_DENIED"){
+          setPunchedTodayLocal(staffKey);
+          toast("Déjà pointé aujourd’hui ✅");
+          renderPointedUI(hA);
+          return;
+        }
+
         toast("Erreur enregistrement ❌");
         debug(code);
         document.getElementById('btn').disabled = false;
@@ -601,10 +640,8 @@
 
       showLoggedUI();
       showPinBlockIfNeeded();
-
       attachResetListener();
 
-      // Default view
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
 
@@ -613,10 +650,14 @@
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').textContent = selected;
 
-        checkGPS();
+        // ✅ Si déjà pointé localement -> UI direct, pas besoin de lire RTDB
+        const staffKey = keyStaff(selected);
+        if(isPunchedTodayLocal(staffKey)){
+          renderPointedUI("—");
+        }
 
-        // Pour gérant: écoute OK. Pour équipe: peut être refusé mais non bloquant.
-        listenPointage();
+        checkGPS();
+        listenPointageIfAllowed(); // utile gérant
       }else{
         genererListeUI();
       }
@@ -636,4 +677,3 @@
   </script>
 </body>
 </html>
-```0
