@@ -10,15 +10,21 @@
 <style>
   html,body{
     height:100%; margin:0; overflow-y:auto; overflow-x:hidden;
-    background: radial-gradient(1200px 600px at 50% -10%, rgba(255,180,60,0.08), transparent 60%),
-                linear-gradient(180deg,#02040a,#050816 40%,#02040a);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(255,180,60,0.08), transparent 60%),
+      linear-gradient(180deg,#02040a,#050816 40%,#02040a);
     font-family:'Plus Jakarta Sans',sans-serif; color:#e5e7eb;
   }
   .card{
     width:100%; max-width:420px; min-height:96vh; border-radius:42px; padding:18px;
-    display:flex; flex-direction:column; background:linear-gradient(145deg,rgba(20,23,35,.75),rgba(5,7,15,.85));
-    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.08);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 40px 80px rgba(0,0,0,.8), 0 0 40px rgba(255,170,60,.08);
+    display:flex; flex-direction:column;
+    background:linear-gradient(145deg,rgba(20,23,35,.75),rgba(5,7,15,.85));
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.04),
+      0 40px 80px rgba(0,0,0,.8),
+      0 0 40px rgba(255,170,60,.08);
     position:relative; margin:auto;
   }
   .gold{ color:#ffcc73; letter-spacing:.08em; }
@@ -129,11 +135,55 @@
     margin:12px 0;
   }
 
-  .hint{
-    font-size:10px;
+  .hint{ font-size:10px; font-weight:900; color:rgba(229,231,235,.70); line-height:1.25; }
+
+  /* ADMIN PANEL */
+  .admin-wrap{
+    display:none;
+    flex-direction:column;
+    gap:10px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    padding:12px;
+    margin-top:10px;
+  }
+  .admin-title{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .admin-list{
+    max-height:42vh;
+    overflow:auto;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(0,0,0,.18);
+  }
+  .admin-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:11px;
+  }
+  .admin-row:last-child{ border-bottom:none; }
+  .btn-reset-one{
+    background:rgba(239,68,68,.18);
+    color:#ffb5b5;
+    border:1px solid rgba(239,68,68,.25);
+    padding:6px 10px;
+    border-radius:12px;
     font-weight:900;
-    color:rgba(229,231,235,.70);
-    line-height:1.25;
+    font-size:11px;
+  }
+  .btn-reset-all{
+    background:#2a0f0f;
+    color:#ffb5b5;
+    border:1px solid rgba(255,90,90,.35);
+    padding:12px;
+    border-radius:14px;
+    font-weight:900;
+    font-size:11px;
+    text-transform:uppercase;
   }
 </style>
 </head>
@@ -143,6 +193,7 @@
 
     <div class="text-center mb-4 flex-shrink-0">
       <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
+      <div class="text-[9px] text-white/30 font-black mt-1">Triple-clic logo = Supervision (gérant)</div>
     </div>
 
     <!-- SESSION BAR -->
@@ -211,8 +262,16 @@
         <button id="btnResetDevice" class="mt-8 text-[10px] text-gray-300/60 uppercase tracking-widest">
           Réinitialiser l’appareil (PIN)
         </button>
+      </div>
 
-        <div id="debugBox" class="mt-3 text-[10px] font-black text-white/40 text-center hidden"></div>
+      <!-- ADMIN -->
+      <div id="adminWrap" class="admin-wrap">
+        <div class="admin-title">
+          <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
+          <button id="btnCloseAdmin" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
+        </div>
+        <div class="admin-list" id="adminList"></div>
+        <button id="btnResetAll" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
       </div>
 
     </div>
@@ -242,10 +301,8 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // ===== Consts =====
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
-    // Google Sheet (A=TYPE, B=MESSAGE)
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
     const equipe = [
@@ -267,15 +324,6 @@
       toast._t=setTimeout(()=>t.style.display="none",2500);
     }
 
-    function debug(msg){
-      const box = document.getElementById('debugBox');
-      if(!box) return;
-      box.textContent = msg || '';
-      box.classList.remove('hidden');
-      clearTimeout(debug._t);
-      debug._t = setTimeout(()=> box.classList.add('hidden'), 5500);
-    }
-
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
@@ -285,15 +333,14 @@
     let role = null;
     let selected = localStorage.getItem('gc_staff_name') || null;
 
-    // ===== Local lock "déjà pointé aujourd'hui" (sans lecture DB) =====
-    function punchLockKey(staffKey){
-      return `gc_punch_done__${dateStr}__${staffKey}`;
-    }
-    function isPunchedTodayLocal(staffKey){
-      return localStorage.getItem(punchLockKey(staffKey)) === "1";
-    }
-    function setPunchedTodayLocal(staffKey){
-      localStorage.setItem(punchLockKey(staffKey), "1");
+    // ===== Local lock + hour saved =====
+    function punchDoneKey(staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
+    function punchTimeKey(staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
+    function isPunchedLocal(staffKey){ return localStorage.getItem(punchDoneKey(staffKey)) === "1"; }
+    function getPunchedTimeLocal(staffKey){ return localStorage.getItem(punchTimeKey(staffKey)) || ""; }
+    function setPunchedLocal(staffKey, hhmm){
+      localStorage.setItem(punchDoneKey(staffKey), "1");
+      if(hhmm) localStorage.setItem(punchTimeKey(staffKey), hhmm);
     }
 
     // ===== Role fetch =====
@@ -307,13 +354,10 @@
       const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
       const t = await r.text();
       const json = JSON.parse(t.substr(47).slice(0,-2));
-      const rows = (json && json.table && json.table.rows) ? json.table.rows : [];
+      const rows = json?.table?.rows || [];
       const typeRaw = rows[0]?.c?.[0]?.v || "";
       const msgRaw  = rows[0]?.c?.[1]?.v || "";
-      return {
-        type: String(typeRaw||"").trim().toUpperCase(),
-        msg:  String(msgRaw||"").trim()
-      };
+      return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
     }
 
     async function loadHomeMsg(){
@@ -341,17 +385,21 @@
         banner.className = "banner";
         const urgent = (type==="URGENT") || msg.toUpperCase().includes("URGENT");
         banner.classList.add(urgent ? "msg-urgent" : "msg-info");
-      }catch(e){
-        wrap.style.display="none";
-      }
+      }catch(e){ wrap.style.display="none"; }
     }
 
-    // ===== UI helpers =====
+    function hasDevicePin(){ return !!localStorage.getItem('gc_device_pin'); }
+    function showPinBlockIfNeeded(){
+      const pinBlock = document.getElementById('pinBlock');
+      if(!pinBlock) return;
+      if(!hasDevicePin()) pinBlock.classList.remove('hidden');
+      else pinBlock.classList.add('hidden');
+    }
+
     function showLoggedUI(){
       document.getElementById('sessionBar').classList.remove('hidden');
       document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
       document.getElementById('app-pointage').classList.remove('hidden');
-
       document.getElementById('loginWrap').classList.add('hidden');
       document.getElementById('homeMsg').classList.add('hidden');
 
@@ -363,63 +411,39 @@
     function showLoginUI(){
       document.getElementById('sessionBar').classList.add('hidden');
       document.getElementById('app-pointage').classList.add('hidden');
-
       document.getElementById('loginWrap').classList.remove('hidden');
       document.getElementById('homeMsg').classList.remove('hidden');
 
       loadHomeMsg();
-      clearInterval(window.__homeMsgInt);
-      window.__homeMsgInt = setInterval(loadHomeMsg, 30000);
-    }
-
-    // ===== PIN device =====
-    function hasDevicePin(){
-      return !!localStorage.getItem('gc_device_pin');
-    }
-    function showPinBlockIfNeeded(){
-      const pinBlock = document.getElementById('pinBlock');
-      if(!pinBlock) return;
-      if(!hasDevicePin()) pinBlock.classList.remove('hidden');
-      else pinBlock.classList.add('hidden');
+      clearInterval(window.__homeInt);
+      window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
     // ===== Login =====
     document.getElementById("btnLogin").onclick = async () => {
       const email = (document.getElementById("loginEmail").value||"").trim();
       const pass  = (document.getElementById("loginPass").value||"").trim();
-      const pinEl = document.getElementById("loginPin");
-      const pin = (pinEl?.value||"").trim();
+      const pin = (document.getElementById("loginPin")?.value||"").trim();
 
       document.getElementById("loginMsg").textContent = "";
-
       if(!email || !pass){
         document.getElementById("loginMsg").textContent = "Email et mot de passe requis.";
         return;
       }
-
-      if(!hasDevicePin()){
-        if(!/^\d{4}$/.test(pin)){
-          document.getElementById("loginMsg").textContent = "PIN requis (4 chiffres).";
-          return;
-        }
+      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
+        document.getElementById("loginMsg").textContent = "PIN requis (4 chiffres).";
+        return;
       }
 
       try{
         const res = await auth.signInWithEmailAndPassword(email, pass);
         const r = await fetchRole(res.user.uid);
-
         if(r !== "gerant" && r !== "equipe"){
           await auth.signOut();
           document.getElementById("loginMsg").textContent = "Compte non autorisé.";
           return;
         }
-
-        localStorage.setItem('gc_role', r);
-
-        if(!hasDevicePin()){
-          localStorage.setItem('gc_device_pin', pin);
-        }
-
+        if(!hasDevicePin()) localStorage.setItem('gc_device_pin', pin);
         location.reload();
       }catch(e){
         document.getElementById("loginMsg").textContent = "Identifiants invalides.";
@@ -431,17 +455,14 @@
       location.reload();
     };
 
-    // ✅ Reset device (PIN) — actif même si PIN manquant (propose de créer)
+    // ===== Reset device PIN (toujours actif) =====
     document.getElementById("btnResetDevice").onclick = () => {
       const currentPin = localStorage.getItem('gc_device_pin');
 
       if(!currentPin){
         const newPin = prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
         if(newPin === null) return;
-        if(!/^\d{4}$/.test(newPin)){
-          toast("PIN invalide ❌");
-          return;
-        }
+        if(!/^\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
         localStorage.setItem('gc_device_pin', newPin);
         toast("PIN créé ✅");
         return;
@@ -458,11 +479,10 @@
       }
     };
 
-    // ===== Staff selection UI =====
+    // ===== Staff list =====
     function genererListeUI(){
       const sel = document.getElementById('selection');
       sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black mb-2">Choisi ton nom (1ère fois)</div>`;
-
       const cats = ["caisse","bar","cuisine","menage","service"];
       cats.forEach(cat => {
         const staff = equipe.filter(e => e.t === cat);
@@ -503,13 +523,21 @@
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
+    function setBtnDisabledByPunchAndGps(canPunch){
+      const btn = document.getElementById('btn');
+      if(!btn) return;
+      if(!selected){ btn.disabled = true; return; }
+      const staffKey = keyStaff(selected);
+      if(isPunchedLocal(staffKey)) { btn.disabled = true; return; }
+      btn.disabled = !canPunch;
+    }
+
     function checkGPS(){
       const status = document.getElementById('status');
-      const btn = document.getElementById('btn');
 
       if(!navigator.geolocation){
         status.innerHTML = `<span class="text-red-300 font-black uppercase">GPS indisponible</span>`;
-        btn.disabled = true;
+        setBtnDisabledByPunchAndGps(false);
         return;
       }
 
@@ -517,57 +545,39 @@
         const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
         if(d <= RAYON_MAX){
           status.innerHTML = `<span class="text-emerald-300 font-black uppercase">Zone Grey Corner OK</span>`;
-          // ⚠️ On n'active le bouton que si pas déjà pointé localement
-          if(selected){
-            const staffKey = keyStaff(selected);
-            btn.disabled = isPunchedTodayLocal(staffKey);
-          }else{
-            btn.disabled = true;
-          }
+          setBtnDisabledByPunchAndGps(true);
         }else{
           status.innerHTML = `<span class="text-red-300 font-black uppercase">Hors zone (${Math.round(d)}m)</span>`;
-          btn.disabled = true;
+          setBtnDisabledByPunchAndGps(false);
         }
       }, err => {
         status.innerHTML = `<span class="text-red-300 font-black uppercase">GPS refusé / erreur</span>`;
-        btn.disabled = true;
+        setBtnDisabledByPunchAndGps(false);
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ===== Pour gérant: écoute possible / pour équipe: ignore erreurs =====
-    function listenPointageIfAllowed(){
-      if(!selected) return;
-      const staffKey = keyStaff(selected);
-      db.ref('punches/'+dateStr+'/'+staffKey).on('value', s => {
-        const v = s.val();
-        if(v && v.hA){
-          setPunchedTodayLocal(staffKey);
-          renderPointedUI(v.hA);
-        }
-      }, err => {});
-    }
-
-    function renderPointedUI(hA){
+    // ===== Render pointed UI (heure locale) =====
+    function renderPointedUI(hhmm){
+      const time = hhmm || "";
       document.getElementById('pointage-zone').innerHTML = `
         <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
           <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
-          <div class="text-2xl font-black mt-1">${hA}</div>
-          <div class="text-[10px] font-black text-white/40 mt-2">(${dateStr})</div>
+          <div class="text-2xl font-black mt-1">${time ? time : "—"}</div>
+          <div class="text-[10px] font-black text-white/40 mt-2">${dateStr}</div>
         </div>`;
       const btn = document.getElementById('btn');
       if(btn) btn.disabled = true;
     }
 
-    // ===== Punch action (clé de la correction) =====
+    // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
       const staffKey = keyStaff(selected);
 
-      // ✅ Bloque si déjà pointé localement
-      if(isPunchedTodayLocal(staffKey)){
+      if(isPunchedLocal(staffKey)){
         toast("Déjà pointé aujourd’hui ✅");
-        renderPointedUI("—");
+        renderPointedUI(getPunchedTimeLocal(staffKey));
         return;
       }
 
@@ -583,42 +593,109 @@
         timestamp: Date.now()
       };
 
-      const ref = db.ref('punches/'+dateStr+'/'+staffKey);
-
       try{
-        await ref.set(payload); // ✅ autorisé 1 seule fois pour equipe
-        setPunchedTodayLocal(staffKey);
+        await db.ref('punches/'+dateStr+'/'+staffKey).set(payload);
+        setPunchedLocal(staffKey, hA);
         toast("Pointage enregistré ✅");
         renderPointedUI(hA);
       }catch(e){
-        const code = e?.code || "unknown";
-        console.log("PUNCH ERROR:", code, e?.message, e);
-
-        // ✅ si PERMISSION_DENIED c'est très souvent: déjà pointé (2ème tentative)
-        if(code === "PERMISSION_DENIED"){
-          setPunchedTodayLocal(staffKey);
+        // Si c’est refusé: le plus fréquent = 2ème tentative => on verrouille localement
+        if(e?.code === "PERMISSION_DENIED"){
+          setPunchedLocal(staffKey, hA);
           toast("Déjà pointé aujourd’hui ✅");
-          renderPointedUI(hA);
+          renderPointedUI(getPunchedTimeLocal(staffKey) || hA);
           return;
         }
-
         toast("Erreur enregistrement ❌");
-        debug(code);
+        console.log("PUNCH ERROR:", e);
         document.getElementById('btn').disabled = false;
       }
     };
 
-    // ===== Remote reset listener =====
+    // ===== Reset listeners =====
     function attachResetListener(){
-      if(!selected) return;
-      db.ref(`system_control/resets/${keyStaff(selected)}`).on('value', s => {
+      if(selected){
+        db.ref(`system_control/resets/${keyStaff(selected)}`).on('value', s => {
+          if(s.val()){
+            db.ref(`system_control/resets/${keyStaff(selected)}`).remove();
+            localStorage.clear();
+            location.reload();
+          }
+        });
+      }
+      db.ref('system_control/global_reset').on('value', s => {
         if(s.val()){
-          db.ref(`system_control/resets/${keyStaff(selected)}`).remove();
+          db.ref('system_control/global_reset').remove();
           localStorage.clear();
           location.reload();
         }
       });
     }
+
+    // ===== Admin =====
+    function openAdmin(){
+      if(role !== "gerant") return;
+
+      document.getElementById('adminWrap').style.display = "flex";
+      document.getElementById('selection').classList.add('hidden');
+      document.getElementById('action').classList.add('hidden');
+
+      const list = document.getElementById('adminList');
+      list.innerHTML = "";
+
+      equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+        const row = document.createElement('div');
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div class="font-black text-white/90">${emp.n}</div>
+          <button class="btn-reset-one">Reset</button>
+        `;
+        row.querySelector('button').onclick = () => {
+          if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
+            db.ref(`system_control/resets/${keyStaff(emp.n)}`).set(Date.now());
+            toast("Signal reset envoyé ✅");
+          }
+        };
+        list.appendChild(row);
+      });
+    }
+
+    document.getElementById('btnCloseAdmin').onclick = () => {
+      document.getElementById('adminWrap').style.display = "none";
+      // retour normal
+      if(selected){
+        document.getElementById('selection').classList.add('hidden');
+        document.getElementById('action').classList.remove('hidden');
+      }else{
+        document.getElementById('selection').classList.remove('hidden');
+        document.getElementById('action').classList.add('hidden');
+      }
+    };
+
+    document.getElementById('btnResetAll').onclick = () => {
+      if(role !== "gerant") return;
+      if(confirm("Réinitialiser TOUS les mobiles ?")){
+        db.ref('system_control/global_reset').set(Date.now());
+        toast("Reset global envoyé ✅");
+      }
+    };
+
+    // Triple clic logo => admin (gérant)
+    let logoClicks=0, logoTimer;
+    document.getElementById("logo").onclick = () => {
+      logoClicks++;
+      clearTimeout(logoTimer);
+      if(logoClicks === 3){
+        logoClicks = 0;
+        if(role === "gerant"){
+          openAdmin();
+          toast("Supervision activée 🛠️");
+        }else{
+          toast("Supervision: réservé au gérant");
+        }
+      }
+      logoTimer = setTimeout(()=>logoClicks=0, 650);
+    };
 
     // ===== Boot =====
     auth.onAuthStateChanged(async (user) => {
@@ -642,6 +719,8 @@
       showPinBlockIfNeeded();
       attachResetListener();
 
+      // écran normal
+      document.getElementById('adminWrap').style.display = "none";
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
 
@@ -650,30 +729,16 @@
         document.getElementById('action').classList.remove('hidden');
         document.getElementById('username').textContent = selected;
 
-        // ✅ Si déjà pointé localement -> UI direct, pas besoin de lire RTDB
         const staffKey = keyStaff(selected);
-        if(isPunchedTodayLocal(staffKey)){
-          renderPointedUI("—");
+        if(isPunchedLocal(staffKey)){
+          renderPointedUI(getPunchedTimeLocal(staffKey));
         }
 
         checkGPS();
-        listenPointageIfAllowed(); // utile gérant
       }else{
         genererListeUI();
       }
     });
-
-    // ===== Triple click logo (info only) =====
-    let logoClicks=0, logoTimer;
-    document.getElementById("logo").onclick = () => {
-      logoClicks++;
-      clearTimeout(logoTimer);
-      if(logoClicks === 3){
-        logoClicks = 0;
-        toast("Réinitialisation = bouton PIN");
-      }
-      logoTimer = setTimeout(()=>logoClicks=0, 500);
-    };
   </script>
 </body>
 </html>
