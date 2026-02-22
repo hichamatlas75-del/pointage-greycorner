@@ -379,25 +379,38 @@
     }
 
     // ===== Login =====
-    document.getElementById("btnLogin").onclick = async () => {
-      const email = (document.getElementById("loginEmail").value||"").trim();
-      const pass  = (document.getElementById("loginPass").value||"").trim();
-      const pinEl = document.getElementById("loginPin");
-      const pin = (pinEl?.value||"").trim();
+    document.getElementById('btn').onclick = async () => {
+  if(!selected) return;
 
-      document.getElementById("loginMsg").textContent = "";
+  const staffKey = keyStaff(selected);
 
-      if(!email || !pass){
-        document.getElementById("loginMsg").textContent = "Email et mot de passe requis.";
-        return;
-      }
+  const hA = new Intl.DateTimeFormat('fr-FR',{
+    timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
+  }).format(new Date());
 
-      if(!localStorage.getItem('gc_device_pin')){
-        if(!/^\d{4}$/.test(pin)){
-          document.getElementById("loginMsg").textContent = "PIN requis (4 chiffres).";
-          return;
-        }
-      }
+  // ✅ conforme rules punches (champs obligatoires)
+  const payload = {
+    empKey: staffKey,
+    hA: hA,
+    retard: false,
+    retardMin: 0,
+    timestamp: Date.now()
+  };
+
+  const ref = db.ref('punches/'+dateStr+'/'+staffKey);
+
+  try{
+    await ref.set(payload); // ✅ pas de read => OK pour "equipe"
+    toast("Pointage enregistré ✅");
+    document.getElementById('btn').disabled = true;
+  }catch(e){
+    // Comme l’équipe ne peut pas lire, on ne peut pas distinguer "déjà pointé" vs autre
+    // mais dans 99% des cas c’est "déjà pointé" ou "accès refusé"
+    toast("Impossible d’enregistrer (déjà pointé ou accès refusé) ❌");
+    document.getElementById('btn').disabled = false;
+    console.log("PUNCH ERROR:", e?.code || e, e?.message || "");
+  }
+};
 
       try{
         const res = await auth.signInWithEmailAndPassword(email, pass);
