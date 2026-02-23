@@ -569,15 +569,38 @@
       if(btn) btn.disabled = true;
     }
 
+    // ===== (CORRECTION #3) Option: Empêcher double pointage côté serveur si lecture autorisée =====
+    async function serverAlreadyPunched(staffKey){
+      try{
+        const snap = await db.ref('punches/'+dateStr+'/'+staffKey).once("value");
+        if(snap.exists() && snap.child("hA").val()){
+          return String(snap.child("hA").val() || "");
+        }
+      }catch(e){
+        // si pas de droits de lecture, on ignore et on reste en local
+      }
+      return "";
+    }
+
     // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
       const staffKey = keyStaff(selected);
 
+      // local
       if(isPunchedLocal(staffKey)){
         toast("Déjà pointé aujourd’hui ✅");
         renderPointedUI(getPunchedTimeLocal(staffKey));
+        return;
+      }
+
+      // serveur (si possible)
+      const already = await serverAlreadyPunched(staffKey);
+      if(already){
+        setPunchedLocal(staffKey, already);
+        toast("Déjà pointé aujourd’hui ✅");
+        renderPointedUI(already);
         return;
       }
 
@@ -599,33 +622,66 @@
         toast("Pointage enregistré ✅");
         renderPointedUI(hA);
       }catch(e){
-        // Si c’est refusé: le plus fréquent = 2ème tentative => on verrouille localement
+        // ===== (CORRECTION #2) PERMISSION_DENIED = refus de droits (PAS faux succès) =====
         if(e?.code === "PERMISSION_DENIED"){
-          setPunchedLocal(staffKey, hA);
-          toast("Déjà pointé aujourd’hui ✅");
-          renderPointedUI(getPunchedTimeLocal(staffKey) || hA);
+          toast("Accès refusé ❌ (droits)");
+          console.log("PERMISSION_DENIED:", e);
+          document.getElementById('btn').disabled = false;
           return;
         }
+
         toast("Erreur enregistrement ❌");
         console.log("PUNCH ERROR:", e);
         document.getElementById('btn').disabled = false;
       }
     };
 
-    // ===== Reset listeners =====
+    // ===== (CORRECTION #1) Reset listeners (broadcast + compat system_control) =====
     function attachResetListener(){
+      // --- NEW: broadcast (lisible par equipe) ---
+      const bc = db.ref("broadcast");
+
+      // Reset global (tous les mobiles)
+      bc.child("resetPunchesAt").on("value", s => {
+        const v = s.val();
+        if(!v) return;
+
+        // reset sélection
+        localStorage.removeItem('gc_staff_name');
+
+        // supprimer uniquement les clés "punch du jour"
+        Object.keys(localStorage).forEach(k=>{
+          if(k.startsWith(`gc_punch_done__${dateStr}__`) || k.startsWith(`gc_punch_time__${dateStr}__`)){
+            localStorage.removeItem(k);
+          }
+        });
+
+        toast("Reset reçu ✅");
+        setTimeout(()=>location.reload(), 250);
+      });
+
+      // Reset PINs (forcer re-création PIN)
+      bc.child("resetPinsAt").on("value", s => {
+        const v = s.val();
+        if(!v) return;
+        localStorage.removeItem("gc_device_pin");
+        toast("PIN reset reçu ✅");
+        setTimeout(()=>location.reload(), 250);
+      });
+
+      // --- COMPAT: anciens resets system_control (si encore utilisés) ---
       if(selected){
         db.ref(`system_control/resets/${keyStaff(selected)}`).on('value', s => {
           if(s.val()){
-            db.ref(`system_control/resets/${keyStaff(selected)}`).remove();
+            // équipe ne peut pas remove si rules gérant-only -> donc on ne remove pas
             localStorage.clear();
             location.reload();
           }
         });
       }
+
       db.ref('system_control/global_reset').on('value', s => {
         if(s.val()){
-          db.ref('system_control/global_reset').remove();
           localStorage.clear();
           location.reload();
         }
@@ -652,7 +708,12 @@
         `;
         row.querySelector('button').onclick = () => {
           if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
+            // compat: ancien système (si tu l'utilises encore)
             db.ref(`system_control/resets/${keyStaff(emp.n)}`).set(Date.now());
+
+            // NEW: broadcast (tu peux aussi choisir de n’utiliser QUE broadcast)
+            // db.ref(`broadcast/resetPunchesAt`).set(Date.now());
+
             toast("Signal reset envoyé ✅");
           }
         };
@@ -672,10 +733,12 @@
       }
     };
 
+    // ===== Admin Reset Global: basculé sur broadcast =====
     document.getElementById('btnResetAll').onclick = () => {
       if(role !== "gerant") return;
       if(confirm("Réinitialiser TOUS les mobiles ?")){
-        db.ref('system_control/global_reset').set(Date.now());
+        // NEW: broadcast (équipe écoute)
+        db.ref('broadcast/resetPunchesAt').set(Date.now());
         toast("Reset global envoyé ✅");
       }
     };
