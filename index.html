@@ -471,7 +471,7 @@
       const pin = prompt("Entrez votre PIN (4 chiffres) :");
       if(pin === null) return;
       if(pin === currentPin){
-        localStorage.clear();
+        localStorage.clear(); // ✅ tu as demandé de ne pas garder le nom
         toast("Appareil réinitialisé ✅");
         setTimeout(()=>location.reload(), 400);
       }else{
@@ -569,38 +569,15 @@
       if(btn) btn.disabled = true;
     }
 
-    // ===== (CORRECTION #3) Option: Empêcher double pointage côté serveur si lecture autorisée =====
-    async function serverAlreadyPunched(staffKey){
-      try{
-        const snap = await db.ref('punches/'+dateStr+'/'+staffKey).once("value");
-        if(snap.exists() && snap.child("hA").val()){
-          return String(snap.child("hA").val() || "");
-        }
-      }catch(e){
-        // si pas de droits de lecture, on ignore et on reste en local
-      }
-      return "";
-    }
-
     // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
       const staffKey = keyStaff(selected);
 
-      // local
       if(isPunchedLocal(staffKey)){
         toast("Déjà pointé aujourd’hui ✅");
         renderPointedUI(getPunchedTimeLocal(staffKey));
-        return;
-      }
-
-      // serveur (si possible)
-      const already = await serverAlreadyPunched(staffKey);
-      if(already){
-        setPunchedLocal(staffKey, already);
-        toast("Déjà pointé aujourd’hui ✅");
-        renderPointedUI(already);
         return;
       }
 
@@ -618,14 +595,18 @@
 
       try{
         await db.ref('punches/'+dateStr+'/'+staffKey).set(payload);
+
+        // ✅ SUCCÈS réel uniquement
         setPunchedLocal(staffKey, hA);
         toast("Pointage enregistré ✅");
         renderPointedUI(hA);
+
       }catch(e){
-        // ===== (CORRECTION #2) PERMISSION_DENIED = refus de droits (PAS faux succès) =====
+        // ✅ Correction #2 : PLUS de “faux succès” sur PERMISSION_DENIED
         if(e?.code === "PERMISSION_DENIED"){
-          toast("Accès refusé ❌ (droits)");
-          console.log("PERMISSION_DENIED:", e);
+          toast("Accès refusé ⛔ (permission)");
+          console.log("PUNCH PERMISSION_DENIED:", e);
+          // on ne verrouille PAS localement, on n’affiche PAS pointé
           document.getElementById('btn').disabled = false;
           return;
         }
@@ -636,55 +617,57 @@
       }
     };
 
-    // ===== (CORRECTION #1) Reset listeners (broadcast + compat system_control) =====
+    // ===== Reset listeners (broadcast) =====
+    // ✅ Correction #1 : les mobiles équipe écoutent via broadcast (pas system_control)
+    // ✅ Correction #3 : anti-boucle (pas de remove côté client + ack sessionStorage)
     function attachResetListener(){
-      // --- NEW: broadcast (lisible par equipe) ---
-      const bc = db.ref("broadcast");
+      const bc = db.ref('broadcast');
 
-      // Reset global (tous les mobiles)
-      bc.child("resetPunchesAt").on("value", s => {
-        const v = s.val();
-        if(!v) return;
-
-        // reset sélection
-        localStorage.removeItem('gc_staff_name');
-
-        // supprimer uniquement les clés "punch du jour"
-        Object.keys(localStorage).forEach(k=>{
-          if(k.startsWith(`gc_punch_done__${dateStr}__`) || k.startsWith(`gc_punch_time__${dateStr}__`)){
-            localStorage.removeItem(k);
-          }
-        });
-
-        toast("Reset reçu ✅");
-        setTimeout(()=>location.reload(), 250);
-      });
-
-      // Reset PINs (forcer re-création PIN)
-      bc.child("resetPinsAt").on("value", s => {
-        const v = s.val();
-        if(!v) return;
-        localStorage.removeItem("gc_device_pin");
-        toast("PIN reset reçu ✅");
-        setTimeout(()=>location.reload(), 250);
-      });
-
-      // --- COMPAT: anciens resets system_control (si encore utilisés) ---
+      // reset ciblé par employé : broadcast/resets/{STAFFKEY} = timestamp
       if(selected){
-        db.ref(`system_control/resets/${keyStaff(selected)}`).on('value', s => {
-          if(s.val()){
-            // équipe ne peut pas remove si rules gérant-only -> donc on ne remove pas
-            localStorage.clear();
-            location.reload();
-          }
+        const staffKey = keyStaff(selected);
+        bc.child('resets/'+staffKey).on('value', s => {
+          const v = s.val();
+          if(!v) return;
+
+          const ackKey = `gc_ack_reset_one__${staffKey}`;
+          const last = Number(sessionStorage.getItem(ackKey) || 0);
+          if(Number(v) <= last) return;
+
+          sessionStorage.setItem(ackKey, String(v));
+          toast("Reset reçu ✅");
+          localStorage.clear(); // ✅ tu as demandé de ne pas garder le nom
+          setTimeout(()=>location.reload(), 250);
         });
       }
 
-      db.ref('system_control/global_reset').on('value', s => {
-        if(s.val()){
-          localStorage.clear();
-          location.reload();
-        }
+      // reset global
+      bc.child('resetPunchesAt').on('value', s => {
+        const v = s.val();
+        if(!v) return;
+
+        const last = Number(sessionStorage.getItem('gc_ack_resetPunchesAt') || 0);
+        if(Number(v) <= last) return;
+
+        sessionStorage.setItem('gc_ack_resetPunchesAt', String(v));
+        toast("Reset global reçu ✅");
+        localStorage.clear(); // ✅ hard reset
+        setTimeout(()=>location.reload(), 250);
+      });
+
+      // reset PIN global (option)
+      bc.child('resetPinsAt').on('value', s => {
+        const v = s.val();
+        if(!v) return;
+
+        const last = Number(sessionStorage.getItem('gc_ack_resetPinsAt') || 0);
+        if(Number(v) <= last) return;
+
+        sessionStorage.setItem('gc_ack_resetPinsAt', String(v));
+        toast("Reset PIN reçu ✅");
+        localStorage.removeItem('gc_device_pin');
+        localStorage.removeItem('gc_staff_name'); // ✅ ne garde pas le nom
+        setTimeout(()=>location.reload(), 250);
       });
     }
 
@@ -708,12 +691,8 @@
         `;
         row.querySelector('button').onclick = () => {
           if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-            // compat: ancien système (si tu l'utilises encore)
-            db.ref(`system_control/resets/${keyStaff(emp.n)}`).set(Date.now());
-
-            // NEW: broadcast (tu peux aussi choisir de n’utiliser QUE broadcast)
-            // db.ref(`broadcast/resetPunchesAt`).set(Date.now());
-
+            // ✅ reset ciblé via broadcast/resets/{key}
+            db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
             toast("Signal reset envoyé ✅");
           }
         };
@@ -733,11 +712,10 @@
       }
     };
 
-    // ===== Admin Reset Global: basculé sur broadcast =====
     document.getElementById('btnResetAll').onclick = () => {
       if(role !== "gerant") return;
       if(confirm("Réinitialiser TOUS les mobiles ?")){
-        // NEW: broadcast (équipe écoute)
+        // ✅ reset global via broadcast/resetPunchesAt
         db.ref('broadcast/resetPunchesAt').set(Date.now());
         toast("Reset global envoyé ✅");
       }
