@@ -137,7 +137,6 @@
 
   .hint{ font-size:10px; font-weight:900; color:rgba(229,231,235,.70); line-height:1.25; }
 
-  /* ADMIN PANEL */
   .admin-wrap{
     display:none;
     flex-direction:column;
@@ -196,7 +195,6 @@
       <div class="text-[9px] text-white/30 font-black mt-1">Triple-clic logo = Supervision (gérant)</div>
     </div>
 
-    <!-- SESSION BAR -->
     <div id="sessionBar" class="hidden mb-3 flex items-center justify-between">
       <div class="pill">
         <span class="muted">Connecté :</span>
@@ -207,13 +205,11 @@
       </button>
     </div>
 
-    <!-- HOME MSG (avant login) -->
     <div id="homeMsg" class="hidden home-box">
       <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
       <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
     </div>
 
-    <!-- LOGIN -->
     <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
       <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
       <div class="space-y-2">
@@ -230,24 +226,19 @@
       </div>
     </div>
 
-    <!-- LINKS -->
     <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-2">🗓️ CONSULTER LE PLANNING</button>
     <button onclick="window.open('https://ramadan-greycorner.pages.dev/', '_blank')" class="btn-ramadan mb-3">🌙 MENU RAMADAN</button>
 
-    <!-- BANNER (après login) -->
     <div id="banner-wrap" class="banner-wrap">
       <div id="banner" class="banner"></div>
     </div>
 
     <div class="sep"></div>
 
-    <!-- APP -->
     <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
 
-      <!-- selection -->
       <div id="selection" class="scroll flex-grow"></div>
 
-      <!-- action -->
       <div id="action" class="hidden flex flex-col flex-grow justify-center">
         <div class="text-center mb-2">
           <div class="text-[10px] muted uppercase font-black tracking-widest">Appareil assigné à</div>
@@ -264,7 +255,6 @@
         </button>
       </div>
 
-      <!-- ADMIN -->
       <div id="adminWrap" class="admin-wrap">
         <div class="admin-title">
           <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
@@ -275,18 +265,15 @@
       </div>
 
     </div>
-
   </div>
 
   <div id="toast" class="toast"></div>
 
-  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // ===== Firebase config =====
     const firebaseConfig = {
       apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
       authDomain: "grey-corner-presence.firebaseapp.com",
@@ -302,7 +289,6 @@
     const auth = firebase.auth();
 
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
-
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
     const equipe = [
@@ -333,7 +319,6 @@
     let role = null;
     let selected = localStorage.getItem('gc_staff_name') || null;
 
-    // ===== Local lock + hour saved =====
     function punchDoneKey(staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
     function punchTimeKey(staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
     function isPunchedLocal(staffKey){ return localStorage.getItem(punchDoneKey(staffKey)) === "1"; }
@@ -343,13 +328,11 @@
       if(hhmm) localStorage.setItem(punchTimeKey(staffKey), hhmm);
     }
 
-    // ===== Role fetch =====
     async function fetchRole(uid){
       const snap = await db.ref("users/"+uid).once("value");
       return snap.val() || null;
     }
 
-    // ===== Google Sheet message =====
     async function fetchSheetMessage(){
       const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
       const t = await r.text();
@@ -419,7 +402,6 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
-    // ===== Login =====
     document.getElementById("btnLogin").onclick = async () => {
       const email = (document.getElementById("loginEmail").value||"").trim();
       const pass  = (document.getElementById("loginPass").value||"").trim();
@@ -455,7 +437,25 @@
       location.reload();
     };
 
-    // ===== Reset device PIN (toujours actif) =====
+    // ✅ reset “device” : on garde PIN (sauf si tu veux tout effacer)
+    function clearAppData(keepPin=true){
+      const pin = localStorage.getItem("gc_device_pin");
+      const staff = localStorage.getItem("gc_staff_name");
+
+      // supprime uniquement données de punch (du jour) + staff name
+      if(staff){
+        const sk = keyStaff(staff);
+        localStorage.removeItem(punchDoneKey(sk));
+        localStorage.removeItem(punchTimeKey(sk));
+      }
+      localStorage.removeItem("gc_staff_name");
+
+      // option : garder PIN
+      if(keepPin && pin){
+        localStorage.setItem("gc_device_pin", pin);
+      }
+    }
+
     document.getElementById("btnResetDevice").onclick = () => {
       const currentPin = localStorage.getItem('gc_device_pin');
 
@@ -471,7 +471,7 @@
       const pin = prompt("Entrez votre PIN (4 chiffres) :");
       if(pin === null) return;
       if(pin === currentPin){
-        localStorage.clear(); // ✅ tu as demandé de ne pas garder le nom
+        clearAppData(true); // ✅ ne garde pas le nom, garde PIN
         toast("Appareil réinitialisé ✅");
         setTimeout(()=>location.reload(), 400);
       }else{
@@ -479,7 +479,6 @@
       }
     };
 
-    // ===== Staff list =====
     function genererListeUI(){
       const sel = document.getElementById('selection');
       sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black mb-2">Choisi ton nom (1ère fois)</div>`;
@@ -514,7 +513,6 @@
       });
     }
 
-    // ===== GPS =====
     function getDist(a,b,c,d){
       const R=6371e3;
       const dLat=(c-a)*Math.PI/180;
@@ -556,7 +554,6 @@
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ===== Render pointed UI (heure locale) =====
     function renderPointedUI(hhmm){
       const time = hhmm || "";
       document.getElementById('pointage-zone').innerHTML = `
@@ -569,7 +566,6 @@
       if(btn) btn.disabled = true;
     }
 
-    // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
@@ -585,28 +581,23 @@
         timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
       }).format(new Date());
 
+      // ✅ payload minimal (évite bruit)
       const payload = {
         empKey: staffKey,
         hA: hA,
-        retard: false,
-        retardMin: 0,
         timestamp: Date.now()
       };
 
       try{
         await db.ref('punches/'+dateStr+'/'+staffKey).set(payload);
-
-        // ✅ SUCCÈS réel uniquement
         setPunchedLocal(staffKey, hA);
         toast("Pointage enregistré ✅");
         renderPointedUI(hA);
 
       }catch(e){
-        // ✅ Correction #2 : PLUS de “faux succès” sur PERMISSION_DENIED
         if(e?.code === "PERMISSION_DENIED"){
           toast("Accès refusé ⛔ (permission)");
           console.log("PUNCH PERMISSION_DENIED:", e);
-          // on ne verrouille PAS localement, on n’affiche PAS pointé
           document.getElementById('btn').disabled = false;
           return;
         }
@@ -617,61 +608,89 @@
       }
     };
 
-    // ===== Reset listeners (broadcast) =====
-    // ✅ Correction #1 : les mobiles équipe écoutent via broadcast (pas system_control)
-    // ✅ Correction #3 : anti-boucle (pas de remove côté client + ack sessionStorage)
+    /** ========= RESET LISTENERS STABLES ========= **/
+    let __resetRefs = [];
+    function detachResetListener(){
+      __resetRefs.forEach(({ref, cb}) => ref.off('value', cb));
+      __resetRefs = [];
+    }
+
+    // ✅ ack persistant (fallback) pour éviter boucle si sessionStorage se vide
+    function getAck(k){
+      const s = Number(sessionStorage.getItem(k) || 0);
+      const l = Number(localStorage.getItem(k) || 0);
+      return Math.max(s, l);
+    }
+    function setAck(k, v){
+      sessionStorage.setItem(k, String(v));
+      localStorage.setItem(k, String(v));
+    }
+
     function attachResetListener(){
+      detachResetListener();
+
       const bc = db.ref('broadcast');
 
-      // reset ciblé par employé : broadcast/resets/{STAFFKEY} = timestamp
       if(selected){
         const staffKey = keyStaff(selected);
-        bc.child('resets/'+staffKey).on('value', s => {
+        const refOne = bc.child('resets/'+staffKey);
+        const cbOne = (s) => {
           const v = s.val();
           if(!v) return;
 
           const ackKey = `gc_ack_reset_one__${staffKey}`;
-          const last = Number(sessionStorage.getItem(ackKey) || 0);
+          const last = getAck(ackKey);
           if(Number(v) <= last) return;
 
-          sessionStorage.setItem(ackKey, String(v));
+          setAck(ackKey, Number(v));
           toast("Reset reçu ✅");
-          localStorage.clear(); // ✅ tu as demandé de ne pas garder le nom
+          clearAppData(true); // garde PIN
           setTimeout(()=>location.reload(), 250);
-        });
+        };
+
+        refOne.on('value', cbOne);
+        __resetRefs.push({ref: refOne, cb: cbOne});
       }
 
-      // reset global
-      bc.child('resetPunchesAt').on('value', s => {
+      const refGlobal = bc.child('resetPunchesAt');
+      const cbGlobal = (s) => {
         const v = s.val();
         if(!v) return;
 
-        const last = Number(sessionStorage.getItem('gc_ack_resetPunchesAt') || 0);
+        const ackKey = 'gc_ack_resetPunchesAt';
+        const last = getAck(ackKey);
         if(Number(v) <= last) return;
 
-        sessionStorage.setItem('gc_ack_resetPunchesAt', String(v));
+        setAck(ackKey, Number(v));
         toast("Reset global reçu ✅");
-        localStorage.clear(); // ✅ hard reset
+        clearAppData(true);
         setTimeout(()=>location.reload(), 250);
-      });
+      };
 
-      // reset PIN global (option)
-      bc.child('resetPinsAt').on('value', s => {
+      refGlobal.on('value', cbGlobal);
+      __resetRefs.push({ref: refGlobal, cb: cbGlobal});
+
+      const refPins = bc.child('resetPinsAt');
+      const cbPins = (s) => {
         const v = s.val();
         if(!v) return;
 
-        const last = Number(sessionStorage.getItem('gc_ack_resetPinsAt') || 0);
+        const ackKey = 'gc_ack_resetPinsAt';
+        const last = getAck(ackKey);
         if(Number(v) <= last) return;
 
-        sessionStorage.setItem('gc_ack_resetPinsAt', String(v));
+        setAck(ackKey, Number(v));
         toast("Reset PIN reçu ✅");
-        localStorage.removeItem('gc_device_pin');
-        localStorage.removeItem('gc_staff_name'); // ✅ ne garde pas le nom
+        clearAppData(false); // efface staff + punch
+        localStorage.removeItem('gc_device_pin'); // efface PIN
         setTimeout(()=>location.reload(), 250);
-      });
-    }
+      };
 
-    // ===== Admin =====
+      refPins.on('value', cbPins);
+      __resetRefs.push({ref: refPins, cb: cbPins});
+    }
+    /** ========================================= **/
+
     function openAdmin(){
       if(role !== "gerant") return;
 
@@ -691,7 +710,6 @@
         `;
         row.querySelector('button').onclick = () => {
           if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-            // ✅ reset ciblé via broadcast/resets/{key}
             db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
             toast("Signal reset envoyé ✅");
           }
@@ -702,7 +720,6 @@
 
     document.getElementById('btnCloseAdmin').onclick = () => {
       document.getElementById('adminWrap').style.display = "none";
-      // retour normal
       if(selected){
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
@@ -715,13 +732,11 @@
     document.getElementById('btnResetAll').onclick = () => {
       if(role !== "gerant") return;
       if(confirm("Réinitialiser TOUS les mobiles ?")){
-        // ✅ reset global via broadcast/resetPunchesAt
         db.ref('broadcast/resetPunchesAt').set(Date.now());
         toast("Reset global envoyé ✅");
       }
     };
 
-    // Triple clic logo => admin (gérant)
     let logoClicks=0, logoTimer;
     document.getElementById("logo").onclick = () => {
       logoClicks++;
@@ -738,10 +753,10 @@
       logoTimer = setTimeout(()=>logoClicks=0, 650);
     };
 
-    // ===== Boot =====
     auth.onAuthStateChanged(async (user) => {
       if(!user){
         role = null;
+        detachResetListener();
         showLoginUI();
         showPinBlockIfNeeded();
         return;
@@ -751,6 +766,7 @@
       if(role !== "gerant" && role !== "equipe"){
         await auth.signOut();
         role = null;
+        detachResetListener();
         showLoginUI();
         showPinBlockIfNeeded();
         return;
@@ -760,7 +776,6 @@
       showPinBlockIfNeeded();
       attachResetListener();
 
-      // écran normal
       document.getElementById('adminWrap').style.display = "none";
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
