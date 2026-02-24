@@ -579,24 +579,27 @@
     // ✅ Export helper (non bloquant)
     // ===============================
     async function exportPunchToSheet({date, empKey, name, hA, timestamp}){
-      try{
-        await fetch(EXPORT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            secret: SECRET,
-            date: date,
-            empKey: empKey,
-            name: name,
-            hA: hA,
-            source: "punch",
-            timestamp: timestamp
-          })
-        });
-      }catch(err){
-        console.log("Erreur export Google Sheet :", err);
-      }
-    }
+  try{
+    const url = new URL(EXPORT_URL);
+
+    url.searchParams.set("secret", SECRET);
+    url.searchParams.set("date", date);
+    url.searchParams.set("empKey", empKey);
+    url.searchParams.set("name", name);
+    url.searchParams.set("hA", hA);
+    url.searchParams.set("source", "punch");
+    url.searchParams.set("timestamp", String(timestamp));
+
+    await fetch(url.toString(), {
+      method: "GET",
+      mode: "no-cors",
+      cache: "no-store"
+    });
+
+  }catch(err){
+    console.log("Erreur export Google Sheet :", err);
+  }
+}
 
     // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
