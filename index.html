@@ -286,11 +286,30 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // ===============================
-    // ✅ GOOGLE SHEET EXPORT (secret)
-    // ===============================
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbw0s42WtsbJ_y0B4UE8wRl90bHeFCAhktsk_ho-RNf_BU8HAFIQQLPQaiYod0VShN1pVA/exec";
-    const SECRET = "greycorner2026";
+    // ==============================
+    // ✅ EXPORT Google Sheet (Option B)
+    // ==============================
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw0s42WtsbJ_y0B4UE8wRl90bHeFCAhktsk_ho-RNf_BU8HAFIQQLPQaiYod0VShN1pVA/exec";
+    const GAS_SECRET = "greycorner2026";
+
+    function sendPunchToSheet({ date, empKey, name, hA, timestamp }) {
+      try{
+        const params = new URLSearchParams({
+          action: "punch",
+          secret: GAS_SECRET,
+          date: String(date || ""),
+          empKey: String(empKey || ""),
+          name: String(name || ""),
+          hA: String(hA || ""),
+          status: "punch",
+          timestamp: String(timestamp || Date.now())
+        });
+
+        // ✅ no-cors => envoi OK même si on ne lit pas la réponse
+        fetch(`${GAS_URL}?${params.toString()}`, { method: "GET", mode: "no-cors" })
+          .catch(()=>{});
+      }catch(_){}
+    }
 
     // ===== Firebase config =====
     const firebaseConfig = {
@@ -575,32 +594,6 @@
       if(btn) btn.disabled = true;
     }
 
-    // ===============================
-    // ✅ Export helper (non bloquant)
-    // ===============================
-    async function exportPunchToSheet({date, empKey, name, hA, timestamp}){
-  try{
-    const url = new URL(EXPORT_URL);
-
-    url.searchParams.set("secret", SECRET);
-    url.searchParams.set("date", date);
-    url.searchParams.set("empKey", empKey);
-    url.searchParams.set("name", name);
-    url.searchParams.set("hA", hA);
-    url.searchParams.set("source", "punch");
-    url.searchParams.set("timestamp", String(timestamp));
-
-    await fetch(url.toString(), {
-      method: "GET",
-      mode: "no-cors",
-      cache: "no-store"
-    });
-
-  }catch(err){
-    console.log("Erreur export Google Sheet :", err);
-  }
-}
-
     // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
@@ -617,32 +610,30 @@
         timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
       }).format(new Date());
 
-      const ts = Date.now();
-
       const payload = {
         empKey: staffKey,
         hA: hA,
         retard: false,
         retardMin: 0,
-        timestamp: ts
+        timestamp: Date.now()
       };
 
       try{
         await db.ref('punches/'+dateStr+'/'+staffKey).set(payload);
 
-        // ✅ Export vers Google Sheet (non bloquant)
-        exportPunchToSheet({
-          date: dateStr,
-          empKey: staffKey,
-          name: selected,
-          hA: hA,
-          timestamp: ts
-        });
-
         // ✅ SUCCÈS réel uniquement
         setPunchedLocal(staffKey, hA);
         toast("Pointage enregistré ✅");
         renderPointedUI(hA);
+
+        // ✅ EXPORT vers Google Sheet (Option B: UPSERT 1 ligne / empKey / date)
+        sendPunchToSheet({
+          date: dateStr,
+          empKey: staffKey,
+          name: selected,
+          hA: hA,
+          timestamp: Date.now()
+        });
 
       }catch(e){
         if(e?.code === "PERMISSION_DENIED"){
@@ -651,7 +642,6 @@
           document.getElementById('btn').disabled = false;
           return;
         }
-
         toast("Erreur enregistrement ❌");
         console.log("PUNCH ERROR:", e);
         document.getElementById('btn').disabled = false;
@@ -662,7 +652,6 @@
     function attachResetListener(){
       const bc = db.ref('broadcast');
 
-      // reset ciblé par employé : broadcast/resets/{STAFFKEY} = timestamp
       if(selected){
         const staffKey = keyStaff(selected);
         bc.child('resets/'+staffKey).on('value', s => {
@@ -675,12 +664,11 @@
 
           sessionStorage.setItem(ackKey, String(v));
           toast("Reset reçu ✅");
-          localStorage.clear(); // ✅ ne garde pas le nom
+          localStorage.clear();
           setTimeout(()=>location.reload(), 250);
         });
       }
 
-      // reset global
       bc.child('resetPunchesAt').on('value', s => {
         const v = s.val();
         if(!v) return;
@@ -694,7 +682,6 @@
         setTimeout(()=>location.reload(), 250);
       });
 
-      // reset PIN global (option)
       bc.child('resetPinsAt').on('value', s => {
         const v = s.val();
         if(!v) return;
