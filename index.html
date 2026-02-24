@@ -307,11 +307,13 @@
     // ===== Messages (Google Sheet gviz) =====
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
-    // ===== Export to Google Sheet (Apps Script WebApp) =====
-    // ✅ Compatible avec ton URL test :
-    // .../exec?action=punch&secret=greycorner2026&date=YYYY-MM-DD&empKey=...&name=...&hA=HH:MM&status=punch&timestamp=...
+    // ===== Apps Script WebApp (Option B) =====
     const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
     const SECRET = "greycorner2026";
+
+    // ✅ pour exports_daily : empNode = le nom affiché (ou "mobile")
+    // Tu peux mettre "pointage" si tu veux identifier la source
+    const EMP_NODE_DEFAULT = "pointage";
 
     const equipe = [
       {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
@@ -565,7 +567,7 @@
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ===== Render pointed UI (heure locale) =====
+    // ===== Render pointed UI =====
     function renderPointedUI(hhmm){
       const time = hhmm || "";
       document.getElementById('pointage-zone').innerHTML = `
@@ -578,43 +580,39 @@
       if(btn) btn.disabled = true;
     }
 
-    // ===== Export punch vers Apps Script (daily_summary) =====
+    // ===== Export vers Apps Script (exports_daily) =====
     function buildGasUrl(paramsObj){
       const sp = new URLSearchParams(paramsObj);
       return GAS_EXEC_URL + "?" + sp.toString();
     }
 
-    async function sendPunchToSheet({date, empKey, name, hA, timestamp}){
+    async function sendPunchToSheet({date, empNode, empKey, hA, timestamp}){
       const url = buildGasUrl({
         action: "punch",
         secret: SECRET,
-        date,
-        empKey,
-        name,
-        hA,
+        date: date,
+        empNode: empNode,
+        empKey: empKey,
+        hA: hA,
         status: "punch",
         timestamp: String(timestamp)
       });
 
-      // ⚠️ Apps Script WebApp ne renvoie pas toujours CORS.
-      // On fait un "beacon" fiable + un fetch best-effort.
-      // Beacon: pas de CORS, mais pas de lecture réponse.
+      // Beacon (passe même si CORS)
       const img = new Image();
       img.src = url;
 
-      // Fetch best-effort (si CORS OK, on lit success)
+      // Fetch best-effort
       try{
         const r = await fetch(url, { method:"GET", cache:"no-store" });
-        // si le serveur renvoie du JSON lisible
         const ct = (r.headers.get("content-type") || "");
         if(ct.includes("application/json")){
           const j = await r.json();
           return !!j?.success;
         }
-        // sinon : on considère OK si HTTP 200
         return r.ok;
       }catch(e){
-        // si CORS bloque, le beacon a quand même été envoyé
+        // si CORS bloque, beacon a quand même envoyé
         return true;
       }
     }
@@ -626,11 +624,11 @@
       const btn = document.getElementById('btn');
       btn.disabled = true;
 
-      const staffKey = keyStaff(selected);
+      const empKey = keyStaff(selected);
 
-      if(isPunchedLocal(staffKey)){
+      if(isPunchedLocal(empKey)){
         toast("Déjà pointé aujourd’hui ✅");
-        renderPointedUI(getPunchedTimeLocal(staffKey));
+        renderPointedUI(getPunchedTimeLocal(empKey));
         return;
       }
 
@@ -640,11 +638,11 @@
 
       const ts = Date.now();
 
-      // 1) ✅ Export vers Google Sheet (daily_summary) = source principale
+      // 1) ✅ Export vers Sheet (exports_daily)
       const okSheet = await sendPunchToSheet({
         date: dateStr,
-        empKey: staffKey,
-        name: selected,
+        empNode: selected || EMP_NODE_DEFAULT,
+        empKey: empKey,
         hA: hA,
         timestamp: ts
       });
@@ -655,25 +653,14 @@
         return;
       }
 
-      // 2) Optionnel: écrire aussi dans Firebase punches (pour ton dashboard si tu veux)
-      const payload = {
-        empKey: staffKey,
-        hA: hA,
-        retard: false,
-        retardMin: 0,
-        timestamp: ts
-      };
+      // 2) Optionnel: écrire aussi dans Firebase punches (non bloquant)
+      const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
+      try{ await db.ref('punches/'+dateStr+'/'+empKey).set(payload); }
+      catch(e){ console.log("Firebase punch write failed (non bloquant):", e); }
 
-      try{
-        await db.ref('punches/'+dateStr+'/'+staffKey).set(payload);
-      }catch(e){
-        // On n'annule pas le punch car Sheet est OK
-        console.log("Firebase punch write failed (non bloquant):", e);
-      }
-
-      // 3) ✅ Verrou local + UI
-      setPunchedLocal(staffKey, hA);
-      toast("Pointage enregistré ✅ (Sheet)");
+      // 3) ✅ verrou local + UI
+      setPunchedLocal(empKey, hA);
+      toast("Pointage enregistré ✅ (exports_daily)");
       renderPointedUI(hA);
     };
 
@@ -825,7 +812,6 @@
         if(isPunchedLocal(staffKey)){
           renderPointedUI(getPunchedTimeLocal(staffKey));
         }
-
         checkGPS();
       }else{
         genererListeUI();
