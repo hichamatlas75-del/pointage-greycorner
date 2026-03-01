@@ -310,21 +310,48 @@
     // ===== Apps Script WebApp (Option B) =====
     const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
     const SECRET = "greycorner2026";
-
-    // ✅ pour exports_daily : empNode = le nom affiché (ou "mobile")
-    // Tu peux mettre "pointage" si tu veux identifier la source
     const EMP_NODE_DEFAULT = "pointage";
 
-    const equipe = [
-      {n:"BENKHADA ABDESLAM",t:"caisse"},{n:"ENNHAILI SOUMIA",t:"caisse"},{n:"SALIL HOUDA",t:"caisse"},
-      {n:"CHKAIRI YOUSSEF",t:"bar"},{n:"ELKOBBI MOSTAFA",t:"bar"},{n:"FILALI ABDERAFI",t:"bar"},{n:"KHALOUQ RACHID",t:"bar"},
-      {n:"BOUCHNAK NAOUAL",t:"cuisine"},{n:"BELQASSE KHAOULA",t:"cuisine"},{n:"BOURAHMA ANAS",t:"cuisine"},
-      {n:"IDRISSI SAAD",t:"cuisine"},{n:"LEMSSIEH JAWAD",t:"cuisine"},{n:"MAJDOUB JIHANE",t:"cuisine"},
-      {n:"MOUJAHID IMANE",t:"cuisine"},{n:"ZAIR FATIMA",t:"cuisine"},{n:"ELGORRAMY ANISSA",t:"menage"},
-      {n:"ELGORRAMY SOUAD",t:"menage"},{n:"ELMCHAOURI SOUAD",t:"menage"},{n:"SBAI HAKIMA",t:"menage"},
-      {n:"ALAOUI LAZIZ",t:"service"},{n:"HATTAF MOHAMED",t:"service"},
-      {n:"HIDARA YOUSSEF",t:"service"},{n:"KAFOUNI ZAKARIAE",t:"service"},{n:"MOHSINE YOUNESS",t:"service"}
-    ];
+    // ===========================
+    // ✅ ÉQUIPE = UNIQUEMENT Firebase
+    // Path: settings/equipe
+    // ===========================
+    let equipe = [];          // [{n:"NOM PRENOM", t:"caisse"}...]
+    let equipeIndex = new Map(); // staffKey -> {n,t}
+
+    function normalizeText(x){
+      return String(x || "").trim().toUpperCase().replace(/\s+/g, " ");
+    }
+    function normalizeRole(x){
+      const r = normalizeText(x).toLowerCase();
+      // on accepte caisse/bar/cuisine/menage/service (sinon "service")
+      const ok = ["caisse","bar","cuisine","menage","service"];
+      return ok.includes(r) ? r : "service";
+    }
+    function empKeyFromNomPrenom(nom, prenom){
+      const full = normalizeText(`${nom} ${prenom}`);
+      return full;
+    }
+    function normalizeEquipeSnapshot(val){
+      if(!val) return [];
+      const arr = Array.isArray(val)
+        ? val.filter(Boolean)
+        : Object.keys(val).sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]).filter(Boolean);
+
+      const out = [];
+      const seen = new Set();
+      for(const x of arr){
+        const nom = normalizeText(x.nom);
+        const prenom = normalizeText(x.prenom);
+        const poste = normalizeRole(x.poste);
+        if(!nom || !prenom) continue;
+        const full = `${nom} ${prenom}`;
+        if(seen.has(full)) continue;
+        seen.add(full);
+        out.push({ n: full, t: poste });
+      }
+      return out;
+    }
 
     function toast(msg){
       const t=document.getElementById("toast");
@@ -490,10 +517,21 @@
       }
     };
 
-    // ===== Staff list =====
+    // ===========================
+    // ✅ Staff list (depuis Firebase)
+    // ===========================
     function genererListeUI(){
       const sel = document.getElementById('selection');
       sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black mb-2">Choisi ton nom (1ère fois)</div>`;
+
+      if(!equipe.length){
+        const msg = document.createElement('div');
+        msg.className="text-center text-[11px] font-black text-white/50 mt-4";
+        msg.textContent="Aucun collaborateur (settings/equipe).";
+        sel.appendChild(msg);
+        return;
+      }
+
       const cats = ["caisse","bar","cuisine","menage","service"];
       cats.forEach(cat => {
         const staff = equipe.filter(e => e.t === cat);
@@ -507,21 +545,66 @@
         cont.className="hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = () => cont.classList.toggle('hidden');
 
-        staff.forEach(emp => {
-          const b = document.createElement('button');
-          b.className = "staff-btn";
-          b.textContent = emp.n;
-          b.onclick = () => {
-            if(confirm(emp.n + " ?")){
-              localStorage.setItem('gc_staff_name', emp.n);
-              location.reload();
-            }
-          };
-          cont.appendChild(b);
-        });
+        staff
+          .slice()
+          .sort((a,b)=>a.n.localeCompare(b.n))
+          .forEach(emp => {
+            const b = document.createElement('button');
+            b.className = "staff-btn";
+            b.textContent = emp.n;
+            b.onclick = () => {
+              if(confirm(emp.n + " ?")){
+                localStorage.setItem('gc_staff_name', emp.n);
+                location.reload();
+              }
+            };
+            cont.appendChild(b);
+          });
 
         sel.appendChild(h);
         sel.appendChild(cont);
+      });
+    }
+
+    // ✅ écoute temps réel sur settings/equipe
+    function attachEquipeListener(){
+      db.ref("settings/equipe").on("value", (snap) => {
+        equipe = normalizeEquipeSnapshot(snap.val());
+
+        // index pour admin list
+        equipeIndex = new Map();
+        equipe.forEach(e => equipeIndex.set(keyStaff(e.n), e));
+
+        // si la personne enregistrée n'existe plus, on reset la sélection
+        if(selected){
+          const k = keyStaff(selected);
+          if(!equipeIndex.has(k)){
+            localStorage.removeItem('gc_staff_name');
+            selected = null;
+          }
+        }
+
+        // refresh UI selon état
+        if(selected){
+          document.getElementById('selection').classList.add('hidden');
+          document.getElementById('action').classList.remove('hidden');
+          document.getElementById('username').textContent = selected;
+
+          const staffKey = keyStaff(selected);
+          if(isPunchedLocal(staffKey)){
+            renderPointedUI(getPunchedTimeLocal(staffKey));
+          }
+          checkGPS();
+        }else{
+          document.getElementById('selection').classList.remove('hidden');
+          document.getElementById('action').classList.add('hidden');
+          genererListeUI();
+        }
+
+        // si admin ouvert, refresh liste
+        if(document.getElementById('adminWrap').style.display === "flex"){
+          openAdmin(true);
+        }
       });
     }
 
@@ -598,11 +681,9 @@
         timestamp: String(timestamp)
       });
 
-      // Beacon (passe même si CORS)
       const img = new Image();
       img.src = url;
 
-      // Fetch best-effort
       try{
         const r = await fetch(url, { method:"GET", cache:"no-store" });
         const ct = (r.headers.get("content-type") || "");
@@ -612,7 +693,6 @@
         }
         return r.ok;
       }catch(e){
-        // si CORS bloque, beacon a quand même envoyé
         return true;
       }
     }
@@ -638,7 +718,7 @@
 
       const ts = Date.now();
 
-      // 1) ✅ Export vers Sheet (exports_daily)
+      // 1) ✅ Export vers Sheet
       const okSheet = await sendPunchToSheet({
         date: dateStr,
         empNode: selected || EMP_NODE_DEFAULT,
@@ -714,7 +794,7 @@
     }
 
     // ===== Admin =====
-    function openAdmin(){
+    function openAdmin(silent=false){
       if(role !== "gerant") return;
 
       document.getElementById('adminWrap').style.display = "flex";
@@ -724,21 +804,26 @@
       const list = document.getElementById('adminList');
       list.innerHTML = "";
 
-      equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
-        const row = document.createElement('div');
-        row.className = "admin-row";
-        row.innerHTML = `
-          <div class="font-black text-white/90">${emp.n}</div>
-          <button class="btn-reset-one">Reset</button>
-        `;
-        row.querySelector('button').onclick = () => {
-          if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-            db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
-            toast("Signal reset envoyé ✅");
-          }
-        };
-        list.appendChild(row);
-      });
+      equipe
+        .slice()
+        .sort((a,b)=>a.n.localeCompare(b.n))
+        .forEach(emp => {
+          const row = document.createElement('div');
+          row.className = "admin-row";
+          row.innerHTML = `
+            <div class="font-black text-white/90">${emp.n}</div>
+            <button class="btn-reset-one">Reset</button>
+          `;
+          row.querySelector('button').onclick = () => {
+            if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
+              db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
+              toast("Signal reset envoyé ✅");
+            }
+          };
+          list.appendChild(row);
+        });
+
+      if(!silent) toast("Supervision activée 🛠️");
     }
 
     document.getElementById('btnCloseAdmin').onclick = () => {
@@ -768,8 +853,7 @@
       if(logoClicks === 3){
         logoClicks = 0;
         if(role === "gerant"){
-          openAdmin();
-          toast("Supervision activée 🛠️");
+          openAdmin(false);
         }else{
           toast("Supervision: réservé au gérant");
         }
@@ -797,25 +881,19 @@
 
       showLoggedUI();
       showPinBlockIfNeeded();
+
+      // ✅ IMPORTANT: équipe depuis Firebase
+      attachEquipeListener();
+
+      // reset listeners
       attachResetListener();
 
       document.getElementById('adminWrap').style.display = "none";
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
 
-      if(selected){
-        document.getElementById('selection').classList.add('hidden');
-        document.getElementById('action').classList.remove('hidden');
-        document.getElementById('username').textContent = selected;
-
-        const staffKey = keyStaff(selected);
-        if(isPunchedLocal(staffKey)){
-          renderPointedUI(getPunchedTimeLocal(staffKey));
-        }
-        checkGPS();
-      }else{
-        genererListeUI();
-      }
+      // si sélection existe, l'écoute équipe va afficher action + checkGPS
+      // sinon, elle va afficher la liste
     });
   </script>
 </body>
