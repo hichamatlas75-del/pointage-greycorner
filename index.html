@@ -8,21 +8,27 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
 
 <style>
+  /* ===========================
+     ✅ THEME UNIQUE: OR + NOIR (Casino)
+     =========================== */
   :root{
-    --bg-a:#02040a;
-    --bg-b:#050816;
-    --radial: rgba(255,180,60,0.08);
+    --bg-a:#03040a;
+    --bg-b:#070a18;
+    --radial1: rgba(255,200,90,.12);
+    --radial2: rgba(255,120,40,.08);
 
-    --card-a: rgba(20,23,35,.75);
-    --card-b: rgba(5,7,15,.85);
+    --card-a: rgba(16,18,30,.80);
+    --card-b: rgba(4,6,14,.88);
     --card-stroke: rgba(255,255,255,.08);
     --card-inset: rgba(255,255,255,.04);
-    --card-shadow: 0 40px 80px rgba(0,0,0,.8);
-    --card-glow: 0 0 40px rgba(255,170,60,.08);
+    --card-shadow: 0 40px 90px rgba(0,0,0,.85);
+    --card-glow: 0 0 55px rgba(255,200,90,.10);
 
-    --text:#e5e7eb;
-    --muted: rgba(229,231,235,.65);
-    --gold:#ffcc73;
+    --text:#e8e9ef;
+    --muted: rgba(232,233,239,.62);
+
+    --gold:#ffd68a;
+    --gold2:#ffb347;
 
     --surface: rgba(255,255,255,.06);
     --surface2: rgba(255,255,255,.05);
@@ -31,63 +37,18 @@
     --btnPlan-a:#2F7BFF;
     --btnPlan-b:#1A4ED8;
 
-    --btnAlt-bg: rgba(255,255,255,.04);
+    --btnAlt-bg: rgba(255,255,255,.05);
     --btnAlt-stroke: rgba(255,255,255,.10);
-    --btnAlt-text: rgba(229,231,235,.92);
+    --btnAlt-text: rgba(232,233,239,.92);
 
-    --btnMain-a:#ffd68a;
-    --btnMain-b:#ffb347;
+    --btnMain-a: var(--gold);
+    --btnMain-b: var(--gold2);
     --btnMain-text:#1a1305;
 
-    --bannerBar: rgba(2,4,10,0.85);
+    --bannerBar: rgba(3,4,10,0.78);
 
-    --toastBg: rgba(0,0,0,.8);
+    --toastBg: rgba(0,0,0,.82);
     --toastStroke: rgba(255,255,255,.12);
-
-    --chipBg: rgba(255,255,255,.10);
-    --chipStroke: rgba(255,255,255,.10);
-    --chipText: rgba(255,255,255,.92);
-  }
-
-  html[data-theme="light"]{
-    --bg-a:#f7f6f2;
-    --bg-b:#eef2ff;
-    --radial: rgba(197,160,89,0.14);
-
-    --card-a: rgba(255,255,255,.86);
-    --card-b: rgba(255,255,255,.94);
-    --card-stroke: rgba(2,6,23,.08);
-    --card-inset: rgba(2,6,23,.04);
-    --card-shadow: 0 22px 55px rgba(2,6,23,.12);
-    --card-glow: 0 0 22px rgba(197,160,89,.16);
-
-    --text:#0f172a;
-    --muted: rgba(15,23,42,.60);
-    --gold:#b89347;
-
-    --surface: rgba(15,23,42,.06);
-    --surface2: rgba(15,23,42,.05);
-    --stroke: rgba(15,23,42,.10);
-
-    --btnPlan-a:#0f172a;
-    --btnPlan-b:#0b1220;
-
-    --btnAlt-bg: rgba(15,23,42,.04);
-    --btnAlt-stroke: rgba(15,23,42,.10);
-    --btnAlt-text: rgba(15,23,42,.90);
-
-    --btnMain-a:#0f172a;
-    --btnMain-b:#111827;
-    --btnMain-text:#ffffff;
-
-    --bannerBar: rgba(255,255,255,0.76);
-
-    --toastBg: rgba(15,23,42,.92);
-    --toastStroke: rgba(255,255,255,.14);
-
-    --chipBg: rgba(15,23,42,.05);
-    --chipStroke: rgba(15,23,42,.10);
-    --chipText: rgba(15,23,42,.85);
   }
 
   html,body{
@@ -96,8 +57,9 @@
     overflow-y:auto;
     overflow-x:hidden;
     background:
-      radial-gradient(1200px 600px at 50% -10%, var(--radial), transparent 60%),
-      linear-gradient(180deg,var(--bg-a),var(--bg-b) 40%,var(--bg-a));
+      radial-gradient(900px 520px at 50% -10%, var(--radial1), transparent 60%),
+      radial-gradient(1100px 700px at 20% 110%, var(--radial2), transparent 62%),
+      linear-gradient(180deg,var(--bg-a),var(--bg-b) 45%,var(--bg-a));
     font-family:'Plus Jakarta Sans',sans-serif;
     color:var(--text);
   }
@@ -130,19 +92,14 @@
     pointer-events:none;
     background:
       radial-gradient(900px 420px at 50% 25%, rgba(255,255,255,.06), transparent 55%),
-      radial-gradient(1200px 700px at 50% 120%, rgba(0,0,0,.35), transparent 55%);
-    opacity:.65;
-  }
-  html[data-theme="light"] .card::after{
-    background:
-      radial-gradient(900px 420px at 50% 25%, rgba(2,6,23,.06), transparent 55%),
-      radial-gradient(1200px 700px at 50% 120%, rgba(2,6,23,.10), transparent 55%);
-    opacity:.55;
+      radial-gradient(1200px 700px at 50% 120%, rgba(0,0,0,.40), transparent 55%);
+    opacity:.70;
   }
 
   .content{ position:relative; z-index:1; display:flex; flex-direction:column; flex:1; }
   .gold{ color:var(--gold); letter-spacing:.08em; }
   .muted{ color:var(--muted); }
+
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
@@ -190,7 +147,7 @@
     border-radius:26px;
     padding:26px;
     font-size:26px;
-    box-shadow: 0 12px 25px rgba(0,0,0,.18);
+    box-shadow: 0 14px 30px rgba(0,0,0,.28);
     transition:.25s;
   }
   .btn-main:disabled{ opacity:.45; }
@@ -204,7 +161,7 @@
     top:0;
     z-index:20;
     background:var(--bannerBar);
-    backdrop-filter:blur(8px);
+    backdrop-filter:blur(10px);
     padding:6px;
     border-radius:18px;
     border:1px solid var(--stroke);
@@ -221,10 +178,10 @@
     overflow-wrap:anywhere;
   }
   .msg-urgent{ background:#3a0d0d; color:#fff; border:1px solid #ff5a5a; }
-  .msg-info{ background:rgba(255,200,120,.10); color:var(--gold); border:1px solid rgba(255,200,120,.28); }
-  html[data-theme="light"] .msg-info{
-    background: rgba(197,160,89,.10);
-    border-color: rgba(197,160,89,.22);
+  .msg-info{
+    background:rgba(255,214,138,.10);
+    color:var(--gold);
+    border:1px solid rgba(255,214,138,.26);
   }
 
   .inpt{
@@ -238,8 +195,8 @@
     font-size:12px;
     outline:none;
   }
-  .inpt:focus{ border-color: rgba(197,160,89,.35); box-shadow: 0 0 0 3px rgba(197,160,89,.12); }
-  html[data-theme="light"] .inpt::placeholder{ color: rgba(15,23,42,.45); }
+  .inpt::placeholder{ color: rgba(232,233,239,.40); }
+  .inpt:focus{ border-color: rgba(255,214,138,.35); box-shadow: 0 0 0 3px rgba(255,214,138,.10); }
 
   .btn-login{
     width:100%;
@@ -248,8 +205,8 @@
     font-size:12px;
     font-weight:900;
     text-transform:uppercase;
-    background:rgba(197,160,89,.16);
-    border:1px solid rgba(197,160,89,.26);
+    background:rgba(255,214,138,.14);
+    border:1px solid rgba(255,214,138,.24);
     color:var(--gold);
   }
 
@@ -286,8 +243,8 @@
     border-radius:14px; font-size:12px; font-weight:900;
     display:none; max-width:min(420px, calc(100vw - 24px));
     text-align:center;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .pill{
@@ -310,9 +267,6 @@
     height:1px;
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
     margin:12px 0;
-  }
-  html[data-theme="light"] .sep{
-    background:linear-gradient(90deg, transparent, rgba(15,23,42,.14), transparent);
   }
 
   .hint{ font-size:10px; font-weight:900; color:var(--muted); line-height:1.25; }
@@ -338,19 +292,14 @@
     border:1px solid var(--stroke);
     background:rgba(0,0,0,.12);
   }
-  html[data-theme="light"] .admin-list{
-    background: rgba(15,23,42,.03);
-  }
   .admin-row{
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 10px;
     border-bottom:1px solid rgba(255,255,255,.06);
     font-size:11px;
   }
-  html[data-theme="light"] .admin-row{
-    border-bottom:1px solid rgba(15,23,42,.08);
-  }
   .admin-row:last-child{ border-bottom:none; }
+
   .btn-reset-one{
     background:rgba(239,68,68,.14);
     color:#ffb5b5;
@@ -360,7 +309,6 @@
     font-weight:900;
     font-size:11px;
   }
-  html[data-theme="light"] .btn-reset-one{ color:#7f1d1d; }
   .btn-reset-all{
     background:#2a0f0f;
     color:#ffb5b5;
@@ -370,23 +318,6 @@
     font-weight:900;
     font-size:11px;
     text-transform:uppercase;
-  }
-  html[data-theme="light"] .btn-reset-all{
-    background:#fff;
-    color:#7f1d1d;
-    border:1px solid rgba(239,68,68,.30);
-  }
-
-  .chip-btn{
-    font-size:10px;
-    font-weight:900;
-    padding:8px 10px;
-    border-radius:999px;
-    background:var(--chipBg);
-    border:1px solid var(--chipStroke);
-    color:var(--chipText);
-    text-transform:uppercase;
-    letter-spacing:.08em;
   }
 
   .top-actions{
@@ -423,15 +354,12 @@
   <div class="card">
     <div class="content">
 
+      <!-- HEADER -->
       <div class="text-center flex-shrink-0">
         <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
-        <div class="text-[9px] muted font-black mt-2">Triple-clic logo = Supervision (gérant)</div>
-
-        <div class="top-actions">
-          <button id="btnTheme2" class="chip-btn">🌙 Dark</button>
-        </div>
       </div>
 
+      <!-- SESSION BAR (après login) -->
       <div id="sessionBar" class="hidden mt-3 mb-2 flex items-center justify-between gap-2">
         <div class="pill">
           <span class="muted">Connecté :</span>
@@ -439,18 +367,19 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button id="btnTheme" class="chip-btn">🌙 Dark</button>
           <button id="btnLogout" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
             Déconnexion
           </button>
         </div>
       </div>
 
+      <!-- PUBLIC HOME (avant login) -->
       <div id="publicHome" class="public-stack">
         <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
           🗓️ CONSULTER LE PLANNING
         </button>
 
+        <!-- ✅ MENU normal -->
         <a href="https://greycorner.pages.dev/" target="_blank" rel="noopener noreferrer" class="btn-menu">
           🌙 MENU
         </a>
@@ -459,11 +388,13 @@
           <button id="btnShowLogin" type="button">Connexion</button>
         </div>
 
+        <!-- HOME MSG -->
         <div id="homeMsg" class="hidden home-box">
           <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
           <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
         </div>
 
+        <!-- LOGIN -->
         <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
           <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
           <div class="space-y-2">
@@ -481,12 +412,14 @@
         </div>
       </div>
 
+      <!-- BANNER (après login) -->
       <div id="banner-wrap" class="banner-wrap">
         <div id="banner" class="banner"></div>
       </div>
 
       <div class="sep"></div>
 
+      <!-- APP (après login) -->
       <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
         <div id="selection" class="scroll flex-grow"></div>
 
@@ -506,6 +439,7 @@
           </button>
         </div>
 
+        <!-- ADMIN -->
         <div id="adminWrap" class="admin-wrap">
           <div class="admin-title">
             <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
@@ -521,58 +455,14 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
     // =========================================================
-    // ✅ THEME JS
-    // =========================================================
-    function getTheme(){ return localStorage.getItem("gc_theme") || "dark"; }
-    function applyTheme(t){
-      const theme = (t === "light") ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("gc_theme", theme);
-
-      const label = (theme === "light") ? "☀️ Clair chic" : "🌙 Dark";
-      const b1 = document.getElementById("btnTheme");
-      const b2 = document.getElementById("btnTheme2");
-      if(b1) b1.textContent = label;
-      if(b2) b2.textContent = label;
-
-      const lo = document.getElementById("btnLogout");
-      if(lo){
-        if(theme === "light"){
-          lo.classList.remove("bg-white/10","border-white/10");
-          lo.classList.add("bg-black/5","border-black/10");
-        }else{
-          lo.classList.add("bg-white/10","border-white/10");
-          lo.classList.remove("bg-black/5","border-black/10");
-        }
-      }
-      const closeAdmin = document.getElementById("btnCloseAdmin");
-      if(closeAdmin){
-        if(theme === "light"){
-          closeAdmin.classList.remove("bg-white/10","border-white/10");
-          closeAdmin.classList.add("bg-black/5","border-black/10");
-        }else{
-          closeAdmin.classList.add("bg-white/10","border-white/10");
-          closeAdmin.classList.remove("bg-black/5","border-black/10");
-        }
-      }
-    }
-    function toggleTheme(){ applyTheme(getTheme() === "dark" ? "light" : "dark"); }
-    applyTheme(getTheme());
-
-    document.addEventListener("click", (e)=>{
-      if(e.target && (e.target.id === "btnTheme" || e.target.id === "btnTheme2")){
-        toggleTheme();
-      }
-    });
-
-    // =========================================================
-    // ✅ Firebase init (corrigé: évite double init)
+    // ✅ Firebase init (safe)
     // =========================================================
     const firebaseConfig = {
       apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
@@ -588,7 +478,6 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // ✅ Persistance (évite “ça se connecte puis revient”)
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
     // ===== GPS =====
@@ -606,7 +495,6 @@
     let equipeIndex = new Map();
     let equipeListenerAttached = false;
 
-    // ✅ CORRECTION CRITIQUE: regex \s (pas \\s)
     function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\s+/g, " "); }
     function normalizeRole(x){
       const r = String(x || "").trim().toLowerCase();
@@ -642,7 +530,6 @@
       toast._t=setTimeout(()=>t.style.display="none",2500);
     }
 
-    // ✅ CORRECTION CRITIQUE: regex \s (pas \\s)
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
@@ -715,6 +602,7 @@
     function showLoggedUI(){
       document.getElementById('sessionBar').classList.remove('hidden');
       document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
+
       document.getElementById('publicHome').classList.add('hidden');
       document.getElementById('app-pointage').classList.remove('hidden');
 
@@ -725,6 +613,7 @@
 
     function showLoginUI(){
       document.getElementById('sessionBar').classList.add('hidden');
+
       document.getElementById('publicHome').classList.remove('hidden');
       document.getElementById('app-pointage').classList.add('hidden');
 
@@ -739,7 +628,6 @@
       showPinBlockIfNeeded();
     };
 
-    // ✅ Login: message d’erreur détaillé (au lieu de “Identifiants invalides.”)
     function prettyAuthError(e){
       const code = String(e?.code || "");
       if(code === "auth/user-not-found") return "Compte introuvable.";
@@ -762,7 +650,6 @@
         msgEl.textContent = "Email et mot de passe requis.";
         return;
       }
-      // ✅ CORRECTION: regex \d (pas \\d)
       if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
         msgEl.textContent = "PIN requis (4 chiffres).";
         return;
@@ -783,8 +670,6 @@
         }
 
         if(!hasDevicePin()) localStorage.setItem('gc_device_pin', pin);
-
-        // ✅ pas besoin de reload forcé, mais OK si tu veux garder ton flow
         location.reload();
       }catch(e){
         msgEl.textContent = prettyAuthError(e);
@@ -1129,6 +1014,7 @@
       }
     };
 
+    // Triple-clic logo => admin (gérant)
     let logoClicks=0, logoTimer;
     document.getElementById("logo").onclick = () => {
       logoClicks++;
