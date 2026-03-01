@@ -128,7 +128,7 @@
     margin:auto;
   }
 
-  /* subtle vignette like screenshot */
+  /* subtle vignette */
   .card::after{
     content:"";
     position:absolute;
@@ -155,7 +155,6 @@
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
-  /* Buttons like screenshot (big pill) */
   .btn-planning{
     background: linear-gradient(180deg,var(--btnPlan-a),var(--btnPlan-b)) !important;
     color:#fff !important;
@@ -327,7 +326,6 @@
 
   .hint{ font-size:10px; font-weight:900; color:var(--muted); line-height:1.25; }
 
-  /* ADMIN PANEL */
   .admin-wrap{
     display:none;
     flex-direction:column;
@@ -415,7 +413,7 @@
   }
 
   .login-toggle{
-    margin-top:14px;
+    margin-top:2px;
     font-size:10px;
     font-weight:900;
     letter-spacing:.12em;
@@ -459,25 +457,23 @@
         </div>
       </div>
 
-      <!-- PUBLIC HOME (avant login) => comme screenshot -->
+      <!-- PUBLIC HOME (avant login) -->
       <div id="publicHome" class="public-stack">
         <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
           🗓️ CONSULTER LE PLANNING
         </button>
 
-       <a 
-  href="https://greycorner.pages.dev/" 
-  target="_blank" 
-  rel="noopener noreferrer"
-  class="btn-menu">
-  🌙 MENU
-</a>
+        <!-- ✅ MENU normal -->
+        <a
+          href="https://greycorner.pages.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-menu"
+        >
+          🌙 MENU
+        </a>
 
-<div class="login-toggle">
-  <button id="btnShowLogin" type="button">
-    Connexion
-  </button>
-</div>
+        <div class="login-toggle">
           <button id="btnShowLogin" type="button">Connexion</button>
         </div>
 
@@ -636,7 +632,7 @@
     let equipeIndex = new Map();
     let equipeListenerAttached = false;
 
-    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\s+/g, " "); }
+    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\\s+/g, " "); }
     function normalizeRole(x){
       const r = String(x || "").trim().toLowerCase();
       const ok = ["caisse","bar","cuisine","menage","service"];
@@ -671,7 +667,7 @@
       toast._t=setTimeout(()=>t.style.display="none",2500);
     }
 
-    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
+    function keyStaff(n){ return String(n||'').trim().replace(/\\s+/g,'_').toUpperCase(); }
 
     // ✅ date ISO (YYYY-MM-DD) Casablanca
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
@@ -762,7 +758,6 @@
       document.getElementById('publicHome').classList.remove('hidden');
       document.getElementById('app-pointage').classList.add('hidden');
 
-      // message home (optionnel)
       loadHomeMsg();
       clearInterval(window.__homeInt);
       window.__homeInt = setInterval(loadHomeMsg, 30000);
@@ -786,7 +781,7 @@
         document.getElementById("loginMsg").textContent = "Email et mot de passe requis.";
         return;
       }
-      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
+      if(!hasDevicePin() && !/^\\d{4}$/.test(pin)){
         document.getElementById("loginMsg").textContent = "PIN requis (4 chiffres).";
         return;
       }
@@ -816,9 +811,9 @@
       const currentPin = localStorage.getItem('gc_device_pin');
 
       if(!currentPin){
-        const newPin = prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
+        const newPin = prompt("Aucun PIN sur cet appareil.\\nCréez un PIN (4 chiffres) :");
         if(newPin === null) return;
-        if(!/^\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
+        if(!/^\\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
         localStorage.setItem('gc_device_pin', newPin);
         toast("PIN créé ✅");
         return;
@@ -1035,7 +1030,6 @@
 
       const ts = Date.now();
 
-      // 1) ✅ Export vers Sheet
       const okSheet = await sendPunchToSheet({
         date: dateStr,
         empNode: selected || EMP_NODE_DEFAULT,
@@ -1050,12 +1044,10 @@
         return;
       }
 
-      // 2) Optionnel: écrire aussi dans Firebase punches (non bloquant)
       const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
       try{ await db.ref('punches/'+dateStr+'/'+empKey).set(payload); }
       catch(e){ console.log("Firebase punch write failed (non bloquant):", e); }
 
-      // 3) ✅ verrou local + UI
       setPunchedLocal(empKey, hA);
       toast("Pointage enregistré ✅ (exports_daily)");
       renderPointedUI(hA);
@@ -1130,7 +1122,7 @@
         `;
         row.querySelector('button').onclick = () => {
           if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-            db.ref(\`broadcast/resets/\${keyStaff(emp.n)}\`).set(Date.now());
+            db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
             toast("Signal reset envoyé ✅");
           }
         };
