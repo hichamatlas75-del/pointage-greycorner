@@ -35,6 +35,11 @@
     --btnPlan-a:#2F7BFF;
     --btnPlan-b:#1A4ED8;
 
+    /* second button (menu) */
+    --btnAlt-bg: rgba(255,255,255,.04);
+    --btnAlt-stroke: rgba(255,255,255,.10);
+    --btnAlt-text: rgba(229,231,235,.92);
+
     --btnMain-a:#ffd68a;
     --btnMain-b:#ffb347;
     --btnMain-text:#1a1305;
@@ -64,7 +69,7 @@
 
     --text:#0f172a;
     --muted: rgba(15,23,42,.60);
-    --gold:#b89347; /* ✅ or mat */
+    --gold:#b89347;
 
     --surface: rgba(15,23,42,.06);
     --surface2: rgba(15,23,42,.05);
@@ -72,6 +77,10 @@
 
     --btnPlan-a:#0f172a;
     --btnPlan-b:#0b1220;
+
+    --btnAlt-bg: rgba(15,23,42,.04);
+    --btnAlt-stroke: rgba(15,23,42,.10);
+    --btnAlt-text: rgba(15,23,42,.90);
 
     --btnMain-a:#0f172a;
     --btnMain-b:#111827;
@@ -88,69 +97,138 @@
   }
 
   html,body{
-    height:100%; margin:0; overflow-y:auto; overflow-x:hidden;
+    height:100%;
+    margin:0;
+    overflow-y:auto;
+    overflow-x:hidden;
     background:
       radial-gradient(1200px 600px at 50% -10%, var(--radial), transparent 60%),
       linear-gradient(180deg,var(--bg-a),var(--bg-b) 40%,var(--bg-a));
-    font-family:'Plus Jakarta Sans',sans-serif; color:var(--text);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    color:var(--text);
   }
 
   .card{
-    width:100%; max-width:420px; min-height:96vh; border-radius:42px; padding:18px;
-    display:flex; flex-direction:column;
+    width:100%;
+    max-width:420px;
+    min-height:96vh;
+    border-radius:42px;
+    padding:18px;
+    display:flex;
+    flex-direction:column;
     background:linear-gradient(145deg,var(--card-a),var(--card-b));
-    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
     border:1px solid var(--card-stroke);
     box-shadow:
       inset 0 0 0 1px var(--card-inset),
       var(--card-shadow),
       var(--card-glow);
-    position:relative; margin:auto;
+    position:relative;
+    margin:auto;
   }
+
+  /* subtle vignette like screenshot */
+  .card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:42px;
+    pointer-events:none;
+    background:
+      radial-gradient(900px 420px at 50% 25%, rgba(255,255,255,.06), transparent 55%),
+      radial-gradient(1200px 700px at 50% 120%, rgba(0,0,0,.35), transparent 55%);
+    opacity:.65;
+  }
+  html[data-theme="light"] .card::after{
+    background:
+      radial-gradient(900px 420px at 50% 25%, rgba(2,6,23,.06), transparent 55%),
+      radial-gradient(1200px 700px at 50% 120%, rgba(2,6,23,.10), transparent 55%);
+    opacity:.55;
+  }
+
+  .content{ position:relative; z-index:1; display:flex; flex-direction:column; flex:1; }
 
   .gold{ color:var(--gold); letter-spacing:.08em; }
   .muted{ color:var(--muted); }
+
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
+  /* Buttons like screenshot (big pill) */
   .btn-planning{
     background: linear-gradient(180deg,var(--btnPlan-a),var(--btnPlan-b)) !important;
-    color:#fff !important; padding:16px 14px; border-radius:22px;
-    font-size:12px; font-weight:900; text-transform:uppercase;
-    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
-    box-shadow:0 14px 30px rgba(0,0,0,.25); transition:.25s;
-  }
-  .btn-ramadan{
-    background: rgba(255,255,255,.05); border:1px solid var(--stroke);
-    color:var(--chipText); padding:12px 14px; border-radius:18px;
-    font-size:11px; font-weight:900; text-transform:uppercase;
-    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    color:#fff !important;
+    padding:18px 16px;
+    border-radius:28px;
+    font-size:18px;
+    font-weight:1000;
+    text-transform:uppercase;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    box-shadow:0 18px 36px rgba(0,0,0,.35);
     transition:.2s;
   }
-  html[data-theme="light"] .btn-ramadan{
-    background: rgba(15,23,42,.04);
+  .btn-planning:active{ transform:scale(.99); }
+
+  .btn-menu{
+    background: var(--btnAlt-bg);
+    border:1px solid var(--btnAlt-stroke);
+    color: var(--btnAlt-text);
+    padding:18px 16px;
+    border-radius:28px;
+    font-size:18px;
+    font-weight:1000;
+    text-transform:uppercase;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    transition:.2s;
+    box-shadow:0 14px 26px rgba(0,0,0,.25);
   }
+  .btn-menu:active{ transform:scale(.99); }
 
   .btn-main{
     background: linear-gradient(180deg,var(--btnMain-a),var(--btnMain-b));
-    color:var(--btnMain-text); font-weight:900; border-radius:26px;
-    padding:26px; font-size:26px;
-    box-shadow: 0 12px 25px rgba(0,0,0,.18); transition:.25s;
+    color:var(--btnMain-text);
+    font-weight:1000;
+    border-radius:26px;
+    padding:26px;
+    font-size:26px;
+    box-shadow: 0 12px 25px rgba(0,0,0,.18);
+    transition:.25s;
   }
   .btn-main:disabled{ opacity:.45; }
 
   .banner-wrap{
-    display:none; gap:10px; align-items:stretch; margin:12px 0;
-    position:sticky; top:0; z-index:20;
-    background:var(--bannerBar); backdrop-filter:blur(8px);
-    padding:6px; border-radius:18px;
+    display:none;
+    gap:10px;
+    align-items:stretch;
+    margin:12px 0;
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:var(--bannerBar);
+    backdrop-filter:blur(8px);
+    padding:6px;
+    border-radius:18px;
     border:1px solid var(--stroke);
   }
   .banner{
-    flex:1; border-radius:16px; padding:12px;
-    font-weight:900; font-size:13px; text-align:center;
+    flex:1;
+    border-radius:16px;
+    padding:12px;
+    font-weight:900;
+    font-size:13px;
+    text-align:center;
     border:1px solid var(--stroke);
-    word-break:break-word; overflow-wrap:anywhere;
+    word-break:break-word;
+    overflow-wrap:anywhere;
   }
   .msg-urgent{ background:#3a0d0d; color:#fff; border:1px solid #ff5a5a; }
   .msg-info{ background:rgba(255,200,120,.10); color:var(--gold); border:1px solid rgba(255,200,120,.28); }
@@ -160,17 +238,26 @@
   }
 
   .inpt{
-    width:100%; background:var(--surface);
+    width:100%;
+    background:var(--surface);
     border:1px solid var(--stroke);
-    border-radius:16px; padding:12px;
-    color:var(--text); font-weight:800; font-size:12px; outline:none;
+    border-radius:16px;
+    padding:12px;
+    color:var(--text);
+    font-weight:800;
+    font-size:12px;
+    outline:none;
   }
   .inpt:focus{ border-color: rgba(197,160,89,.35); box-shadow: 0 0 0 3px rgba(197,160,89,.12); }
   html[data-theme="light"] .inpt::placeholder{ color: rgba(15,23,42,.45); }
 
   .btn-login{
-    width:100%; border-radius:18px; padding:12px;
-    font-size:12px; font-weight:900; text-transform:uppercase;
+    width:100%;
+    border-radius:18px;
+    padding:12px;
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
     background:rgba(197,160,89,.16);
     border:1px solid rgba(197,160,89,.26);
     color:var(--gold);
@@ -179,16 +266,23 @@
   .drawer-header{
     background:var(--surface2);
     border:1px solid var(--stroke);
-    border-radius:16px; padding:14px; margin-top:10px;
-    display:flex; justify-content:space-between; cursor:pointer;
+    border-radius:16px;
+    padding:14px;
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    cursor:pointer;
     user-select:none;
   }
   .staff-btn{
-    padding:14px; border-radius:14px;
+    padding:14px;
+    border-radius:14px;
     background:var(--surface2);
     border:1px solid var(--stroke);
-    font-size:11px; font-weight:800;
-    text-align:center; color:var(--text);
+    font-size:11px;
+    font-weight:800;
+    text-align:center;
+    color:var(--text);
     transition:.15s;
   }
   .staff-btn:active{ transform:scale(.99); }
@@ -217,7 +311,8 @@
   .home-box{
     background:var(--surface2);
     border:1px solid var(--stroke);
-    border-radius:18px; padding:12px;
+    border-radius:18px;
+    padding:12px;
     margin:10px 0 12px 0;
   }
 
@@ -276,9 +371,7 @@
     font-weight:900;
     font-size:11px;
   }
-  html[data-theme="light"] .btn-reset-one{
-    color:#7f1d1d;
-  }
+  html[data-theme="light"] .btn-reset-one{ color:#7f1d1d; }
   .btn-reset-all{
     background:#2a0f0f;
     color:#ffb5b5;
@@ -306,107 +399,143 @@
     text-transform:uppercase;
     letter-spacing:.08em;
   }
+
+  .top-actions{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:10px;
+  }
+
+  .public-stack{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:14px;
+  }
+
+  .login-toggle{
+    margin-top:14px;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:center;
+  }
+  .login-toggle button{
+    text-decoration:underline;
+    text-underline-offset:4px;
+  }
 </style>
 </head>
 
 <body class="flex items-center justify-center p-4">
   <div class="card">
+    <div class="content">
 
-    <div class="text-center mb-4 flex-shrink-0">
-      <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
-      <div class="text-[9px] muted font-black mt-1">Triple-clic logo = Supervision (gérant)</div>
-    </div>
+      <!-- HEADER -->
+      <div class="text-center flex-shrink-0">
+        <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
+        <div class="text-[9px] muted font-black mt-2">Triple-clic logo = Supervision (gérant)</div>
 
-    <!-- SESSION BAR -->
-    <div id="sessionBar" class="hidden mb-3 flex items-center justify-between gap-2">
-      <div class="pill">
-        <span class="muted">Connecté :</span>
-        <span id="roleLabel" class="text-yellow-200">—</span>
+        <div class="top-actions">
+          <button id="btnTheme2" class="chip-btn">🌙 Dark</button>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button id="btnTheme" class="chip-btn">🌙 Dark</button>
+      <!-- SESSION BAR (après login) -->
+      <div id="sessionBar" class="hidden mt-3 mb-2 flex items-center justify-between gap-2">
+        <div class="pill">
+          <span class="muted">Connecté :</span>
+          <span id="roleLabel" class="text-yellow-200">—</span>
+        </div>
 
-        <button id="btnLogout" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
-          Déconnexion
+        <div class="flex items-center gap-2">
+          <button id="btnTheme" class="chip-btn">🌙 Dark</button>
+          <button id="btnLogout" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+
+      <!-- PUBLIC HOME (avant login) => comme screenshot -->
+      <div id="publicHome" class="public-stack">
+        <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
+          🗓️ CONSULTER LE PLANNING
         </button>
-      </div>
-    </div>
 
-    <!-- HOME MSG (avant login) -->
-    <div id="homeMsg" class="hidden home-box">
-      <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
-      <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
-
-      <!-- Theme toggle aussi avant login -->
-      <div class="mt-3 flex justify-center">
-        <button id="btnTheme2" class="chip-btn">🌙 Dark</button>
-      </div>
-    </div>
-
-    <!-- LOGIN -->
-    <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
-      <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
-      <div class="space-y-2">
-        <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
-        <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
-
-        <div id="pinBlock" class="hidden">
-          <input id="loginPin" class="inpt" type="password" maxlength="4" placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" />
-          <div class="hint mt-1">Le PIN sert uniquement à réinitialiser cet appareil.</div>
-        </div>
-
-        <button id="btnLogin" class="btn-login">Se connecter</button>
-        <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
-      </div>
-    </div>
-
-    <!-- LINKS -->
-    <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning mb-2">🗓️ CONSULTER LE PLANNING</button>
-    <button onclick="window.open('https://greycorner.pages.dev/', '_blank')" class="btn-ramadan mb-3">🌙 MENU </button>
-
-    <!-- BANNER (après login) -->
-    <div id="banner-wrap" class="banner-wrap">
-      <div id="banner" class="banner"></div>
-    </div>
-
-    <div class="sep"></div>
-
-    <!-- APP -->
-    <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
-
-      <!-- selection -->
-      <div id="selection" class="scroll flex-grow"></div>
-
-      <!-- action -->
-      <div id="action" class="hidden flex flex-col flex-grow justify-center">
-        <div class="text-center mb-2">
-          <div class="text-[10px] muted uppercase font-black tracking-widest">Appareil assigné à</div>
-          <div id="username" class="text-3xl font-black mt-1" style="color:var(--gold)">--</div>
-        </div>
-
-        <div id="pointage-zone" class="text-center">
-          <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
-          <button id="btn" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
-        </div>
-
-        <button id="btnResetDevice" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
-          Réinitialiser l’appareil (PIN)
+        <button onclick="window.open('https://greycorner.pages.dev/', '_blank')" class="btn-menu">
+          🌙 MENU
         </button>
+
+        <div class="login-toggle">
+          <button id="btnShowLogin" type="button">Connexion</button>
+        </div>
+
+        <!-- HOME MSG (optionnel) -->
+        <div id="homeMsg" class="hidden home-box">
+          <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
+          <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
+        </div>
+
+        <!-- LOGIN (dépliable) -->
+        <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
+          <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
+          <div class="space-y-2">
+            <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
+            <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+
+            <div id="pinBlock" class="hidden">
+              <input id="loginPin" class="inpt" type="password" maxlength="4" placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" />
+              <div class="hint mt-1">Le PIN sert uniquement à réinitialiser cet appareil.</div>
+            </div>
+
+            <button id="btnLogin" class="btn-login">Se connecter</button>
+            <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- ADMIN -->
-      <div id="adminWrap" class="admin-wrap">
-        <div class="admin-title">
-          <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
-          <button id="btnCloseAdmin" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
+      <!-- BANNER (après login) -->
+      <div id="banner-wrap" class="banner-wrap">
+        <div id="banner" class="banner"></div>
+      </div>
+
+      <div class="sep"></div>
+
+      <!-- APP (après login) -->
+      <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
+        <div id="selection" class="scroll flex-grow"></div>
+
+        <div id="action" class="hidden flex flex-col flex-grow justify-center">
+          <div class="text-center mb-2">
+            <div class="text-[10px] muted uppercase font-black tracking-widest">Appareil assigné à</div>
+            <div id="username" class="text-3xl font-black mt-1" style="color:var(--gold)">--</div>
+          </div>
+
+          <div id="pointage-zone" class="text-center">
+            <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
+            <button id="btn" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
+          </div>
+
+          <button id="btnResetDevice" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
+            Réinitialiser l’appareil (PIN)
+          </button>
         </div>
-        <div class="admin-list" id="adminList"></div>
-        <button id="btnResetAll" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
+
+        <!-- ADMIN -->
+        <div id="adminWrap" class="admin-wrap">
+          <div class="admin-title">
+            <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
+            <button id="btnCloseAdmin" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
+          </div>
+          <div class="admin-list" id="adminList"></div>
+          <button id="btnResetAll" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
+        </div>
       </div>
 
     </div>
-
   </div>
 
   <div id="toast" class="toast"></div>
@@ -420,9 +549,8 @@
     // =========================================================
     // ✅ THEME JS (persist localStorage)
     // =========================================================
-    function getTheme(){
-      return localStorage.getItem("gc_theme") || "dark";
-    }
+    function getTheme(){ return localStorage.getItem("gc_theme") || "dark"; }
+
     function applyTheme(t){
       const theme = (t === "light") ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", theme);
@@ -434,7 +562,6 @@
       if(b1) b1.textContent = label;
       if(b2) b2.textContent = label;
 
-      // Ajustement bouton logout (pour rester lisible en light)
       const lo = document.getElementById("btnLogout");
       if(lo){
         if(theme === "light"){
@@ -456,11 +583,9 @@
         }
       }
     }
-    function toggleTheme(){
-      applyTheme(getTheme() === "dark" ? "light" : "dark");
-    }
-    // apply immediately
+    function toggleTheme(){ applyTheme(getTheme() === "dark" ? "light" : "dark"); }
     applyTheme(getTheme());
+
     document.addEventListener("click", (e)=>{
       if(e.target && (e.target.id === "btnTheme" || e.target.id === "btnTheme2")){
         toggleTheme();
@@ -499,13 +624,11 @@
     // ✅ ÉQUIPE = UNIQUEMENT Firebase
     // Path: settings/equipe
     // ===========================
-    let equipe = [];             // [{n:"NOM PRENOM", t:"caisse"}...]
-    let equipeIndex = new Map(); // staffKey -> {n,t}
+    let equipe = [];
+    let equipeIndex = new Map();
     let equipeListenerAttached = false;
 
-    function normalizeText(x){
-      return String(x || "").trim().toUpperCase().replace(/\s+/g, " ");
-    }
+    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\s+/g, " "); }
     function normalizeRole(x){
       const r = String(x || "").trim().toLowerCase();
       const ok = ["caisse","bar","cuisine","menage","service"];
@@ -616,9 +739,9 @@
     function showLoggedUI(){
       document.getElementById('sessionBar').classList.remove('hidden');
       document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
+
+      document.getElementById('publicHome').classList.add('hidden');
       document.getElementById('app-pointage').classList.remove('hidden');
-      document.getElementById('loginWrap').classList.add('hidden');
-      document.getElementById('homeMsg').classList.add('hidden');
 
       loadBanner();
       clearInterval(window.__bannerInt);
@@ -627,14 +750,22 @@
 
     function showLoginUI(){
       document.getElementById('sessionBar').classList.add('hidden');
-      document.getElementById('app-pointage').classList.add('hidden');
-      document.getElementById('loginWrap').classList.remove('hidden');
-      document.getElementById('homeMsg').classList.remove('hidden');
 
+      document.getElementById('publicHome').classList.remove('hidden');
+      document.getElementById('app-pointage').classList.add('hidden');
+
+      // message home (optionnel)
       loadHomeMsg();
       clearInterval(window.__homeInt);
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
+
+    // ===== Login panel toggle =====
+    document.getElementById("btnShowLogin").onclick = () => {
+      const wrap = document.getElementById("loginWrap");
+      wrap.classList.toggle("hidden");
+      showPinBlockIfNeeded();
+    };
 
     // ===== Login =====
     document.getElementById("btnLogin").onclick = async () => {
@@ -746,7 +877,6 @@
       });
     }
 
-    // ✅ écoute temps réel sur settings/equipe
     function attachEquipeListener(){
       if(equipeListenerAttached) return;
       equipeListenerAttached = true;
@@ -872,7 +1002,7 @@
         }
         return r.ok;
       }catch(e){
-        return true; // beacon a quand même envoyé
+        return true;
       }
     }
 
@@ -983,24 +1113,21 @@
       const list = document.getElementById('adminList');
       list.innerHTML = "";
 
-      equipe
-        .slice()
-        .sort((a,b)=>a.n.localeCompare(b.n))
-        .forEach(emp => {
-          const row = document.createElement('div');
-          row.className = "admin-row";
-          row.innerHTML = `
-            <div class="font-black">${emp.n}</div>
-            <button class="btn-reset-one">Reset</button>
-          `;
-          row.querySelector('button').onclick = () => {
-            if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-              db.ref(\`broadcast/resets/\${keyStaff(emp.n)}\`).set(Date.now());
-              toast("Signal reset envoyé ✅");
-            }
-          };
-          list.appendChild(row);
-        });
+      equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+        const row = document.createElement('div');
+        row.className = "admin-row";
+        row.innerHTML = `
+          <div class="font-black">${emp.n}</div>
+          <button class="btn-reset-one">Reset</button>
+        `;
+        row.querySelector('button').onclick = () => {
+          if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
+            db.ref(\`broadcast/resets/\${keyStaff(emp.n)}\`).set(Date.now());
+            toast("Signal reset envoyé ✅");
+          }
+        };
+        list.appendChild(row);
+      });
 
       if(!silent) toast("Supervision activée 🛠️");
     }
@@ -1031,11 +1158,8 @@
       clearTimeout(logoTimer);
       if(logoClicks === 3){
         logoClicks = 0;
-        if(role === "gerant"){
-          openAdmin(false);
-        }else{
-          toast("Supervision: réservé au gérant");
-        }
+        if(role === "gerant") openAdmin(false);
+        else toast("Supervision: réservé au gérant");
       }
       logoTimer = setTimeout(()=>logoClicks=0, 650);
     };
@@ -1061,10 +1185,7 @@
       showLoggedUI();
       showPinBlockIfNeeded();
 
-      // ✅ équipe depuis Firebase
       attachEquipeListener();
-
-      // reset listeners
       attachResetListener();
 
       document.getElementById('adminWrap').style.display = "none";
