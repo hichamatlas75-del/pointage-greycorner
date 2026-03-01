@@ -310,27 +310,22 @@
     // ===== Apps Script WebApp (Option B) =====
     const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
     const SECRET = "greycorner2026";
-    const EMP_NODE_DEFAULT = "pointage";
+    const EMP_NODE_DEFAULT = "pointage"; // ✅ on envoie toujours "pointage" au Sheet
 
     // ===========================
     // ✅ ÉQUIPE = UNIQUEMENT Firebase
     // Path: settings/equipe
     // ===========================
-    let equipe = [];          // [{n:"NOM PRENOM", t:"caisse"}...]
-    let equipeIndex = new Map(); // staffKey -> {n,t}
+    let equipe = [];               // [{n:"NOM PRENOM", t:"caisse"}...]
+    let equipeIndex = new Map();   // staffKey -> {n,t}
 
     function normalizeText(x){
       return String(x || "").trim().toUpperCase().replace(/\s+/g, " ");
     }
     function normalizeRole(x){
       const r = normalizeText(x).toLowerCase();
-      // on accepte caisse/bar/cuisine/menage/service (sinon "service")
       const ok = ["caisse","bar","cuisine","menage","service"];
       return ok.includes(r) ? r : "service";
-    }
-    function empKeyFromNomPrenom(nom, prenom){
-      const full = normalizeText(`${nom} ${prenom}`);
-      return full;
     }
     function normalizeEquipeSnapshot(val){
       if(!val) return [];
@@ -566,16 +561,22 @@
       });
     }
 
-    // ✅ écoute temps réel sur settings/equipe
+    // ✅ Listener settings/equipe (anti doublons off/on)
+    let equipeRef=null, equipeCb=null;
+
     function attachEquipeListener(){
-      db.ref("settings/equipe").on("value", (snap) => {
+      // anti-doublons
+      if(equipeRef && equipeCb){
+        try{ equipeRef.off("value", equipeCb); }catch(e){}
+      }
+
+      equipeRef = db.ref("settings/equipe");
+      equipeCb = (snap) => {
         equipe = normalizeEquipeSnapshot(snap.val());
 
-        // index pour admin list
         equipeIndex = new Map();
         equipe.forEach(e => equipeIndex.set(keyStaff(e.n), e));
 
-        // si la personne enregistrée n'existe plus, on reset la sélection
         if(selected){
           const k = keyStaff(selected);
           if(!equipeIndex.has(k)){
@@ -584,7 +585,6 @@
           }
         }
 
-        // refresh UI selon état
         if(selected){
           document.getElementById('selection').classList.add('hidden');
           document.getElementById('action').classList.remove('hidden');
@@ -601,11 +601,12 @@
           genererListeUI();
         }
 
-        // si admin ouvert, refresh liste
         if(document.getElementById('adminWrap').style.display === "flex"){
           openAdmin(true);
         }
-      });
+      };
+
+      equipeRef.on("value", equipeCb);
     }
 
     // ===== GPS =====
@@ -650,7 +651,7 @@
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ===== Render pointed UI =====
+    // ===== Render pointed UI (conserve #btn) =====
     function renderPointedUI(hhmm){
       const time = hhmm || "";
       document.getElementById('pointage-zone').innerHTML = `
@@ -658,9 +659,9 @@
           <div class="text-emerald-400 font-black text-xl">POINTÉ ✅</div>
           <div class="text-2xl font-black mt-1">${time ? time : "—"}</div>
           <div class="text-[10px] font-black text-white/40 mt-2">${dateStr}</div>
-        </div>`;
-      const btn = document.getElementById('btn');
-      if(btn) btn.disabled = true;
+        </div>
+        <button id="btn" class="btn-main w-full mt-4" disabled>DÉJÀ VALIDÉ</button>
+      `;
     }
 
     // ===== Export vers Apps Script (exports_daily) =====
@@ -698,51 +699,60 @@
     }
 
     // ===== Punch action =====
-    document.getElementById('btn').onclick = async () => {
-      if(!selected) return;
-
+    function attachPunchHandler(){
       const btn = document.getElementById('btn');
-      btn.disabled = true;
+      if(!btn) return;
 
-      const empKey = keyStaff(selected);
+      btn.onclick = async () => {
+        if(!selected) return;
 
-      if(isPunchedLocal(empKey)){
-        toast("Déjà pointé aujourd’hui ✅");
-        renderPointedUI(getPunchedTimeLocal(empKey));
-        return;
-      }
+        const btnNow = document.getElementById('btn');
+        if(btnNow) btnNow.disabled = true;
 
-      const hA = new Intl.DateTimeFormat('fr-FR',{
-        timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
-      }).format(new Date());
+        const empKey = keyStaff(selected);
 
-      const ts = Date.now();
+        if(isPunchedLocal(empKey)){
+          toast("Déjà pointé aujourd’hui ✅");
+          renderPointedUI(getPunchedTimeLocal(empKey));
+          return;
+        }
 
-      // 1) ✅ Export vers Sheet
-      const okSheet = await sendPunchToSheet({
-        date: dateStr,
-        empNode: selected || EMP_NODE_DEFAULT,
-        empKey: empKey,
-        hA: hA,
-        timestamp: ts
-      });
+        const hA = new Intl.DateTimeFormat('fr-FR',{
+          timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
+        }).format(new Date());
 
-      if(!okSheet){
-        toast("Export Sheet échoué ❌");
-        btn.disabled = false;
-        return;
-      }
+        const ts = Date.now();
 
-      // 2) Optionnel: écrire aussi dans Firebase punches (non bloquant)
-      const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
-      try{ await db.ref('punches/'+dateStr+'/'+empKey).set(payload); }
-      catch(e){ console.log("Firebase punch write failed (non bloquant):", e); }
+        // 1) ✅ Export vers Sheet (empNode stable)
+        const okSheet = await sendPunchToSheet({
+          date: dateStr,
+          empNode: EMP_NODE_DEFAULT, // ✅ toujours "pointage"
+          empKey: empKey,
+          hA: hA,
+          timestamp: ts
+        });
 
-      // 3) ✅ verrou local + UI
-      setPunchedLocal(empKey, hA);
-      toast("Pointage enregistré ✅ (exports_daily)");
-      renderPointedUI(hA);
-    };
+        if(!okSheet){
+          toast("Export Sheet échoué ❌");
+          const b = document.getElementById('btn');
+          if(b && !isPunchedLocal(empKey)) b.disabled = false;
+          return;
+        }
+
+        // 2) Optionnel: écrire aussi dans Firebase punches (non bloquant)
+        const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
+        try{ await db.ref('punches/'+dateStr+'/'+empKey).set(payload); }
+        catch(e){ console.log("Firebase punch write failed (non bloquant):", e); }
+
+        // 3) ✅ verrou local + UI
+        setPunchedLocal(empKey, hA);
+        toast("Pointage enregistré ✅ (exports_daily)");
+        renderPointedUI(hA);
+
+        // ✅ rebrancher le handler car #btn est recréé dans le DOM
+        attachPunchHandler();
+      };
+    }
 
     // ===== Reset listeners (broadcast) =====
     function attachResetListener(){
@@ -882,7 +892,7 @@
       showLoggedUI();
       showPinBlockIfNeeded();
 
-      // ✅ IMPORTANT: équipe depuis Firebase
+      // ✅ équipe depuis Firebase (anti-doublons)
       attachEquipeListener();
 
       // reset listeners
@@ -892,8 +902,8 @@
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
 
-      // si sélection existe, l'écoute équipe va afficher action + checkGPS
-      // sinon, elle va afficher la liste
+      // ✅ punch handler (et re-attach après renderPointedUI)
+      attachPunchHandler();
     });
   </script>
 </body>
