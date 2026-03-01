@@ -8,11 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
 
 <style>
-  /* =========================================================
-     ✅ THEME ENGINE (2 thèmes) — Dark (actuel) + Light Chic (or MAT)
-     ========================================================= */
   :root{
-    /* default = DARK */
     --bg-a:#02040a;
     --bg-b:#050816;
     --radial: rgba(255,180,60,0.08);
@@ -35,7 +31,6 @@
     --btnPlan-a:#2F7BFF;
     --btnPlan-b:#1A4ED8;
 
-    /* second button (menu) */
     --btnAlt-bg: rgba(255,255,255,.04);
     --btnAlt-stroke: rgba(255,255,255,.10);
     --btnAlt-text: rgba(229,231,235,.92);
@@ -55,7 +50,6 @@
   }
 
   html[data-theme="light"]{
-    /* ✅ LIGHT CHIC (or MAT) */
     --bg-a:#f7f6f2;
     --bg-b:#eef2ff;
     --radial: rgba(197,160,89,0.14);
@@ -128,7 +122,6 @@
     margin:auto;
   }
 
-  /* subtle vignette */
   .card::after{
     content:"";
     position:absolute;
@@ -148,10 +141,8 @@
   }
 
   .content{ position:relative; z-index:1; display:flex; flex-direction:column; flex:1; }
-
   .gold{ color:var(--gold); letter-spacing:.08em; }
   .muted{ color:var(--muted); }
-
   .scroll{ overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar{ display:none }
 
@@ -432,7 +423,6 @@
   <div class="card">
     <div class="content">
 
-      <!-- HEADER -->
       <div class="text-center flex-shrink-0">
         <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
         <div class="text-[9px] muted font-black mt-2">Triple-clic logo = Supervision (gérant)</div>
@@ -442,7 +432,6 @@
         </div>
       </div>
 
-      <!-- SESSION BAR (après login) -->
       <div id="sessionBar" class="hidden mt-3 mb-2 flex items-center justify-between gap-2">
         <div class="pill">
           <span class="muted">Connecté :</span>
@@ -457,19 +446,12 @@
         </div>
       </div>
 
-      <!-- PUBLIC HOME (avant login) -->
       <div id="publicHome" class="public-stack">
         <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
           🗓️ CONSULTER LE PLANNING
         </button>
 
-        <!-- ✅ MENU normal -->
-        <a
-          href="https://greycorner.pages.dev/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-menu"
-        >
+        <a href="https://greycorner.pages.dev/" target="_blank" rel="noopener noreferrer" class="btn-menu">
           🌙 MENU
         </a>
 
@@ -477,13 +459,11 @@
           <button id="btnShowLogin" type="button">Connexion</button>
         </div>
 
-        <!-- HOME MSG (optionnel) -->
         <div id="homeMsg" class="hidden home-box">
           <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
           <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
         </div>
 
-        <!-- LOGIN (dépliable) -->
         <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
           <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
           <div class="space-y-2">
@@ -501,14 +481,12 @@
         </div>
       </div>
 
-      <!-- BANNER (après login) -->
       <div id="banner-wrap" class="banner-wrap">
         <div id="banner" class="banner"></div>
       </div>
 
       <div class="sep"></div>
 
-      <!-- APP (après login) -->
       <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
         <div id="selection" class="scroll flex-grow"></div>
 
@@ -528,7 +506,6 @@
           </button>
         </div>
 
-        <!-- ADMIN -->
         <div id="adminWrap" class="admin-wrap">
           <div class="admin-title">
             <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
@@ -544,17 +521,15 @@
 
   <div id="toast" class="toast"></div>
 
-  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
     // =========================================================
-    // ✅ THEME JS (persist localStorage)
+    // ✅ THEME JS
     // =========================================================
     function getTheme(){ return localStorage.getItem("gc_theme") || "dark"; }
-
     function applyTheme(t){
       const theme = (t === "light") ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", theme);
@@ -597,7 +572,7 @@
     });
 
     // =========================================================
-    // ===== Firebase config =====
+    // ✅ Firebase init (corrigé: évite double init)
     // =========================================================
     const firebaseConfig = {
       apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
@@ -609,9 +584,12 @@
       appId: "1:730206093359:web:59e3c145120807f29e46da"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
+
+    // ✅ Persistance (évite “ça se connecte puis revient”)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
     // ===== GPS =====
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
@@ -624,15 +602,12 @@
     const SECRET = "greycorner2026";
     const EMP_NODE_DEFAULT = "pointage";
 
-    // ===========================
-    // ✅ ÉQUIPE = UNIQUEMENT Firebase
-    // Path: settings/equipe
-    // ===========================
     let equipe = [];
     let equipeIndex = new Map();
     let equipeListenerAttached = false;
 
-    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\\s+/g, " "); }
+    // ✅ CORRECTION CRITIQUE: regex \s (pas \\s)
+    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\s+/g, " "); }
     function normalizeRole(x){
       const r = String(x || "").trim().toLowerCase();
       const ok = ["caisse","bar","cuisine","menage","service"];
@@ -667,9 +642,9 @@
       toast._t=setTimeout(()=>t.style.display="none",2500);
     }
 
-    function keyStaff(n){ return String(n||'').trim().replace(/\\s+/g,'_').toUpperCase(); }
+    // ✅ CORRECTION CRITIQUE: regex \s (pas \\s)
+    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
-    // ✅ date ISO (YYYY-MM-DD) Casablanca
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
       timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
     }).format(new Date());
@@ -677,7 +652,6 @@
     let role = null;
     let selected = localStorage.getItem('gc_staff_name') || null;
 
-    // ===== Local lock + hour saved =====
     function punchDoneKey(staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
     function punchTimeKey(staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
     function isPunchedLocal(staffKey){ return localStorage.getItem(punchDoneKey(staffKey)) === "1"; }
@@ -687,13 +661,11 @@
       if(hhmm) localStorage.setItem(punchTimeKey(staffKey), hhmm);
     }
 
-    // ===== Role fetch =====
     async function fetchRole(uid){
       const snap = await db.ref("users/"+uid).once("value");
       return snap.val() || null;
     }
 
-    // ===== Google Sheet message =====
     async function fetchSheetMessage(){
       const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
       const t = await r.text();
@@ -743,7 +715,6 @@
     function showLoggedUI(){
       document.getElementById('sessionBar').classList.remove('hidden');
       document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
-
       document.getElementById('publicHome').classList.add('hidden');
       document.getElementById('app-pointage').classList.remove('hidden');
 
@@ -754,7 +725,6 @@
 
     function showLoginUI(){
       document.getElementById('sessionBar').classList.add('hidden');
-
       document.getElementById('publicHome').classList.remove('hidden');
       document.getElementById('app-pointage').classList.add('hidden');
 
@@ -763,41 +733,62 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
-    // ===== Login panel toggle =====
     document.getElementById("btnShowLogin").onclick = () => {
       const wrap = document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
       showPinBlockIfNeeded();
     };
 
-    // ===== Login =====
+    // ✅ Login: message d’erreur détaillé (au lieu de “Identifiants invalides.”)
+    function prettyAuthError(e){
+      const code = String(e?.code || "");
+      if(code === "auth/user-not-found") return "Compte introuvable.";
+      if(code === "auth/wrong-password") return "Mot de passe incorrect.";
+      if(code === "auth/invalid-email") return "Email invalide.";
+      if(code === "auth/too-many-requests") return "Trop de tentatives. Réessaie plus tard.";
+      if(code === "auth/network-request-failed") return "Problème réseau.";
+      return e?.message || "Erreur de connexion.";
+    }
+
     document.getElementById("btnLogin").onclick = async () => {
       const email = (document.getElementById("loginEmail").value||"").trim();
       const pass  = (document.getElementById("loginPass").value||"").trim();
       const pin = (document.getElementById("loginPin")?.value||"").trim();
 
-      document.getElementById("loginMsg").textContent = "";
+      const msgEl = document.getElementById("loginMsg");
+      msgEl.textContent = "";
+
       if(!email || !pass){
-        document.getElementById("loginMsg").textContent = "Email et mot de passe requis.";
+        msgEl.textContent = "Email et mot de passe requis.";
         return;
       }
-      if(!hasDevicePin() && !/^\\d{4}$/.test(pin)){
-        document.getElementById("loginMsg").textContent = "PIN requis (4 chiffres).";
+      // ✅ CORRECTION: regex \d (pas \\d)
+      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
+        msgEl.textContent = "PIN requis (4 chiffres).";
         return;
       }
+
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = true;
 
       try{
         const res = await auth.signInWithEmailAndPassword(email, pass);
         const r = await fetchRole(res.user.uid);
+
         if(r !== "gerant" && r !== "equipe"){
           await auth.signOut();
-          document.getElementById("loginMsg").textContent = "Compte non autorisé.";
+          msgEl.textContent = "Compte non autorisé.";
+          btn.disabled = false;
           return;
         }
+
         if(!hasDevicePin()) localStorage.setItem('gc_device_pin', pin);
+
+        // ✅ pas besoin de reload forcé, mais OK si tu veux garder ton flow
         location.reload();
       }catch(e){
-        document.getElementById("loginMsg").textContent = "Identifiants invalides.";
+        msgEl.textContent = prettyAuthError(e);
+        btn.disabled = false;
       }
     };
 
@@ -806,14 +797,13 @@
       location.reload();
     };
 
-    // ===== Reset device PIN =====
     document.getElementById("btnResetDevice").onclick = () => {
       const currentPin = localStorage.getItem('gc_device_pin');
 
       if(!currentPin){
-        const newPin = prompt("Aucun PIN sur cet appareil.\\nCréez un PIN (4 chiffres) :");
+        const newPin = prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
         if(newPin === null) return;
-        if(!/^\\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
+        if(!/^\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
         localStorage.setItem('gc_device_pin', newPin);
         toast("PIN créé ✅");
         return;
@@ -830,9 +820,6 @@
       }
     };
 
-    // ===========================
-    // ✅ Staff list (depuis Firebase)
-    // ===========================
     function genererListeUI(){
       const sel = document.getElementById('selection');
       sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black mb-2">Choisi ton nom (1ère fois)</div>`;
@@ -859,21 +846,18 @@
         cont.className="hidden grid grid-cols-2 gap-2 py-3";
         h.onclick = () => cont.classList.toggle('hidden');
 
-        staff
-          .slice()
-          .sort((a,b)=>a.n.localeCompare(b.n))
-          .forEach(emp => {
-            const b = document.createElement('button');
-            b.className = "staff-btn";
-            b.textContent = emp.n;
-            b.onclick = () => {
-              if(confirm(emp.n + " ?")){
-                localStorage.setItem('gc_staff_name', emp.n);
-                location.reload();
-              }
-            };
-            cont.appendChild(b);
-          });
+        staff.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+          const b = document.createElement('button');
+          b.className = "staff-btn";
+          b.textContent = emp.n;
+          b.onclick = () => {
+            if(confirm(emp.n + " ?")){
+              localStorage.setItem('gc_staff_name', emp.n);
+              location.reload();
+            }
+          };
+          cont.appendChild(b);
+        });
 
         sel.appendChild(h);
         sel.appendChild(cont);
@@ -920,7 +904,6 @@
       });
     }
 
-    // ===== GPS =====
     function getDist(a,b,c,d){
       const R=6371e3;
       const dLat=(c-a)*Math.PI/180;
@@ -962,7 +945,6 @@
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ===== Render pointed UI =====
     function renderPointedUI(hhmm){
       const time = hhmm || "";
       document.getElementById('pointage-zone').innerHTML = `
@@ -975,7 +957,6 @@
       if(btn) btn.disabled = true;
     }
 
-    // ===== Export vers Apps Script (exports_daily) =====
     function buildGasUrl(paramsObj){
       const sp = new URLSearchParams(paramsObj);
       return GAS_EXEC_URL + "?" + sp.toString();
@@ -1009,7 +990,6 @@
       }
     }
 
-    // ===== Punch action =====
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
@@ -1053,7 +1033,6 @@
       renderPointedUI(hA);
     };
 
-    // ===== Reset listeners (broadcast) =====
     function attachResetListener(){
       const bc = db.ref('broadcast');
 
@@ -1102,7 +1081,6 @@
       });
     }
 
-    // ===== Admin =====
     function openAdmin(silent=false){
       if(role !== "gerant") return;
 
@@ -1151,7 +1129,6 @@
       }
     };
 
-    // Triple clic logo => admin (gérant)
     let logoClicks=0, logoTimer;
     document.getElementById("logo").onclick = () => {
       logoClicks++;
@@ -1164,7 +1141,6 @@
       logoTimer = setTimeout(()=>logoClicks=0, 650);
     };
 
-    // ===== Boot =====
     auth.onAuthStateChanged(async (user) => {
       if(!user){
         role = null;
