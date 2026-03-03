@@ -351,12 +351,16 @@
 </head>
 
 <body class="flex items-center justify-center p-4">
+
   <div class="card">
     <div class="content">
 
       <!-- HEADER -->
-      <div class="text-center flex-shrink-0">
-        <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
+      <div class="text-center flex-shrink-0 mb-6">
+        <img id="logo"
+             src="images/LOGO GREY CORNER.png"
+             class="h-14 mx-auto cursor-pointer"
+             alt="Grey Corner" />
       </div>
 
       <!-- SESSION BAR (après login) -->
@@ -367,49 +371,97 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button id="btnLogout" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
+          <button id="btnLogout"
+                  class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
             Déconnexion
           </button>
         </div>
       </div>
 
-      <!-- PUBLIC HOME (avant login) -->
-      <div id="publicHome" class="public-stack">
-        <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
+      <!-- PUBLIC HOME -->
+      <div id="publicHome"
+           class="flex flex-col gap-6 mt-4">
+
+        <!-- PLANNING -->
+        <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')"
+                class="btn-planning">
           🗓️ CONSULTER LE PLANNING
         </button>
 
-        <!-- ✅ MENU normal -->
-        <a href="https://greycorner.pages.dev/" target="_blank" rel="noopener noreferrer" class="btn-menu">
+        <!-- MENU -->
+        <a href="https://greycorner.pages.dev/"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="btn-menu">
           🌙 MENU
         </a>
 
-        <div class="login-toggle">
-          <button id="btnShowLogin" type="button">Connexion</button>
-        </div>
+        <!-- CONNEXION -->
+        <button id="btnShowLogin"
+                type="button"
+                class="btn-connexion">
+          <span style="font-size:20px">🔐</span>
+          <span>
+            CONNEXION
+            <span class="sub">Espace équipe / gérant</span>
+          </span>
+        </button>
 
-        <!-- HOME MSG -->
+        <!-- MESSAGE HOME -->
         <div id="homeMsg" class="hidden home-box">
-          <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
-          <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
-        </div>
-
-        <!-- LOGIN -->
-        <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
-          <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
-          <div class="space-y-2">
-            <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
-            <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
-
-            <div id="pinBlock" class="hidden">
-              <input id="loginPin" class="inpt" type="password" maxlength="4" placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" />
-              <div class="hint mt-1">Le PIN sert uniquement à réinitialiser cet appareil.</div>
-            </div>
-
-            <button id="btnLogin" class="btn-login">Se connecter</button>
-            <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
+          <div class="text-[10px] font-black gold uppercase mb-1">
+            Note de service
+          </div>
+          <div id="homeMsgContent"
+               class="text-[12px] font-bold">
+            Chargement…
           </div>
         </div>
+
+        <!-- LOGIN PANEL -->
+        <div id="loginWrap"
+             class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
+
+          <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">
+            Connexion
+          </div>
+
+          <div class="space-y-2">
+            <input id="loginEmail"
+                   class="inpt"
+                   type="email"
+                   placeholder="Email"
+                   autocomplete="username" />
+
+            <input id="loginPass"
+                   class="inpt"
+                   type="password"
+                   placeholder="Mot de passe"
+                   autocomplete="current-password" />
+
+            <div id="pinBlock" class="hidden">
+              <input id="loginPin"
+                     class="inpt"
+                     type="password"
+                     maxlength="4"
+                     placeholder="Créer votre PIN (4 chiffres)"
+                     inputmode="numeric" />
+              <div class="hint mt-1">
+                Le PIN sert uniquement à réinitialiser cet appareil.
+              </div>
+            </div>
+
+            <button id="btnLogin"
+                    class="btn-login">
+              Se connecter
+            </button>
+
+            <div id="loginMsg"
+                 class="text-[10px] font-black text-red-300">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- BANNER (après login) -->
@@ -419,39 +471,52 @@
 
       <div class="sep"></div>
 
-      <!-- APP (après login) -->
-      <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
+      <!-- APP POINTAGE -->
+      <div id="app-pointage"
+           class="flex flex-col flex-grow overflow-hidden hidden">
+
         <div id="selection" class="scroll flex-grow"></div>
 
-        <div id="action" class="hidden flex flex-col flex-grow justify-center">
+        <div id="action"
+             class="hidden flex flex-col flex-grow justify-center">
+
           <div class="text-center mb-2">
-            <div class="text-[10px] muted uppercase font-black tracking-widest">Appareil assigné à</div>
-            <div id="username" class="text-3xl font-black mt-1" style="color:var(--gold)">--</div>
+            <div class="text-[10px] muted uppercase font-black tracking-widest">
+              Appareil assigné à
+            </div>
+            <div id="username"
+                 class="text-3xl font-black mt-1"
+                 style="color:var(--gold)">
+              --
+            </div>
           </div>
 
           <div id="pointage-zone" class="text-center">
-            <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
-            <button id="btn" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
+            <div id="status"
+                 class="text-[10px] mb-4 muted uppercase">
+              Localisation GPS…
+            </div>
+
+            <button id="btn"
+                    class="btn-main w-full"
+                    disabled>
+              APPUYER POUR VALIDER
+            </button>
           </div>
 
-          <button id="btnResetDevice" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
+          <button id="btnResetDevice"
+                  class="mt-8 text-[10px] uppercase tracking-widest"
+                  style="color:var(--muted)">
             Réinitialiser l’appareil (PIN)
           </button>
         </div>
 
-        <!-- ADMIN -->
-        <div id="adminWrap" class="admin-wrap">
-          <div class="admin-title">
-            <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
-            <button id="btnCloseAdmin" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
-          </div>
-          <div class="admin-list" id="adminList"></div>
-          <button id="btnResetAll" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
-        </div>
       </div>
 
     </div>
   </div>
+
+</body>
 
   <div id="toast" class="toast"></div>
 
