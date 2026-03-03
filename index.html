@@ -49,6 +49,11 @@
 
     --toastBg: rgba(0,0,0,.82);
     --toastStroke: rgba(255,255,255,.12);
+
+    /* ✅ NEW: Connexion button */
+    --btnConn-a:#ffcf7a;
+    --btnConn-b:#ff8a2a;
+    --btnConn-text:#1a1206;
   }
 
   html,body{
@@ -151,6 +156,49 @@
     transition:.25s;
   }
   .btn-main:disabled{ opacity:.45; }
+
+  /* ✅ NEW: Big attractive Connexion button (replaces small text link) */
+  .btn-connexion{
+    width:100%;
+    border-radius:28px;
+    padding:18px 16px;
+    font-size:18px;
+    font-weight:1000;
+    text-transform:uppercase;
+    color:var(--btnConn-text);
+    background: linear-gradient(180deg,var(--btnConn-a),var(--btnConn-b));
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:
+      0 18px 36px rgba(0,0,0,.40),
+      0 0 0 1px rgba(255,255,255,.06) inset,
+      0 0 40px rgba(255,170,60,.14);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    transition:.22s;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-connexion::after{
+    content:"";
+    position:absolute;
+    inset:-40%;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 45%);
+    transform: rotate(12deg);
+    opacity:.55;
+    pointer-events:none;
+  }
+  .btn-connexion:hover{ filter:brightness(1.03); }
+  .btn-connexion:active{ transform:scale(.99); filter:brightness(.98); }
+  .btn-connexion .sub{
+    display:block;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.14em;
+    opacity:.78;
+    margin-top:2px;
+  }
 
   .banner-wrap{
     display:none;
@@ -319,34 +367,6 @@
     font-size:11px;
     text-transform:uppercase;
   }
-
-  .top-actions{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-top:10px;
-  }
-
-  .public-stack{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-    margin-top:14px;
-  }
-
-  .login-toggle{
-    margin-top:2px;
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--muted);
-    text-align:center;
-  }
-  .login-toggle button{
-    text-decoration:underline;
-    text-underline-offset:4px;
-  }
 </style>
 </head>
 
@@ -384,9 +404,14 @@
           🌙 MENU
         </a>
 
-        <div class="login-toggle">
-          <button id="btnShowLogin" type="button">Connexion</button>
-        </div>
+        <!-- ✅ NEW: Big Connexion button -->
+        <button id="btnShowLogin" type="button" class="btn-connexion" aria-expanded="false" aria-controls="loginWrap">
+          <span style="font-size:20px">🔐</span>
+          <span>
+            CONNEXION
+            <span class="sub">Espace équipe / gérant</span>
+          </span>
+        </button>
 
         <!-- HOME MSG -->
         <div id="homeMsg" class="hidden home-box">
@@ -622,9 +647,11 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
+    // ✅ UPDATED: button now toggles + updates aria-expanded
     document.getElementById("btnShowLogin").onclick = () => {
       const wrap = document.getElementById("loginWrap");
-      wrap.classList.toggle("hidden");
+      const isHidden = wrap.classList.toggle("hidden");
+      document.getElementById("btnShowLogin").setAttribute("aria-expanded", String(!isHidden));
       showPinBlockIfNeeded();
     };
 
@@ -985,7 +1012,7 @@
         `;
         row.querySelector('button').onclick = () => {
           if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-            db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
+            db.ref(\`broadcast/resets/\${keyStaff(emp.n)}\`).set(Date.now());
             toast("Signal reset envoyé ✅");
           }
         };
