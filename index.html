@@ -89,7 +89,7 @@
     position:absolute;
     inset:0;
     border-radius:42px;
-    pointer-events:none; /* ✅ FIX: l’overlay ne bloque plus les clics */
+    pointer-events:none; /* ✅ n'empêche jamais les clics */
     background:
       radial-gradient(900px 420px at 50% 25%, rgba(255,255,255,.06), transparent 55%),
       radial-gradient(1200px 700px at 50% 120%, rgba(0,0,0,.40), transparent 55%);
@@ -227,6 +227,31 @@
     border:1px solid rgba(255,214,138,.24);
     color:var(--gold);
   }
+  .btn-login:disabled{ opacity:.55; }
+
+  .drawer-header{
+    background:var(--surface2);
+    border:1px solid var(--stroke);
+    border-radius:16px;
+    padding:14px;
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    cursor:pointer;
+    user-select:none;
+  }
+  .staff-btn{
+    padding:14px;
+    border-radius:14px;
+    background:var(--surface2);
+    border:1px solid var(--stroke);
+    font-size:11px;
+    font-weight:800;
+    text-align:center;
+    color:var(--text);
+    transition:.15s;
+  }
+  .staff-btn:active{ transform:scale(.99); }
 
   .toast{
     position:fixed; left:50%; transform:translateX(-50%);
@@ -275,10 +300,48 @@
     padding:12px;
     margin-top:10px;
   }
+  .admin-title{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .admin-list{
+    max-height:42vh;
+    overflow:auto;
+    border-radius:14px;
+    border:1px solid var(--stroke);
+    background:rgba(0,0,0,.12);
+  }
+  .admin-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:11px;
+  }
+  .admin-row:last-child{ border-bottom:none; }
+
+  .btn-reset-one{
+    background:rgba(239,68,68,.14);
+    color:#ffb5b5;
+    border:1px solid rgba(239,68,68,.22);
+    padding:6px 10px;
+    border-radius:12px;
+    font-weight:900;
+    font-size:11px;
+  }
+  .btn-reset-all{
+    background:#2a0f0f;
+    color:#ffb5b5;
+    border:1px solid rgba(255,90,90,.35);
+    padding:12px;
+    border-radius:14px;
+    font-weight:900;
+    font-size:11px;
+    text-transform:uppercase;
+  }
 
   .public-stack{
-    position:relative;  /* ✅ FIX: assure le clic */
-    z-index:2;          /* ✅ FIX: au-dessus de tout overlay */
+    position:relative;
+    z-index:2;
     display:flex;
     flex-direction:column;
     gap:18px;
@@ -296,7 +359,7 @@
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.12);
     color:rgba(232,233,239,.92);
-    display:none;
+    display:none; /* ✅ caché au départ */
   }
   .btn-gps-retry:active{ transform:scale(.99); }
 </style>
@@ -306,24 +369,27 @@
   <div class="card">
     <div class="content">
 
+      <!-- HEADER -->
       <div class="text-center flex-shrink-0">
         <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
       </div>
 
+      <!-- SESSION BAR (après login) -->
       <div id="sessionBar" class="hidden mt-3 mb-2 flex items-center justify-between gap-2">
         <div class="pill">
           <span class="muted">Connecté :</span>
           <span id="roleLabel" class="text-yellow-200">—</span>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btnLogout" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
+          <button id="btnLogout" type="button" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
             Déconnexion
           </button>
         </div>
       </div>
 
+      <!-- PUBLIC HOME (avant login) -->
       <div id="publicHome" class="public-stack">
-        <button onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
+        <button type="button" onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
           🗓️ CONSULTER LE PLANNING
         </button>
 
@@ -335,32 +401,38 @@
           🔐 CONNEXION
         </button>
 
+        <!-- HOME MSG -->
         <div id="homeMsg" class="hidden home-box">
           <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
           <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
         </div>
 
+        <!-- LOGIN -->
         <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
           <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
           <div class="space-y-2">
             <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
             <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+
             <div id="pinBlock" class="hidden">
               <input id="loginPin" class="inpt" type="password" maxlength="4" placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" />
               <div class="hint mt-1">Le PIN sert uniquement à réinitialiser cet appareil.</div>
             </div>
-            <button id="btnLogin" class="btn-login">Se connecter</button>
+
+            <button id="btnLogin" type="button" class="btn-login">Se connecter</button>
             <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
           </div>
         </div>
       </div>
 
+      <!-- BANNER (après login) -->
       <div id="banner-wrap" class="banner-wrap">
         <div id="banner" class="banner"></div>
       </div>
 
       <div class="sep"></div>
 
+      <!-- APP (après login) -->
       <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
         <div id="selection" class="scroll flex-grow"></div>
 
@@ -372,22 +444,23 @@
 
           <div id="pointage-zone" class="text-center">
             <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
-            <button id="btn" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
+            <button id="btn" type="button" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
             <button id="btnRetryGPS" type="button" class="btn-gps-retry">📍 Réessayer GPS</button>
           </div>
 
-          <button id="btnResetDevice" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
+          <button id="btnResetDevice" type="button" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
             Réinitialiser l’appareil (PIN)
           </button>
         </div>
 
+        <!-- ADMIN -->
         <div id="adminWrap" class="admin-wrap">
           <div class="admin-title">
             <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
-            <button id="btnCloseAdmin" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
+            <button id="btnCloseAdmin" type="button" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
           </div>
           <div class="admin-list" id="adminList"></div>
-          <button id="btnResetAll" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
+          <button id="btnResetAll" type="button" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
         </div>
       </div>
 
@@ -396,11 +469,15 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
+    // =========================================================
+    // ✅ Firebase init
+    // =========================================================
     const firebaseConfig = {
       apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
       authDomain: "grey-corner-presence.firebaseapp.com",
@@ -416,17 +493,754 @@
     const auth = firebase.auth();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
-    // --- le reste de ton JS inchangé (colle ici ton bloc complet actuel) ---
-    // IMPORTANT: l’id du bouton est toujours "btnShowLogin" donc ton handler existant marche.
-    document.getElementById("btnShowLogin").onclick = () => {
+    // ===== GPS =====
+    const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
+
+    // ===== Messages (Google Sheet gviz) =====
+    const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
+
+    // ===== Apps Script WebApp (export Sheet) =====
+    const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
+    const SECRET = "greycorner2026";
+    const EMP_NODE_DEFAULT = "pointage";
+
+    // =========================================================
+    // ✅ Date/Time dynamiques (corrige le bug J-1)
+    // =========================================================
+    function currentDateStr(){
+      return new Intl.DateTimeFormat('fr-CA',{
+        timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
+      }).format(new Date());
+    }
+    function currentTimeHHMM(){
+      return new Intl.DateTimeFormat('fr-FR',{
+        timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
+      }).format(new Date());
+    }
+
+    // =========================================================
+    // ✅ Helpers / UI
+    // =========================================================
+    let equipe = [];
+    let equipeIndex = new Map();
+    let equipeListenerAttached = false;
+
+    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\s+/g, " "); }
+    function normalizeRole(x){
+      const r = String(x || "").trim().toLowerCase();
+      const ok = ["caisse","bar","cuisine","menage","service"];
+      return ok.includes(r) ? r : "service";
+    }
+    function normalizeEquipeSnapshot(val){
+      if(!val) return [];
+      const arr = Array.isArray(val)
+        ? val.filter(Boolean)
+        : Object.keys(val).sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]).filter(Boolean);
+
+      const out = [];
+      const seen = new Set();
+      for(const x of arr){
+        const nom = normalizeText(x.nom);
+        const prenom = normalizeText(x.prenom);
+        const poste = normalizeRole(x.poste);
+        if(!nom || !prenom) continue;
+        const full = `${nom} ${prenom}`;
+        if(seen.has(full)) continue;
+        seen.add(full);
+        out.push({ n: full, t: poste });
+      }
+      return out;
+    }
+
+    function toast(msg){
+      const t=document.getElementById("toast");
+      t.textContent=msg;
+      t.style.display="block";
+      clearTimeout(toast._t);
+      toast._t=setTimeout(()=>t.style.display="none",2500);
+    }
+
+    function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
+
+    // ===== Local storage keys (date dynamique) =====
+    function punchDoneKey(dateStr, staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
+    function punchTimeKey(dateStr, staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
+    function isPunchedLocal(dateStr, staffKey){ return localStorage.getItem(punchDoneKey(dateStr, staffKey)) === "1"; }
+    function getPunchedTimeLocal(dateStr, staffKey){ return localStorage.getItem(punchTimeKey(dateStr, staffKey)) || ""; }
+    function setPunchedLocal(dateStr, staffKey, hhmm){
+      localStorage.setItem(punchDoneKey(dateStr, staffKey), "1");
+      if(hhmm) localStorage.setItem(punchTimeKey(dateStr, staffKey), hhmm);
+    }
+
+    // =========================================================
+    // ✅ Role
+    // =========================================================
+    async function fetchRole(uid){
+      const snap = await db.ref("users/"+uid).once("value");
+      return snap.val() || null; // "gerant" | "equipe"
+    }
+
+    // =========================================================
+    // ✅ Sheet message fetch (avec timeout)
+    // =========================================================
+    async function fetchWithTimeout(url, ms=6500){
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), ms);
+      try{
+        const r = await fetch(url, { cache:"no-store", signal: ctrl.signal });
+        return r;
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    async function fetchSheetMessage(){
+      const r = await fetchWithTimeout(URL_MSG_SHEET, 6500);
+      const t = await r.text();
+      const json = JSON.parse(t.substr(47).slice(0,-2));
+      const rows = json?.table?.rows || [];
+      const typeRaw = rows[0]?.c?.[0]?.v || "";
+      const msgRaw  = rows[0]?.c?.[1]?.v || "";
+      return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
+    }
+
+    async function loadHomeMsg(){
+      const box = document.getElementById("homeMsg");
+      const content = document.getElementById("homeMsgContent");
+      try{
+        const {type,msg} = await fetchSheetMessage();
+        if(!msg){ box.classList.add("hidden"); return; }
+        content.textContent = msg;
+        box.classList.remove("hidden");
+        box.classList.remove("msg-urgent","msg-info");
+        const urgent = (type==="URGENT") || msg.toUpperCase().includes("URGENT");
+        box.classList.add(urgent ? "msg-urgent" : "msg-info");
+      }catch(e){
+        box.classList.add("hidden");
+      }
+    }
+
+    async function loadBanner(){
+      const wrap = document.getElementById("banner-wrap");
+      const banner = document.getElementById("banner");
+      try{
+        const {type,msg} = await fetchSheetMessage();
+        if(!msg){ wrap.style.display="none"; return; }
+        wrap.style.display="flex";
+        banner.textContent = msg;
+        banner.className = "banner";
+        const urgent = (type==="URGENT") || msg.toUpperCase().includes("URGENT");
+        banner.classList.add(urgent ? "msg-urgent" : "msg-info");
+      }catch(e){
+        wrap.style.display="none";
+      }
+    }
+
+    // =========================================================
+    // ✅ Login UI
+    // =========================================================
+    function hasDevicePin(){ return !!localStorage.getItem('gc_device_pin'); }
+    function showPinBlockIfNeeded(){
+      const pinBlock = document.getElementById('pinBlock');
+      if(!pinBlock) return;
+      if(!hasDevicePin()) pinBlock.classList.remove('hidden');
+      else pinBlock.classList.add('hidden');
+    }
+
+    function showLoggedUI(){
+      document.getElementById('sessionBar').classList.remove('hidden');
+      document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
+      document.getElementById('publicHome').classList.add('hidden');
+      document.getElementById('app-pointage').classList.remove('hidden');
+
+      loadBanner();
+      clearInterval(window.__bannerInt);
+      window.__bannerInt = setInterval(loadBanner, 30000);
+    }
+
+    function showLoginUI(){
+      document.getElementById('sessionBar').classList.add('hidden');
+      document.getElementById('publicHome').classList.remove('hidden');
+      document.getElementById('app-pointage').classList.add('hidden');
+
+      loadHomeMsg();
+      clearInterval(window.__homeInt);
+      window.__homeInt = setInterval(loadHomeMsg, 30000);
+    }
+
+    // ✅ Connexion button
+    document.getElementById("btnShowLogin").addEventListener("click", () => {
       const wrap = document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
-      const pinBlock = document.getElementById('pinBlock');
-      if(pinBlock){
-        if(!localStorage.getItem('gc_device_pin')) pinBlock.classList.remove('hidden');
-        else pinBlock.classList.add('hidden');
+      showPinBlockIfNeeded();
+    });
+
+    function prettyAuthError(e){
+      const code = String(e?.code || "");
+      if(code === "auth/user-not-found") return "Compte introuvable.";
+      if(code === "auth/wrong-password") return "Mot de passe incorrect.";
+      if(code === "auth/invalid-email") return "Email invalide.";
+      if(code === "auth/too-many-requests") return "Trop de tentatives. Réessaie plus tard.";
+      if(code === "auth/network-request-failed") return "Problème réseau.";
+      return e?.message || "Erreur de connexion.";
+    }
+
+    // ✅ FIX: se connecter (robuste)
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest("#btnLogin");
+      if(!btn) return;
+
+      const email = (document.getElementById("loginEmail").value||"").trim();
+      const pass  = (document.getElementById("loginPass").value||"").trim();
+      const pin   = (document.getElementById("loginPin")?.value||"").trim();
+      const msgEl = document.getElementById("loginMsg");
+      msgEl.textContent = "";
+
+      if(!email || !pass){
+        msgEl.textContent = "Email et mot de passe requis.";
+        return;
       }
-    };
+      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
+        msgEl.textContent = "PIN requis (4 chiffres).";
+        return;
+      }
+
+      btn.disabled = true;
+
+      try{
+        const res = await auth.signInWithEmailAndPassword(email, pass);
+        const r = await fetchRole(res.user.uid);
+
+        if(r !== "gerant" && r !== "equipe"){
+          await auth.signOut();
+          msgEl.textContent = "Compte non autorisé.";
+          btn.disabled = false;
+          return;
+        }
+
+        if(!hasDevicePin()) localStorage.setItem('gc_device_pin', pin);
+        location.reload();
+      }catch(err){
+        msgEl.textContent = prettyAuthError(err);
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      try{ await auth.signOut(); }catch(e){}
+      location.reload();
+    });
+
+    document.getElementById("btnResetDevice").addEventListener("click", () => {
+      const currentPin = localStorage.getItem('gc_device_pin');
+
+      if(!currentPin){
+        const newPin = prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
+        if(newPin === null) return;
+        if(!/^\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
+        localStorage.setItem('gc_device_pin', newPin);
+        toast("PIN créé ✅");
+        return;
+      }
+
+      const pin = prompt("Entrez votre PIN (4 chiffres) :");
+      if(pin === null) return;
+      if(pin === currentPin){
+        localStorage.clear();
+        toast("Appareil réinitialisé ✅");
+        setTimeout(()=>location.reload(), 400);
+      }else{
+        toast("PIN incorrect ❌");
+      }
+    });
+
+    // =========================================================
+    // ✅ Liste équipe
+    // =========================================================
+    let role = null;
+    let selected = localStorage.getItem('gc_staff_name') || null;
+
+    function genererListeUI(){
+      const sel = document.getElementById('selection');
+      sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black mb-2">Choisi ton nom (1ère fois)</div>`;
+
+      if(!equipe.length){
+        const msg = document.createElement('div');
+        msg.className="text-center text-[11px] font-black mt-4";
+        msg.style.color = "var(--muted)";
+        msg.textContent="Aucun collaborateur (settings/equipe).";
+        sel.appendChild(msg);
+        return;
+      }
+
+      const cats = ["caisse","bar","cuisine","menage","service"];
+      cats.forEach(cat => {
+        const staff = equipe.filter(e => e.t === cat);
+        if(staff.length === 0) return;
+
+        const h = document.createElement('div');
+        h.className="drawer-header";
+        h.innerHTML=`<span class="gold text-[10px] font-black uppercase">${cat}</span><span class="gold text-[10px]">▼</span>`;
+
+        const cont = document.createElement('div');
+        cont.className="hidden grid grid-cols-2 gap-2 py-3";
+        h.onclick = () => cont.classList.toggle('hidden');
+
+        staff.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+          const b = document.createElement('button');
+          b.className = "staff-btn";
+          b.textContent = emp.n;
+          b.onclick = () => {
+            if(confirm(emp.n + " ?")){
+              localStorage.setItem('gc_staff_name', emp.n);
+              location.reload();
+            }
+          };
+          cont.appendChild(b);
+        });
+
+        sel.appendChild(h);
+        sel.appendChild(cont);
+      });
+    }
+
+    // =========================================================
+    // ✅ GPS: fiable + retry + bouton jamais actif pendant la recherche
+    // =========================================================
+    let gpsState = "idle"; // idle | searching | ok | bad | denied | error
+    let gpsLastCheckedKey = ""; // évite relances inutiles
+
+    function getDist(a,b,c,d){
+      const R=6371e3;
+      const dLat=(c-a)*Math.PI/180;
+      const dLon=(d-b)*Math.PI/180;
+      const q=Math.sin(dLat/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
+    }
+
+    function setPunchButtonEnabled(enabled){
+      const btn = document.getElementById('btn');
+      if(!btn) return;
+      btn.disabled = !enabled;
+    }
+
+    function showRetryGPS(show){
+      const b = document.getElementById('btnRetryGPS');
+      if(!b) return;
+      b.style.display = show ? "block" : "none";
+    }
+
+    function updateGpsUI({msgHtml, canPunch, showRetry}){
+      const status = document.getElementById('status');
+      if(status) status.innerHTML = msgHtml;
+      setPunchButtonEnabled(!!canPunch);
+      showRetryGPS(!!showRetry);
+    }
+
+    async function checkGPS(force=false){
+      if(!selected) return;
+
+      const staffKey = keyStaff(selected);
+      const dStr = currentDateStr();
+
+      // ✅ si déjà pointé aujourd’hui => bouton doit rester OFF
+      if(isPunchedLocal(dStr, staffKey)){
+        setPunchButtonEnabled(false);
+        showRetryGPS(false);
+        return;
+      }
+
+      // ✅ évite de relancer le GPS à chaque update Firebase
+      const lockKey = `${dStr}__${staffKey}`;
+      if(!force && gpsLastCheckedKey === lockKey && (gpsState==="ok" || gpsState==="bad" || gpsState==="denied" || gpsState==="error")){
+        return;
+      }
+      gpsLastCheckedKey = lockKey;
+
+      // ✅ pendant la recherche => bouton OFF
+      gpsState = "searching";
+      updateGpsUI({
+        msgHtml: `<span style="color:rgba(232,233,239,.75);font-weight:900;text-transform:uppercase">Recherche GPS…</span>`,
+        canPunch: false,
+        showRetry: false
+      });
+
+      if(!navigator.geolocation){
+        gpsState = "error";
+        updateGpsUI({
+          msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS indisponible sur cet appareil</span>`,
+          canPunch: false,
+          showRetry: true
+        });
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(p => {
+        const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
+
+        if(d <= RAYON_MAX){
+          gpsState = "ok";
+          updateGpsUI({
+            msgHtml: `<span style="color:#10b981;font-weight:900;text-transform:uppercase">Zone Grey Corner OK</span>`,
+            canPunch: true,
+            showRetry: false
+          });
+        }else{
+          gpsState = "bad";
+          updateGpsUI({
+            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">Hors zone (${Math.round(d)}m)</span>`,
+            canPunch: false,
+            showRetry: true
+          });
+        }
+      }, err => {
+        const code = err?.code;
+        // 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
+        if(code === 1){
+          gpsState = "denied";
+          updateGpsUI({
+            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS refusé — autorise “Position” puis réessaye</span>`,
+            canPunch: false,
+            showRetry: true
+          });
+        }else if(code === 3){
+          gpsState = "error";
+          updateGpsUI({
+            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS trop lent — réessaye</span>`,
+            canPunch: false,
+            showRetry: true
+          });
+        }else{
+          gpsState = "error";
+          updateGpsUI({
+            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">Erreur GPS — réessaye</span>`,
+            canPunch: false,
+            showRetry: true
+          });
+        }
+      }, {
+        enableHighAccuracy: true,     // ✅ + fiable Android
+        timeout: 12000,
+        maximumAge: 0
+      });
+    }
+
+    document.getElementById("btnRetryGPS").addEventListener("click", () => checkGPS(true));
+
+    // =========================================================
+    // ✅ Pointage UI (sans remplacer tout pointage-zone)
+    // =========================================================
+    function renderPointedUI(hhmm, dStr){
+      const zone = document.getElementById('pointage-zone');
+      if(!zone) return;
+
+      // On met à jour uniquement le contenu d’état
+      const status = document.getElementById('status');
+      if(status) status.innerHTML = `<span style="color:#10b981;font-weight:900;text-transform:uppercase">POINTÉ ✅</span>`;
+
+      // Affichage simple dans la zone (sans casser les boutons existants)
+      let box = document.getElementById("pointedBox");
+      if(!box){
+        box = document.createElement("div");
+        box.id = "pointedBox";
+        box.className = "mt-3 p-4 rounded-3xl";
+        box.style.background = "var(--surface2)";
+        box.style.border = "1px solid var(--stroke)";
+        zone.insertBefore(box, document.getElementById("btn"));
+      }
+      box.innerHTML = `
+        <div style="color:#10b981" class="font-black text-xl">POINTÉ ✅</div>
+        <div class="text-2xl font-black mt-1">${hhmm ? hhmm : "—"}</div>
+        <div class="text-[10px] font-black mt-2" style="color:var(--muted)">${dStr}</div>
+      `;
+
+      setPunchButtonEnabled(false);
+      showRetryGPS(false);
+    }
+
+    // =========================================================
+    // ✅ Export Sheet (en arrière-plan, non bloquant)
+    // =========================================================
+    function buildGasUrl(paramsObj){
+      const sp = new URLSearchParams(paramsObj);
+      return GAS_EXEC_URL + "?" + sp.toString();
+    }
+
+    async function sendPunchToSheetBackground({date, empNode, empKey, hA, timestamp}){
+      const url = buildGasUrl({
+        action: "punch",
+        secret: SECRET,
+        date: date,
+        empNode: empNode,
+        empKey: empKey,
+        hA: hA,
+        status: "punch",
+        timestamp: String(timestamp)
+      });
+
+      // ✅ pas de double requête (suppression new Image())
+      try{
+        await fetchWithTimeout(url, 6000);
+      }catch(e){
+        // non bloquant
+      }
+    }
+
+    // =========================================================
+    // ✅ Punch: Firebase bloquant, Sheet en arrière-plan
+    // =========================================================
+    document.getElementById('btn').addEventListener("click", async () => {
+      if(!selected) return;
+
+      const staffKey = keyStaff(selected);
+      const dStr = currentDateStr();     // ✅ date recalculée au clic
+      const hA   = currentTimeHHMM();
+      const ts   = Date.now();
+
+      // bloque pendant traitement
+      setPunchButtonEnabled(false);
+
+      if(isPunchedLocal(dStr, staffKey)){
+        toast("Déjà pointé aujourd’hui ✅");
+        renderPointedUI(getPunchedTimeLocal(dStr, staffKey), dStr);
+        return;
+      }
+
+      // ✅ ne permet jamais de pointer si GPS non OK
+      if(gpsState !== "ok"){
+        toast("GPS non validé ❌");
+        checkGPS(true);
+        return;
+      }
+
+      // ✅ 1) FIREBASE (bloquant)
+      const payload = { empKey: staffKey, hA, retard:false, retardMin:0, timestamp: ts };
+      try{
+        await db.ref('punches/'+dStr+'/'+staffKey).set(payload);
+      }catch(e){
+        toast("Erreur Firebase ❌");
+        // réactive uniquement si GPS OK
+        setPunchButtonEnabled(gpsState==="ok");
+        showRetryGPS(gpsState!=="ok");
+        return;
+      }
+
+      // ✅ 2) UI + local immédiat
+      setPunchedLocal(dStr, staffKey, hA);
+      toast("Pointage enregistré ✅");
+      renderPointedUI(hA, dStr);
+
+      // ✅ 3) SHEET (arrière-plan)
+      sendPunchToSheetBackground({
+        date: dStr,
+        empNode: selected || EMP_NODE_DEFAULT,
+        empKey: staffKey,
+        hA,
+        timestamp: ts
+      });
+    });
+
+    // =========================================================
+    // ✅ Reset listeners
+    // =========================================================
+    function attachResetListener(){
+      const bc = db.ref('broadcast');
+
+      if(selected){
+        const staffKey = keyStaff(selected);
+        bc.child('resets/'+staffKey).on('value', s => {
+          const v = s.val();
+          if(!v) return;
+
+          const ackKey = `gc_ack_reset_one__${staffKey}`;
+          const last = Number(sessionStorage.getItem(ackKey) || 0);
+          if(Number(v) <= last) return;
+
+          sessionStorage.setItem(ackKey, String(v));
+          toast("Reset reçu ✅");
+          localStorage.clear();
+          setTimeout(()=>location.reload(), 250);
+        });
+      }
+
+      bc.child('resetPunchesAt').on('value', s => {
+        const v = s.val();
+        if(!v) return;
+
+        const last = Number(sessionStorage.getItem('gc_ack_resetPunchesAt') || 0);
+        if(Number(v) <= last) return;
+
+        sessionStorage.setItem('gc_ack_resetPunchesAt', String(v));
+        toast("Reset global reçu ✅");
+        localStorage.clear();
+        setTimeout(()=>location.reload(), 250);
+      });
+
+      bc.child('resetPinsAt').on('value', s => {
+        const v = s.val();
+        if(!v) return;
+
+        const last = Number(sessionStorage.getItem('gc_ack_resetPinsAt') || 0);
+        if(Number(v) <= last) return;
+
+        sessionStorage.setItem('gc_ack_resetPinsAt', String(v));
+        toast("Reset PIN reçu ✅");
+        localStorage.removeItem('gc_device_pin');
+        localStorage.removeItem('gc_staff_name');
+        setTimeout(()=>location.reload(), 250);
+      });
+    }
+
+    // =========================================================
+    // ✅ Admin (safe-ish: pas de HTML injecté via noms)
+    // =========================================================
+    function openAdmin(silent=false){
+      if(role !== "gerant") return;
+
+      document.getElementById('adminWrap').style.display = "flex";
+      document.getElementById('selection').classList.add('hidden');
+      document.getElementById('action').classList.add('hidden');
+
+      const list = document.getElementById('adminList');
+      list.innerHTML = "";
+
+      equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
+        const row = document.createElement('div');
+        row.className = "admin-row";
+
+        const left = document.createElement("div");
+        left.className = "font-black";
+        left.textContent = emp.n;
+
+        const btn = document.createElement("button");
+        btn.className = "btn-reset-one";
+        btn.type = "button";
+        btn.textContent = "Reset";
+        btn.onclick = () => {
+          if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
+            db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
+            toast("Signal reset envoyé ✅");
+          }
+        };
+
+        row.appendChild(left);
+        row.appendChild(btn);
+        list.appendChild(row);
+      });
+
+      if(!silent) toast("Supervision activée 🛠️");
+    }
+
+    document.getElementById('btnCloseAdmin').addEventListener("click", () => {
+      document.getElementById('adminWrap').style.display = "none";
+      if(selected){
+        document.getElementById('selection').classList.add('hidden');
+        document.getElementById('action').classList.remove('hidden');
+      }else{
+        document.getElementById('selection').classList.remove('hidden');
+        document.getElementById('action').classList.add('hidden');
+      }
+    });
+
+    document.getElementById('btnResetAll').addEventListener("click", () => {
+      if(role !== "gerant") return;
+      if(confirm("Réinitialiser TOUS les mobiles ?")){
+        db.ref('broadcast/resetPunchesAt').set(Date.now());
+        toast("Reset global envoyé ✅");
+      }
+    });
+
+    // Triple-clic logo => admin (gérant)
+    let logoClicks=0, logoTimer;
+    document.getElementById("logo").addEventListener("click", () => {
+      logoClicks++;
+      clearTimeout(logoTimer);
+      if(logoClicks === 3){
+        logoClicks = 0;
+        if(role === "gerant") openAdmin(false);
+        else toast("Supervision: réservé au gérant");
+      }
+      logoTimer = setTimeout(()=>logoClicks=0, 650);
+    });
+
+    // =========================================================
+    // ✅ Équipe listener (NE relance PAS GPS à chaque update)
+    // =========================================================
+    function attachEquipeListener(){
+      if(equipeListenerAttached) return;
+      equipeListenerAttached = true;
+
+      db.ref("settings/equipe").on("value", (snap) => {
+        equipe = normalizeEquipeSnapshot(snap.val());
+
+        equipeIndex = new Map();
+        equipe.forEach(e => equipeIndex.set(keyStaff(e.n), e));
+
+        if(selected){
+          const k = keyStaff(selected);
+          if(!equipeIndex.has(k)){
+            localStorage.removeItem('gc_staff_name');
+            selected = null;
+          }
+        }
+
+        if(selected){
+          document.getElementById('selection').classList.add('hidden');
+          document.getElementById('action').classList.remove('hidden');
+          document.getElementById('username').textContent = selected;
+
+          const dStr = currentDateStr();
+          const staffKey = keyStaff(selected);
+
+          // si déjà pointé aujourd'hui -> UI direct
+          if(isPunchedLocal(dStr, staffKey)){
+            renderPointedUI(getPunchedTimeLocal(dStr, staffKey), dStr);
+          }else{
+            // ✅ GPS uniquement si nécessaire et pas en boucle
+            checkGPS(false);
+          }
+        }else{
+          document.getElementById('selection').classList.remove('hidden');
+          document.getElementById('action').classList.add('hidden');
+          genererListeUI();
+        }
+
+        if(document.getElementById('adminWrap').style.display === "flex"){
+          openAdmin(true);
+        }
+      });
+    }
+
+    // =========================================================
+    // ✅ Auth
+    // =========================================================
+    auth.onAuthStateChanged(async (user) => {
+      if(!user){
+        role = null;
+        showLoginUI();
+        showPinBlockIfNeeded();
+        return;
+      }
+
+      role = await fetchRole(user.uid);
+      if(role !== "gerant" && role !== "equipe"){
+        await auth.signOut();
+        role = null;
+        showLoginUI();
+        showPinBlockIfNeeded();
+        return;
+      }
+
+      showLoggedUI();
+      showPinBlockIfNeeded();
+
+      attachEquipeListener();
+      attachResetListener();
+
+      document.getElementById('adminWrap').style.display = "none";
+      document.getElementById('selection').classList.remove('hidden');
+      document.getElementById('action').classList.add('hidden');
+    });
   </script>
 </body>
 </html>
