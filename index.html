@@ -354,11 +354,10 @@
   .public-stack{
     display:flex;
     flex-direction:column;
-    gap:18px;      /* avant: 14px */
-    margin-top:16px; /* avant: 14px */
+    gap:18px;
+    margin-top:16px;
   }
 
-  /* on garde ce style pour ne pas casser ton design ailleurs */
   .login-toggle{
     margin-top:2px;
     font-size:10px;
@@ -409,7 +408,7 @@
           🌙 MENU
         </a>
 
-        <!-- ✅ NEW: remplace uniquement l’ancien petit lien par ce bouton (même id) -->
+        <!-- ✅ NEW: bouton Connexion (même id pour garder le JS intact) -->
         <button id="btnShowLogin" type="button" class="btn-connexion">
           🔐 CONNEXION
         </button>
@@ -902,6 +901,9 @@
       }
     }
 
+    // =========================================================
+    // ✅ POINTAGE: Firebase en priorité (bloquant) -> UI -> Sheet (non bloquant)
+    // =========================================================
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
@@ -910,6 +912,7 @@
 
       const empKey = keyStaff(selected);
 
+      // Déjà pointé (local)
       if(isPunchedLocal(empKey)){
         toast("Déjà pointé aujourd’hui ✅");
         renderPointedUI(getPunchedTimeLocal(empKey));
@@ -922,27 +925,34 @@
 
       const ts = Date.now();
 
-      const okSheet = await sendPunchToSheet({
+      // ✅ 1) Firebase en priorité (bloquant)
+      const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
+      try{
+        await db.ref('punches/'+dateStr+'/'+empKey).set(payload);
+      }catch(e){
+        console.log("Firebase punch write failed:", e);
+        toast("Erreur Firebase ❌");
+        btn.disabled = false; // retenter
+        return;
+      }
+
+      // ✅ 2) UI + local immédiat (après Firebase OK)
+      setPunchedLocal(empKey, hA);
+      renderPointedUI(hA);
+      toast("Pointage enregistré ✅");
+
+      // ✅ 3) Google Sheet ensuite (non bloquant)
+      sendPunchToSheet({
         date: dateStr,
         empNode: selected || EMP_NODE_DEFAULT,
         empKey: empKey,
         hA: hA,
         timestamp: ts
+      }).then(ok => {
+        if(!ok) console.log("Export Sheet échoué (non bloquant)");
+      }).catch(err => {
+        console.log("Export Sheet erreur (non bloquant):", err);
       });
-
-      if(!okSheet){
-        toast("Export Sheet échoué ❌");
-        btn.disabled = false;
-        return;
-      }
-
-      const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
-      try{ await db.ref('punches/'+dateStr+'/'+empKey).set(payload); }
-      catch(e){ console.log("Firebase punch write failed (non bloquant):", e); }
-
-      setPunchedLocal(empKey, hA);
-      toast("Pointage enregistré ✅ (exports_daily)");
-      renderPointedUI(hA);
     };
 
     function attachResetListener(){
