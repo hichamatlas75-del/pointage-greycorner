@@ -37,6 +37,10 @@
     --btnPlan-a:#2F7BFF;
     --btnPlan-b:#1A4ED8;
 
+    /* ✅ NEW: Connexion orange/jaune (sans toucher au reste) */
+    --btnConn-a:#FFC34D;
+    --btnConn-b:#FF7A18;
+
     --btnAlt-bg: rgba(255,255,255,.05);
     --btnAlt-stroke: rgba(255,255,255,.10);
     --btnAlt-text: rgba(232,233,239,.92);
@@ -120,6 +124,25 @@
     transition:.2s;
   }
   .btn-planning:active{ transform:scale(.99); }
+
+  /* ✅ NEW: bouton Connexion (même style que planning) */
+  .btn-connexion{
+    background: linear-gradient(180deg,var(--btnConn-a),var(--btnConn-b)) !important;
+    color:#fff !important;
+    padding:18px 16px;
+    border-radius:28px;
+    font-size:18px;
+    font-weight:1000;
+    text-transform:uppercase;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    box-shadow:0 18px 36px rgba(0,0,0,.35);
+    transition:.2s;
+  }
+  .btn-connexion:active{ transform:scale(.99); }
 
   .btn-menu{
     background: var(--btnAlt-bg);
@@ -327,13 +350,15 @@
     margin-top:10px;
   }
 
+  /* ✅ ergonomie: un peu plus d’espace entre Planning / Menu / Connexion */
   .public-stack{
     display:flex;
     flex-direction:column;
-    gap:14px;
-    margin-top:14px;
+    gap:18px;      /* avant: 14px */
+    margin-top:16px; /* avant: 14px */
   }
 
+  /* on garde ce style pour ne pas casser ton design ailleurs */
   .login-toggle{
     margin-top:2px;
     font-size:10px;
@@ -384,9 +409,10 @@
           🌙 MENU
         </a>
 
-        <div class="login-toggle">
-          <button id="btnShowLogin" type="button">Connexion</button>
-        </div>
+        <!-- ✅ NEW: remplace uniquement l’ancien petit lien par ce bouton (même id) -->
+        <button id="btnShowLogin" type="button" class="btn-connexion">
+          🔐 CONNEXION
+        </button>
 
         <!-- HOME MSG -->
         <div id="homeMsg" class="hidden home-box">
@@ -622,6 +648,7 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
+    /* ✅ IMPORTANT: on garde EXACTEMENT le même handler, il fonctionne car id inchangé */
     document.getElementById("btnShowLogin").onclick = () => {
       const wrap = document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
