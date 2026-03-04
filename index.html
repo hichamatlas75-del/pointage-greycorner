@@ -8,9 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
 
 <style>
-  /* ===========================
-     ✅ THEME UNIQUE: OR + NOIR (Casino)
-     =========================== */
   :root{
     --bg-a:#03040a;
     --bg-b:#070a18;
@@ -37,7 +34,6 @@
     --btnPlan-a:#2F7BFF;
     --btnPlan-b:#1A4ED8;
 
-    /* ✅ Connexion orange/jaune */
     --btnConn-a:#FFC34D;
     --btnConn-b:#FF7A18;
 
@@ -125,7 +121,6 @@
   }
   .btn-planning:active{ transform:scale(.99); }
 
-  /* ✅ bouton Connexion (même style que planning) */
   .btn-connexion{
     background: linear-gradient(180deg,var(--btnConn-a),var(--btnConn-b)) !important;
     color:#fff !important;
@@ -343,14 +338,6 @@
     text-transform:uppercase;
   }
 
-  .top-actions{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-top:10px;
-  }
-
-  /* ✅ ergonomie: plus d’espace entre Planning / Menu / Connexion */
   .public-stack{
     display:flex;
     flex-direction:column;
@@ -358,21 +345,6 @@
     margin-top:16px;
   }
 
-  .login-toggle{
-    margin-top:2px;
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--muted);
-    text-align:center;
-  }
-  .login-toggle button{
-    text-decoration:underline;
-    text-underline-offset:4px;
-  }
-
-  /* ✅ Petit bouton "Réessayer GPS" */
   .btn-gps-retry{
     margin-top:10px;
     width:100%;
@@ -384,6 +356,7 @@
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.12);
     color:rgba(232,233,239,.92);
+    display:none; /* ✅ FIX 1: caché au départ */
   }
   .btn-gps-retry:active{ transform:scale(.99); }
 </style>
@@ -418,23 +391,19 @@
           🗓️ CONSULTER LE PLANNING
         </button>
 
-        <!-- ✅ MENU normal -->
         <a href="https://greycorner.pages.dev/" target="_blank" rel="noopener noreferrer" class="btn-menu">
           🌙 MENU
         </a>
 
-        <!-- ✅ Bouton Connexion (id inchangé => JS inchangé) -->
         <button id="btnShowLogin" type="button" class="btn-connexion">
           🔐 CONNEXION
         </button>
 
-        <!-- HOME MSG -->
         <div id="homeMsg" class="hidden home-box">
           <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
           <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
         </div>
 
-        <!-- LOGIN -->
         <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
           <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
           <div class="space-y-2">
@@ -452,14 +421,12 @@
         </div>
       </div>
 
-      <!-- BANNER (après login) -->
       <div id="banner-wrap" class="banner-wrap">
         <div id="banner" class="banner"></div>
       </div>
 
       <div class="sep"></div>
 
-      <!-- APP (après login) -->
       <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
         <div id="selection" class="scroll flex-grow"></div>
 
@@ -473,7 +440,6 @@
             <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
             <button id="btn" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
 
-            <!-- ✅ NEW: retry GPS -->
             <button id="btnRetryGPS" type="button" class="btn-gps-retry">📍 Réessayer GPS</button>
           </div>
 
@@ -482,7 +448,6 @@
           </button>
         </div>
 
-        <!-- ADMIN -->
         <div id="adminWrap" class="admin-wrap">
           <div class="admin-title">
             <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
@@ -504,9 +469,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // =========================================================
-    // ✅ Firebase init (safe)
-    // =========================================================
     const firebaseConfig = {
       apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
       authDomain: "grey-corner-presence.firebaseapp.com",
@@ -520,17 +482,13 @@
     if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
-    // ===== GPS =====
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
     let gpsInFlight = false;
+    let gpsCheckedOnceForSelected = false; /* ✅ FIX 3: évite relance à chaque update équipe */
 
-    // ===== Messages (Google Sheet gviz) =====
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
-
-    // ===== Apps Script WebApp =====
     const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
     const SECRET = "greycorner2026";
     const EMP_NODE_DEFAULT = "pointage";
@@ -576,16 +534,23 @@
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
-    // ⚠️ Date globale initiale (affichage). La vraie date d’écriture est recalculée au clic (anti J-1)
-    const dateStr = new Intl.DateTimeFormat('fr-CA',{
-      timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
-    }).format(new Date());
+    /* ✅ FIX 2: dateStr dynamique (anti J-1) + utilisée pour localStorage keys */
+    function currentDateStr(){
+      return new Intl.DateTimeFormat('fr-CA',{
+        timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
+      }).format(new Date());
+    }
+    function currentTimeHHMM(){
+      return new Intl.DateTimeFormat('fr-FR',{
+        timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
+      }).format(new Date());
+    }
 
     let role = null;
     let selected = localStorage.getItem('gc_staff_name') || null;
 
-    function punchDoneKey(staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
-    function punchTimeKey(staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
+    function punchDoneKey(staffKey){ return `gc_punch_done__${currentDateStr()}__${staffKey}`; }
+    function punchTimeKey(staffKey){ return `gc_punch_time__${currentDateStr()}__${staffKey}`; }
     function isPunchedLocal(staffKey){ return localStorage.getItem(punchDoneKey(staffKey)) === "1"; }
     function getPunchedTimeLocal(staffKey){ return localStorage.getItem(punchTimeKey(staffKey)) || ""; }
     function setPunchedLocal(staffKey, hhmm){
@@ -598,21 +563,20 @@
       return snap.val() || null;
     }
 
-    // ✅ timeout pour gviz
-    async function fetchSheetMessage(){
+    function fetchWithTimeout(url, opts={}, ms=3500){
       const ac = new AbortController();
-      const t = setTimeout(()=>ac.abort(), 3500);
-      try{
-        const r = await fetch(URL_MSG_SHEET, { cache:"no-store", signal: ac.signal });
-        const txt = await r.text();
-        const json = JSON.parse(txt.substr(47).slice(0,-2));
-        const rows = json?.table?.rows || [];
-        const typeRaw = rows[0]?.c?.[0]?.v || "";
-        const msgRaw  = rows[0]?.c?.[1]?.v || "";
-        return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
-      }finally{
-        clearTimeout(t);
-      }
+      const t = setTimeout(()=>ac.abort(), ms);
+      return fetch(url, { ...opts, signal: ac.signal }).finally(()=>clearTimeout(t));
+    }
+
+    async function fetchSheetMessage(){
+      const r = await fetchWithTimeout(URL_MSG_SHEET, { cache:"no-store" }, 3500);
+      const txt = await r.text();
+      const json = JSON.parse(txt.substr(47).slice(0,-2));
+      const rows = json?.table?.rows || [];
+      const typeRaw = rows[0]?.c?.[0]?.v || "";
+      const msgRaw  = rows[0]?.c?.[1]?.v || "";
+      return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
     }
 
     async function loadHomeMsg(){
@@ -654,7 +618,6 @@
     function showLoggedUI(){
       document.getElementById('sessionBar').classList.remove('hidden');
       document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
-
       document.getElementById('publicHome').classList.add('hidden');
       document.getElementById('app-pointage').classList.remove('hidden');
 
@@ -665,7 +628,6 @@
 
     function showLoginUI(){
       document.getElementById('sessionBar').classList.add('hidden');
-
       document.getElementById('publicHome').classList.remove('hidden');
       document.getElementById('app-pointage').classList.add('hidden');
 
@@ -674,7 +636,6 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
-    // ✅ Connexion toggle (id inchangé)
     document.getElementById("btnShowLogin").onclick = () => {
       const wrap = document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
@@ -699,14 +660,8 @@
       const msgEl = document.getElementById("loginMsg");
       msgEl.textContent = "";
 
-      if(!email || !pass){
-        msgEl.textContent = "Email et mot de passe requis.";
-        return;
-      }
-      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
-        msgEl.textContent = "PIN requis (4 chiffres).";
-        return;
-      }
+      if(!email || !pass){ msgEl.textContent = "Email et mot de passe requis."; return; }
+      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){ msgEl.textContent = "PIN requis (4 chiffres)."; return; }
 
       const btn = document.getElementById("btnLogin");
       btn.disabled = true;
@@ -753,9 +708,7 @@
         localStorage.clear();
         toast("Appareil réinitialisé ✅");
         setTimeout(()=>location.reload(), 400);
-      }else{
-        toast("PIN incorrect ❌");
-      }
+      }else toast("PIN incorrect ❌");
     };
 
     function genererListeUI(){
@@ -826,11 +779,15 @@
           document.getElementById('username').textContent = selected;
 
           const staffKey = keyStaff(selected);
-          if(isPunchedLocal(staffKey)){
-            renderPointedUI(getPunchedTimeLocal(staffKey));
+          if(isPunchedLocal(staffKey)) renderPointedUI(getPunchedTimeLocal(staffKey));
+
+          /* ✅ FIX 3: GPS appelé une seule fois tant que selected ne change pas */
+          if(!gpsCheckedOnceForSelected){
+            gpsCheckedOnceForSelected = true;
+            checkGPS();
           }
-          checkGPS(); // ✅ auto
         }else{
+          gpsCheckedOnceForSelected = false;
           document.getElementById('selection').classList.remove('hidden');
           document.getElementById('action').classList.add('hidden');
           genererListeUI();
@@ -853,27 +810,25 @@
     function setBtnDisabledByPunchAndGps(canPunch){
       const btn = document.getElementById('btn');
       if(!btn) return;
-
-      // ✅ pendant recherche GPS => bouton toujours désactivé
       if(gpsInFlight){ btn.disabled = true; return; }
-
       if(!selected){ btn.disabled = true; return; }
       const staffKey = keyStaff(selected);
       if(isPunchedLocal(staffKey)) { btn.disabled = true; return; }
-
       btn.disabled = !canPunch;
     }
 
     function checkGPS(){
       const status = document.getElementById('status');
-      gpsInFlight = true;
+      const retryBtn = document.getElementById('btnRetryGPS');
 
-      // ✅ bloque le bouton pendant la recherche
+      gpsInFlight = true;
+      retryBtn.style.display = "none"; /* ✅ FIX 1: n'affiche le retry qu'en cas d'échec */
       setBtnDisabledByPunchAndGps(false);
 
       if(!navigator.geolocation){
         status.innerHTML = `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS indisponible</span>`;
         gpsInFlight = false;
+        retryBtn.style.display = "block";
         setBtnDisabledByPunchAndGps(false);
         return;
       }
@@ -889,54 +844,40 @@
           setBtnDisabledByPunchAndGps(true);
         }else{
           status.innerHTML = `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">Hors zone (${Math.round(d)}m)</span>`;
+          retryBtn.style.display = "block";
           setBtnDisabledByPunchAndGps(false);
         }
       }, err => {
         gpsInFlight = false;
-
-        // ✅ message plus clair Android (permission refusée)
         const denied = (err && err.code === 1);
         status.innerHTML = denied
           ? `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS refusé — Autorise la localisation</span>`
           : `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS erreur — Réessaye</span>`;
-
+        retryBtn.style.display = "block";
         setBtnDisabledByPunchAndGps(false);
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
-    // ✅ bouton "Réessayer GPS"
     document.getElementById('btnRetryGPS').onclick = () => checkGPS();
 
     function renderPointedUI(hhmm){
       const time = hhmm || "";
-
-      // ⚠️ IMPORTANT: on garde le bouton retry GPS (ne pas remplacer tout #pointage-zone)
       const zone = document.getElementById('pointage-zone');
-      const box = document.createElement('div');
-      box.innerHTML = `
+
+      const old = zone.querySelector('[data-pointed-box="1"]');
+      if(old) old.remove();
+
+      const wrap = document.createElement('div');
+      wrap.setAttribute('data-pointed-box', '1');
+      wrap.className = "mb-4";
+      wrap.innerHTML = `
         <div style="background:var(--surface2);border:1px solid var(--stroke)" class="p-4 rounded-3xl">
           <div style="color:#10b981" class="font-black text-xl">POINTÉ ✅</div>
           <div class="text-2xl font-black mt-1">${time ? time : "—"}</div>
-          <div class="text-[10px] font-black mt-2" style="color:var(--muted)">${dateStr}</div>
+          <div class="text-[10px] font-black mt-2" style="color:var(--muted)">${currentDateStr()}</div>
         </div>`;
 
-      // Remplace uniquement l'affichage "status + box", pas les boutons
-      // -> on met le box juste au-dessus du bouton principal
-      const statusEl = document.getElementById('status');
-      if(statusEl && statusEl.parentNode === zone){
-        // zone children order: status, btn, retryBtn
-        // on insert box after status
-        // remove old pointed box if exists
-        const old = zone.querySelector('[data-pointed-box="1"]');
-        if(old) old.remove();
-
-        const wrap = document.createElement('div');
-        wrap.setAttribute('data-pointed-box', '1');
-        wrap.className = "mb-4";
-        wrap.appendChild(box.firstElementChild);
-
-        zone.insertBefore(wrap, document.getElementById('btn'));
-      }
+      zone.insertBefore(wrap, document.getElementById('btn'));
 
       const b = document.getElementById('btn');
       if(b) b.disabled = true;
@@ -947,14 +888,6 @@
       return GAS_EXEC_URL + "?" + sp.toString();
     }
 
-    // ✅ helper fetch timeout (Sheet)
-    function fetchWithTimeout(url, opts={}, ms=3500){
-      const ac = new AbortController();
-      const t = setTimeout(()=>ac.abort(), ms);
-      return fetch(url, { ...opts, signal: ac.signal }).finally(()=>clearTimeout(t));
-    }
-
-    // ✅ CLICK POINTAGE: Firebase bloquant, Sheet en arrière-plan
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
@@ -969,18 +902,11 @@
         return;
       }
 
-      // ✅ anti bug J-1 : date/heure au clic
-      const dateNowStr = new Intl.DateTimeFormat('fr-CA',{
-        timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
-      }).format(new Date());
-
-      const hA = new Intl.DateTimeFormat('fr-FR',{
-        timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
-      }).format(new Date());
-
+      const dateNowStr = currentDateStr();
+      const hA = currentTimeHHMM();
       const ts = Date.now();
 
-      // ✅ 1) FIREBASE PRIORITÉ (BLOQUANT)
+      // ✅ Firebase bloquant
       const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
       try{
         await db.ref('punches/'+dateNowStr+'/'+empKey).set(payload);
@@ -991,12 +917,12 @@
         return;
       }
 
-      // ✅ 2) UI + localStorage
+      // UI + local
       setPunchedLocal(empKey, hA);
       toast("Pointage enregistré ✅");
       renderPointedUI(hA);
 
-      // ✅ 3) SHEET (non bloquant) + timeout + PAS de new Image()
+      // Sheet non bloquant + timeout, pas de new Image()
       try{
         const url = buildGasUrl({
           action: "punch",
@@ -1086,14 +1012,13 @@
       equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
         const row = document.createElement('div');
         row.className = "admin-row";
-        // ⚠️ (tu as accepté le risque XSS) -> on garde comme avant (innerHTML)
         row.innerHTML = `
           <div class="font-black">${emp.n}</div>
           <button class="btn-reset-one">Reset</button>
         `;
         row.querySelector('button').onclick = () => {
           if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
-            db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
+            db.ref(\`broadcast/resets/\${keyStaff(emp.n)}\`).set(Date.now());
             toast("Signal reset envoyé ✅");
           }
         };
@@ -1122,7 +1047,6 @@
       }
     };
 
-    // Triple-clic logo => admin (gérant)
     let logoClicks=0, logoTimer;
     document.getElementById("logo").onclick = () => {
       logoClicks++;
