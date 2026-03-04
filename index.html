@@ -37,7 +37,7 @@
     --btnPlan-a:#2F7BFF;
     --btnPlan-b:#1A4ED8;
 
-    /* ✅ NEW: Connexion orange/jaune (sans toucher au reste) */
+    /* ✅ Connexion orange/jaune */
     --btnConn-a:#FFC34D;
     --btnConn-b:#FF7A18;
 
@@ -125,7 +125,7 @@
   }
   .btn-planning:active{ transform:scale(.99); }
 
-  /* ✅ NEW: bouton Connexion (même style que planning) */
+  /* ✅ bouton Connexion (même style que planning) */
   .btn-connexion{
     background: linear-gradient(180deg,var(--btnConn-a),var(--btnConn-b)) !important;
     color:#fff !important;
@@ -350,7 +350,7 @@
     margin-top:10px;
   }
 
-  /* ✅ ergonomie: un peu plus d’espace entre Planning / Menu / Connexion */
+  /* ✅ ergonomie: plus d’espace entre Planning / Menu / Connexion */
   .public-stack{
     display:flex;
     flex-direction:column;
@@ -371,6 +371,21 @@
     text-decoration:underline;
     text-underline-offset:4px;
   }
+
+  /* ✅ Petit bouton "Réessayer GPS" */
+  .btn-gps-retry{
+    margin-top:10px;
+    width:100%;
+    border-radius:14px;
+    padding:10px 12px;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    color:rgba(232,233,239,.92);
+  }
+  .btn-gps-retry:active{ transform:scale(.99); }
 </style>
 </head>
 
@@ -408,7 +423,7 @@
           🌙 MENU
         </a>
 
-        <!-- ✅ NEW: bouton Connexion (même id pour garder le JS intact) -->
+        <!-- ✅ Bouton Connexion (id inchangé => JS inchangé) -->
         <button id="btnShowLogin" type="button" class="btn-connexion">
           🔐 CONNEXION
         </button>
@@ -457,6 +472,9 @@
           <div id="pointage-zone" class="text-center">
             <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
             <button id="btn" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
+
+            <!-- ✅ NEW: retry GPS -->
+            <button id="btnRetryGPS" type="button" class="btn-gps-retry">📍 Réessayer GPS</button>
           </div>
 
           <button id="btnResetDevice" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
@@ -507,6 +525,7 @@
 
     // ===== GPS =====
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
+    let gpsInFlight = false;
 
     // ===== Messages (Google Sheet gviz) =====
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
@@ -557,6 +576,7 @@
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
+    // ⚠️ Date globale initiale (affichage). La vraie date d’écriture est recalculée au clic (anti J-1)
     const dateStr = new Intl.DateTimeFormat('fr-CA',{
       timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
     }).format(new Date());
@@ -578,14 +598,21 @@
       return snap.val() || null;
     }
 
+    // ✅ timeout pour gviz
     async function fetchSheetMessage(){
-      const r = await fetch(URL_MSG_SHEET, { cache:"no-store" });
-      const t = await r.text();
-      const json = JSON.parse(t.substr(47).slice(0,-2));
-      const rows = json?.table?.rows || [];
-      const typeRaw = rows[0]?.c?.[0]?.v || "";
-      const msgRaw  = rows[0]?.c?.[1]?.v || "";
-      return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
+      const ac = new AbortController();
+      const t = setTimeout(()=>ac.abort(), 3500);
+      try{
+        const r = await fetch(URL_MSG_SHEET, { cache:"no-store", signal: ac.signal });
+        const txt = await r.text();
+        const json = JSON.parse(txt.substr(47).slice(0,-2));
+        const rows = json?.table?.rows || [];
+        const typeRaw = rows[0]?.c?.[0]?.v || "";
+        const msgRaw  = rows[0]?.c?.[1]?.v || "";
+        return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
+      }finally{
+        clearTimeout(t);
+      }
     }
 
     async function loadHomeMsg(){
@@ -647,7 +674,7 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
-    /* ✅ IMPORTANT: on garde EXACTEMENT le même handler, il fonctionne car id inchangé */
+    // ✅ Connexion toggle (id inchangé)
     document.getElementById("btnShowLogin").onclick = () => {
       const wrap = document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
@@ -802,7 +829,7 @@
           if(isPunchedLocal(staffKey)){
             renderPointedUI(getPunchedTimeLocal(staffKey));
           }
-          checkGPS();
+          checkGPS(); // ✅ auto
         }else{
           document.getElementById('selection').classList.remove('hidden');
           document.getElementById('action').classList.add('hidden');
@@ -826,23 +853,37 @@
     function setBtnDisabledByPunchAndGps(canPunch){
       const btn = document.getElementById('btn');
       if(!btn) return;
+
+      // ✅ pendant recherche GPS => bouton toujours désactivé
+      if(gpsInFlight){ btn.disabled = true; return; }
+
       if(!selected){ btn.disabled = true; return; }
       const staffKey = keyStaff(selected);
       if(isPunchedLocal(staffKey)) { btn.disabled = true; return; }
+
       btn.disabled = !canPunch;
     }
 
     function checkGPS(){
       const status = document.getElementById('status');
+      gpsInFlight = true;
+
+      // ✅ bloque le bouton pendant la recherche
+      setBtnDisabledByPunchAndGps(false);
 
       if(!navigator.geolocation){
         status.innerHTML = `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS indisponible</span>`;
+        gpsInFlight = false;
         setBtnDisabledByPunchAndGps(false);
         return;
       }
 
+      status.innerHTML = `<span style="color:rgba(232,233,239,.75);font-weight:900;text-transform:uppercase">Recherche GPS…</span>`;
+
       navigator.geolocation.getCurrentPosition(p => {
         const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
+        gpsInFlight = false;
+
         if(d <= RAYON_MAX){
           status.innerHTML = `<span style="color:#10b981;font-weight:900;text-transform:uppercase">Zone Grey Corner OK</span>`;
           setBtnDisabledByPunchAndGps(true);
@@ -851,21 +892,54 @@
           setBtnDisabledByPunchAndGps(false);
         }
       }, err => {
-        status.innerHTML = `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS refusé / erreur</span>`;
+        gpsInFlight = false;
+
+        // ✅ message plus clair Android (permission refusée)
+        const denied = (err && err.code === 1);
+        status.innerHTML = denied
+          ? `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS refusé — Autorise la localisation</span>`
+          : `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS erreur — Réessaye</span>`;
+
         setBtnDisabledByPunchAndGps(false);
       }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
     }
 
+    // ✅ bouton "Réessayer GPS"
+    document.getElementById('btnRetryGPS').onclick = () => checkGPS();
+
     function renderPointedUI(hhmm){
       const time = hhmm || "";
-      document.getElementById('pointage-zone').innerHTML = `
+
+      // ⚠️ IMPORTANT: on garde le bouton retry GPS (ne pas remplacer tout #pointage-zone)
+      const zone = document.getElementById('pointage-zone');
+      const box = document.createElement('div');
+      box.innerHTML = `
         <div style="background:var(--surface2);border:1px solid var(--stroke)" class="p-4 rounded-3xl">
           <div style="color:#10b981" class="font-black text-xl">POINTÉ ✅</div>
           <div class="text-2xl font-black mt-1">${time ? time : "—"}</div>
           <div class="text-[10px] font-black mt-2" style="color:var(--muted)">${dateStr}</div>
         </div>`;
-      const btn = document.getElementById('btn');
-      if(btn) btn.disabled = true;
+
+      // Remplace uniquement l'affichage "status + box", pas les boutons
+      // -> on met le box juste au-dessus du bouton principal
+      const statusEl = document.getElementById('status');
+      if(statusEl && statusEl.parentNode === zone){
+        // zone children order: status, btn, retryBtn
+        // on insert box after status
+        // remove old pointed box if exists
+        const old = zone.querySelector('[data-pointed-box="1"]');
+        if(old) old.remove();
+
+        const wrap = document.createElement('div');
+        wrap.setAttribute('data-pointed-box', '1');
+        wrap.className = "mb-4";
+        wrap.appendChild(box.firstElementChild);
+
+        zone.insertBefore(wrap, document.getElementById('btn'));
+      }
+
+      const b = document.getElementById('btn');
+      if(b) b.disabled = true;
     }
 
     function buildGasUrl(paramsObj){
@@ -873,37 +947,14 @@
       return GAS_EXEC_URL + "?" + sp.toString();
     }
 
-    async function sendPunchToSheet({date, empNode, empKey, hA, timestamp}){
-      const url = buildGasUrl({
-        action: "punch",
-        secret: SECRET,
-        date: date,
-        empNode: empNode,
-        empKey: empKey,
-        hA: hA,
-        status: "punch",
-        timestamp: String(timestamp)
-      });
-
-      const img = new Image();
-      img.src = url;
-
-      try{
-        const r = await fetch(url, { method:"GET", cache:"no-store" });
-        const ct = (r.headers.get("content-type") || "");
-        if(ct.includes("application/json")){
-          const j = await r.json();
-          return !!j?.success;
-        }
-        return r.ok;
-      }catch(e){
-        return true;
-      }
+    // ✅ helper fetch timeout (Sheet)
+    function fetchWithTimeout(url, opts={}, ms=3500){
+      const ac = new AbortController();
+      const t = setTimeout(()=>ac.abort(), ms);
+      return fetch(url, { ...opts, signal: ac.signal }).finally(()=>clearTimeout(t));
     }
 
-    // =========================================================
-    // ✅ POINTAGE: Firebase en priorité (bloquant) -> UI -> Sheet (non bloquant)
-    // =========================================================
+    // ✅ CLICK POINTAGE: Firebase bloquant, Sheet en arrière-plan
     document.getElementById('btn').onclick = async () => {
       if(!selected) return;
 
@@ -912,12 +963,16 @@
 
       const empKey = keyStaff(selected);
 
-      // Déjà pointé (local)
       if(isPunchedLocal(empKey)){
         toast("Déjà pointé aujourd’hui ✅");
         renderPointedUI(getPunchedTimeLocal(empKey));
         return;
       }
+
+      // ✅ anti bug J-1 : date/heure au clic
+      const dateNowStr = new Intl.DateTimeFormat('fr-CA',{
+        timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
+      }).format(new Date());
 
       const hA = new Intl.DateTimeFormat('fr-FR',{
         timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',hour12:false
@@ -925,34 +980,49 @@
 
       const ts = Date.now();
 
-      // ✅ 1) Firebase en priorité (bloquant)
+      // ✅ 1) FIREBASE PRIORITÉ (BLOQUANT)
       const payload = { empKey, hA, retard:false, retardMin:0, timestamp: ts };
       try{
-        await db.ref('punches/'+dateStr+'/'+empKey).set(payload);
+        await db.ref('punches/'+dateNowStr+'/'+empKey).set(payload);
       }catch(e){
         console.log("Firebase punch write failed:", e);
-        toast("Erreur Firebase ❌");
-        btn.disabled = false; // retenter
+        toast("Erreur Firebase ❌ Réessaie");
+        btn.disabled = false;
         return;
       }
 
-      // ✅ 2) UI + local immédiat (après Firebase OK)
+      // ✅ 2) UI + localStorage
       setPunchedLocal(empKey, hA);
-      renderPointedUI(hA);
       toast("Pointage enregistré ✅");
+      renderPointedUI(hA);
 
-      // ✅ 3) Google Sheet ensuite (non bloquant)
-      sendPunchToSheet({
-        date: dateStr,
-        empNode: selected || EMP_NODE_DEFAULT,
-        empKey: empKey,
-        hA: hA,
-        timestamp: ts
-      }).then(ok => {
-        if(!ok) console.log("Export Sheet échoué (non bloquant)");
-      }).catch(err => {
-        console.log("Export Sheet erreur (non bloquant):", err);
-      });
+      // ✅ 3) SHEET (non bloquant) + timeout + PAS de new Image()
+      try{
+        const url = buildGasUrl({
+          action: "punch",
+          secret: SECRET,
+          date: dateNowStr,
+          empNode: selected || EMP_NODE_DEFAULT,
+          empKey: empKey,
+          hA: hA,
+          status: "punch",
+          timestamp: String(ts)
+        });
+
+        fetchWithTimeout(url, { method:"GET", cache:"no-store" }, 3500)
+          .then(async (r)=>{
+            const ct = (r.headers.get("content-type") || "");
+            if(ct.includes("application/json")){
+              const j = await r.json().catch(()=>null);
+              if(j && j.success === false) console.log("Sheet export failed (json):", j);
+            }else if(!r.ok){
+              console.log("Sheet export failed (status):", r.status);
+            }
+          })
+          .catch((err)=>console.log("Sheet export timeout/fail:", err));
+      }catch(err){
+        console.log("Sheet export build failed:", err);
+      }
     };
 
     function attachResetListener(){
@@ -1016,6 +1086,7 @@
       equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
         const row = document.createElement('div');
         row.className = "admin-row";
+        // ⚠️ (tu as accepté le risque XSS) -> on garde comme avant (innerHTML)
         row.innerHTML = `
           <div class="font-black">${emp.n}</div>
           <button class="btn-reset-one">Reset</button>
