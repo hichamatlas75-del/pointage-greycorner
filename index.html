@@ -89,7 +89,7 @@
     position:absolute;
     inset:0;
     border-radius:42px;
-    pointer-events:none; /* ✅ n'empêche jamais les clics */
+    pointer-events:none;
     background:
       radial-gradient(900px 420px at 50% 25%, rgba(255,255,255,.06), transparent 55%),
       radial-gradient(1200px 700px at 50% 120%, rgba(0,0,0,.40), transparent 55%);
@@ -359,9 +359,75 @@
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.12);
     color:rgba(232,233,239,.92);
-    display:none; /* ✅ caché au départ */
+    display:none;
   }
   .btn-gps-retry:active{ transform:scale(.99); }
+
+  .planning-panel{
+    margin-top:14px;
+    background:var(--surface2);
+    border:1px solid var(--stroke);
+    border-radius:22px;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-height:320px;
+  }
+
+  .planning-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .planning-title{
+    font-size:10px;
+    font-weight:1000;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--gold);
+  }
+
+  .planning-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .planning-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid var(--stroke);
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+    text-decoration:none;
+  }
+
+  .planning-frame-wrap{
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid var(--stroke);
+    background:rgba(0,0,0,.18);
+    min-height:420px;
+    height:52vh;
+  }
+
+  .planning-frame{
+    width:100%;
+    height:100%;
+    border:0;
+    background:#fff;
+  }
 </style>
 </head>
 
@@ -433,8 +499,42 @@
       <div class="sep"></div>
 
       <!-- APP (après login) -->
-      <div id="app-pointage" class="flex flex-col flex-grow overflow-hidden hidden">
+      <div id="app-pointage" class="flex flex-col flex-grow overflow-y-auto hidden">
         <div id="selection" class="scroll flex-grow"></div>
+
+        <!-- PLANNING TOUJOURS VISIBLE -->
+        <div id="planningPanel" class="planning-panel">
+          <div class="planning-head">
+            <div class="planning-title">Planning de l’équipe</div>
+            <div class="planning-actions">
+              <a
+                href="https://grey-corner-app.pages.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="planning-link"
+              >
+                ↗ Ouvrir
+              </a>
+              <button
+                id="btnRefreshPlanning"
+                type="button"
+                class="planning-link"
+              >
+                ⟳ Actualiser
+              </button>
+            </div>
+          </div>
+
+          <div class="planning-frame-wrap">
+            <iframe
+              id="planningFrame"
+              class="planning-frame"
+              src="https://grey-corner-app.pages.dev/"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            ></iframe>
+          </div>
+        </div>
 
         <div id="action" class="hidden flex flex-col flex-grow justify-center">
           <div class="text-center mb-2">
@@ -504,6 +604,9 @@
     const SECRET = "greycorner2026";
     const EMP_NODE_DEFAULT = "pointage";
 
+    // ===== Planning intégré =====
+    const PLANNING_URL = "https://grey-corner-app.pages.dev/";
+
     // =========================================================
     // ✅ Date/Time dynamiques (corrige le bug J-1)
     // =========================================================
@@ -562,6 +665,14 @@
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
+    function refreshPlanningFrame(){
+      const frame = document.getElementById("planningFrame");
+      if(!frame) return;
+      frame.src = PLANNING_URL + (PLANNING_URL.includes("?") ? "&" : "?") + "t=" + Date.now();
+    }
+
+    document.getElementById("btnRefreshPlanning")?.addEventListener("click", refreshPlanningFrame);
+
     // ===== Local storage keys (date dynamique) =====
     function punchDoneKey(dateStr, staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
     function punchTimeKey(dateStr, staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
@@ -577,7 +688,7 @@
     // =========================================================
     async function fetchRole(uid){
       const snap = await db.ref("users/"+uid).once("value");
-      return snap.val() || null; // "gerant" | "equipe"
+      return snap.val() || null;
     }
 
     // =========================================================
@@ -668,7 +779,6 @@
       window.__homeInt = setInterval(loadHomeMsg, 30000);
     }
 
-    // ✅ Connexion button
     document.getElementById("btnShowLogin").addEventListener("click", () => {
       const wrap = document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
@@ -685,7 +795,6 @@
       return e?.message || "Erreur de connexion.";
     }
 
-    // ✅ FIX: se connecter (robuste)
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest("#btnLogin");
       if(!btn) return;
@@ -807,8 +916,8 @@
     // =========================================================
     // ✅ GPS: fiable + retry + bouton jamais actif pendant la recherche
     // =========================================================
-    let gpsState = "idle"; // idle | searching | ok | bad | denied | error
-    let gpsLastCheckedKey = ""; // évite relances inutiles
+    let gpsState = "idle";
+    let gpsLastCheckedKey = "";
 
     function getDist(a,b,c,d){
       const R=6371e3;
@@ -843,21 +952,18 @@
       const staffKey = keyStaff(selected);
       const dStr = currentDateStr();
 
-      // ✅ si déjà pointé aujourd’hui => bouton doit rester OFF
       if(isPunchedLocal(dStr, staffKey)){
         setPunchButtonEnabled(false);
         showRetryGPS(false);
         return;
       }
 
-      // ✅ évite de relancer le GPS à chaque update Firebase
       const lockKey = `${dStr}__${staffKey}`;
       if(!force && gpsLastCheckedKey === lockKey && (gpsState==="ok" || gpsState==="bad" || gpsState==="denied" || gpsState==="error")){
         return;
       }
       gpsLastCheckedKey = lockKey;
 
-      // ✅ pendant la recherche => bouton OFF
       gpsState = "searching";
       updateGpsUI({
         msgHtml: `<span style="color:rgba(232,233,239,.75);font-weight:900;text-transform:uppercase">Recherche GPS…</span>`,
@@ -895,7 +1001,6 @@
         }
       }, err => {
         const code = err?.code;
-        // 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
         if(code === 1){
           gpsState = "denied";
           updateGpsUI({
@@ -919,7 +1024,7 @@
           });
         }
       }, {
-        enableHighAccuracy: true,     // ✅ + fiable Android
+        enableHighAccuracy: true,
         timeout: 12000,
         maximumAge: 0
       });
@@ -934,11 +1039,9 @@
       const zone = document.getElementById('pointage-zone');
       if(!zone) return;
 
-      // On met à jour uniquement le contenu d’état
       const status = document.getElementById('status');
       if(status) status.innerHTML = `<span style="color:#10b981;font-weight:900;text-transform:uppercase">POINTÉ ✅</span>`;
 
-      // Affichage simple dans la zone (sans casser les boutons existants)
       let box = document.getElementById("pointedBox");
       if(!box){
         box = document.createElement("div");
@@ -978,11 +1081,9 @@
         timestamp: String(timestamp)
       });
 
-      // ✅ pas de double requête (suppression new Image())
       try{
         await fetchWithTimeout(url, 6000);
       }catch(e){
-        // non bloquant
       }
     }
 
@@ -993,11 +1094,10 @@
       if(!selected) return;
 
       const staffKey = keyStaff(selected);
-      const dStr = currentDateStr();     // ✅ date recalculée au clic
+      const dStr = currentDateStr();
       const hA   = currentTimeHHMM();
       const ts   = Date.now();
 
-      // bloque pendant traitement
       setPunchButtonEnabled(false);
 
       if(isPunchedLocal(dStr, staffKey)){
@@ -1006,31 +1106,26 @@
         return;
       }
 
-      // ✅ ne permet jamais de pointer si GPS non OK
       if(gpsState !== "ok"){
         toast("GPS non validé ❌");
         checkGPS(true);
         return;
       }
 
-      // ✅ 1) FIREBASE (bloquant)
       const payload = { empKey: staffKey, hA, retard:false, retardMin:0, timestamp: ts };
       try{
         await db.ref('punches/'+dStr+'/'+staffKey).set(payload);
       }catch(e){
         toast("Erreur Firebase ❌");
-        // réactive uniquement si GPS OK
         setPunchButtonEnabled(gpsState==="ok");
         showRetryGPS(gpsState!=="ok");
         return;
       }
 
-      // ✅ 2) UI + local immédiat
       setPunchedLocal(dStr, staffKey, hA);
       toast("Pointage enregistré ✅");
       renderPointedUI(hA, dStr);
 
-      // ✅ 3) SHEET (arrière-plan)
       sendPunchToSheetBackground({
         date: dStr,
         empNode: selected || EMP_NODE_DEFAULT,
@@ -1100,6 +1195,7 @@
       document.getElementById('adminWrap').style.display = "flex";
       document.getElementById('selection').classList.add('hidden');
       document.getElementById('action').classList.add('hidden');
+      document.getElementById('planningPanel').style.display = "none";
 
       const list = document.getElementById('adminList');
       list.innerHTML = "";
@@ -1133,6 +1229,7 @@
 
     document.getElementById('btnCloseAdmin').addEventListener("click", () => {
       document.getElementById('adminWrap').style.display = "none";
+      document.getElementById('planningPanel').style.display = "flex";
       if(selected){
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
@@ -1150,7 +1247,6 @@
       }
     });
 
-    // Triple-clic logo => admin (gérant)
     let logoClicks=0, logoTimer;
     document.getElementById("logo").addEventListener("click", () => {
       logoClicks++;
@@ -1187,21 +1283,21 @@
         if(selected){
           document.getElementById('selection').classList.add('hidden');
           document.getElementById('action').classList.remove('hidden');
+          document.getElementById('planningPanel').style.display = "flex";
           document.getElementById('username').textContent = selected;
 
           const dStr = currentDateStr();
           const staffKey = keyStaff(selected);
 
-          // si déjà pointé aujourd'hui -> UI direct
           if(isPunchedLocal(dStr, staffKey)){
             renderPointedUI(getPunchedTimeLocal(dStr, staffKey), dStr);
           }else{
-            // ✅ GPS uniquement si nécessaire et pas en boucle
             checkGPS(false);
           }
         }else{
           document.getElementById('selection').classList.remove('hidden');
           document.getElementById('action').classList.add('hidden');
+          document.getElementById('planningPanel').style.display = "flex";
           genererListeUI();
         }
 
@@ -1238,6 +1334,7 @@
       attachResetListener();
 
       document.getElementById('adminWrap').style.display = "none";
+      document.getElementById('planningPanel').style.display = "flex";
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
     });
