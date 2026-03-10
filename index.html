@@ -362,72 +362,6 @@
     display:none;
   }
   .btn-gps-retry:active{ transform:scale(.99); }
-
-  .planning-panel{
-    margin-top:14px;
-    background:var(--surface2);
-    border:1px solid var(--stroke);
-    border-radius:22px;
-    padding:12px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    min-height:320px;
-  }
-
-  .planning-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-
-  .planning-title{
-    font-size:10px;
-    font-weight:1000;
-    text-transform:uppercase;
-    letter-spacing:.12em;
-    color:var(--gold);
-  }
-
-  .planning-actions{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-
-  .planning-link{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding:10px 12px;
-    border-radius:14px;
-    border:1px solid var(--stroke);
-    background:rgba(255,255,255,.06);
-    color:var(--text);
-    font-size:10px;
-    font-weight:900;
-    text-transform:uppercase;
-    text-decoration:none;
-  }
-
-  .planning-frame-wrap{
-    border-radius:18px;
-    overflow:hidden;
-    border:1px solid var(--stroke);
-    background:rgba(0,0,0,.18);
-    min-height:420px;
-    height:52vh;
-  }
-
-  .planning-frame{
-    width:100%;
-    height:100%;
-    border:0;
-    background:#fff;
-  }
 </style>
 </head>
 
@@ -502,38 +436,14 @@
       <div id="app-pointage" class="flex flex-col flex-grow overflow-y-auto hidden">
         <div id="selection" class="scroll flex-grow"></div>
 
-        <!-- PLANNING TOUJOURS VISIBLE -->
-        <div id="planningPanel" class="planning-panel">
-          <div class="planning-head">
-            <div class="planning-title">Planning de l’équipe</div>
-            <div class="planning-actions">
-              <a
-                href="https://grey-corner-app.pages.dev/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="planning-link"
-              >
-                ↗ Ouvrir
-              </a>
-              <button
-                id="btnRefreshPlanning"
-                type="button"
-                class="planning-link"
-              >
-                ⟳ Actualiser
-              </button>
-            </div>
-          </div>
-
-          <div class="planning-frame-wrap">
-            <iframe
-              id="planningFrame"
-              class="planning-frame"
-              src="https://grey-corner-app.pages.dev/"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            ></iframe>
-          </div>
+        <div id="planningPanel" class="mt-3 mb-1">
+          <button
+            type="button"
+            onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')"
+            class="btn-planning"
+          >
+            🗓️ CONSULTER LE PLANNING
+          </button>
         </div>
 
         <div id="action" class="hidden flex flex-col flex-grow justify-center">
@@ -604,9 +514,6 @@
     const SECRET = "greycorner2026";
     const EMP_NODE_DEFAULT = "pointage";
 
-    // ===== Planning intégré =====
-    const PLANNING_URL = "https://grey-corner-app.pages.dev/";
-
     // =========================================================
     // ✅ Date/Time dynamiques (corrige le bug J-1)
     // =========================================================
@@ -664,14 +571,6 @@
     }
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
-
-    function refreshPlanningFrame(){
-      const frame = document.getElementById("planningFrame");
-      if(!frame) return;
-      frame.src = PLANNING_URL + (PLANNING_URL.includes("?") ? "&" : "?") + "t=" + Date.now();
-    }
-
-    document.getElementById("btnRefreshPlanning")?.addEventListener("click", refreshPlanningFrame);
 
     // ===== Local storage keys (date dynamique) =====
     function punchDoneKey(dateStr, staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
@@ -1229,7 +1128,7 @@
 
     document.getElementById('btnCloseAdmin').addEventListener("click", () => {
       document.getElementById('adminWrap').style.display = "none";
-      document.getElementById('planningPanel').style.display = "flex";
+      document.getElementById('planningPanel').style.display = "block";
       if(selected){
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
@@ -1283,7 +1182,7 @@
         if(selected){
           document.getElementById('selection').classList.add('hidden');
           document.getElementById('action').classList.remove('hidden');
-          document.getElementById('planningPanel').style.display = "flex";
+          document.getElementById('planningPanel').style.display = "block";
           document.getElementById('username').textContent = selected;
 
           const dStr = currentDateStr();
@@ -1297,7 +1196,7 @@
         }else{
           document.getElementById('selection').classList.remove('hidden');
           document.getElementById('action').classList.add('hidden');
-          document.getElementById('planningPanel').style.display = "flex";
+          document.getElementById('planningPanel').style.display = "block";
           genererListeUI();
         }
 
@@ -1334,7 +1233,7 @@
       attachResetListener();
 
       document.getElementById('adminWrap').style.display = "none";
-      document.getElementById('planningPanel').style.display = "flex";
+      document.getElementById('planningPanel').style.display = "block";
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
     });
