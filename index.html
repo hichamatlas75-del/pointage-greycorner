@@ -5,76 +5,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Grey Corner • Master Pro</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
 
 <style>
+  /* ─────────────────────────────────────────
+     DESIGN TOKENS
+  ───────────────────────────────────────── */
   :root{
-    --bg-a:#03040a;
-    --bg-b:#070a18;
-    --radial1: rgba(255,200,90,.12);
-    --radial2: rgba(255,120,40,.08);
+    --bg-a:#111827;
+    --bg-b:#1a2540;
+    --radial1:rgba(255,200,90,.11);
+    --radial2:rgba(37,99,235,.10);
 
-    --card-a: rgba(16,18,30,.80);
-    --card-b: rgba(4,6,14,.88);
-    --card-stroke: rgba(255,255,255,.08);
-    --card-inset: rgba(255,255,255,.04);
-    --card-shadow: 0 40px 90px rgba(0,0,0,.85);
-    --card-glow: 0 0 55px rgba(255,200,90,.10);
+    --card-a:rgba(22,28,48,.88);
+    --card-b:rgba(14,20,38,.94);
+    --card-stroke:rgba(255,255,255,.10);
+    --card-inset:rgba(255,255,255,.05);
+    --card-shadow:0 48px 100px rgba(5,10,30,.85);
+    --card-glow:0 0 70px rgba(255,200,90,.09);
 
     --text:#e8e9ef;
-    --muted: rgba(232,233,239,.62);
+    --muted:rgba(232,233,239,.58);
 
     --gold:#ffd68a;
     --gold2:#ffb347;
+    --gold-dim:rgba(255,214,138,.18);
+    --gold-stroke:rgba(255,214,138,.28);
 
-    --surface: rgba(255,255,255,.06);
-    --surface2: rgba(255,255,255,.05);
-    --stroke: rgba(255,255,255,.10);
+    --surface:rgba(255,255,255,.06);
+    --surface2:rgba(255,255,255,.045);
+    --stroke:rgba(255,255,255,.09);
 
-    --btnPlan-a:#2F7BFF;
-    --btnPlan-b:#1A4ED8;
+    --green:#10b981;
+    --red:#ef4444;
+    --amber:#f59e0b;
 
-    --btnConn-a:#FFC34D;
-    --btnConn-b:#FF7A18;
-
-    --btnAlt-bg: rgba(255,255,255,.05);
-    --btnAlt-stroke: rgba(255,255,255,.10);
-    --btnAlt-text: rgba(232,233,239,.92);
-
-    --btnMain-a: var(--gold);
-    --btnMain-b: var(--gold2);
-    --btnMain-text:#1a1305;
-
-    --bannerBar: rgba(3,4,10,0.78);
-
-    --toastBg: rgba(0,0,0,.82);
-    --toastStroke: rgba(255,255,255,.12);
+    --toastBg:rgba(0,0,0,.88);
+    --toastStroke:rgba(255,255,255,.12);
+    --bannerBar:rgba(3,4,10,0.80);
   }
 
-  html,body{
+  /* ─────────────────────────────────────────
+     BASE
+  ───────────────────────────────────────── */
+  *, *::before, *::after { box-sizing:border-box; }
+
+  html, body {
     height:100%;
     margin:0;
     overflow-y:auto;
     overflow-x:hidden;
     background:
-      radial-gradient(900px 520px at 50% -10%, var(--radial1), transparent 60%),
-      radial-gradient(1100px 700px at 20% 110%, var(--radial2), transparent 62%),
-      linear-gradient(180deg,var(--bg-a),var(--bg-b) 45%,var(--bg-a));
-    font-family:'Plus Jakarta Sans',sans-serif;
+      radial-gradient(800px 480px at 50% -8%,  var(--radial1), transparent 58%),
+      radial-gradient(900px 600px at 80% 110%,  var(--radial2), transparent 60%),
+      radial-gradient(600px 400px at -5% 60%,  rgba(37,99,235,.06), transparent 55%),
+      linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 60%, #131d35 100%);
+    font-family:'DM Sans', sans-serif;
     color:var(--text);
+    -webkit-tap-highlight-color:transparent;
   }
 
-  .card{
+  /* noise overlay */
+  body::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    opacity:.028;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:180px;
+  }
+
+  /* ─────────────────────────────────────────
+     CARD
+  ───────────────────────────────────────── */
+  .card {
     width:100%;
     max-width:420px;
     min-height:96vh;
-    border-radius:42px;
-    padding:18px;
+    border-radius:44px;
+    padding:20px;
     display:flex;
     flex-direction:column;
     background:linear-gradient(145deg,var(--card-a),var(--card-b));
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
     border:1px solid var(--card-stroke);
     box-shadow:
       inset 0 0 0 1px var(--card-inset),
@@ -82,99 +98,134 @@
       var(--card-glow);
     position:relative;
     margin:auto;
+    overflow:hidden;
   }
 
-  .card::after{
+  /* shimmer halo top */
+  .card::before {
+    content:"";
+    position:absolute;
+    top:-1px; left:20%; right:20%;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,214,138,.55), transparent);
+    border-radius:999px;
+    pointer-events:none;
+    z-index:2;
+  }
+
+  .card::after {
     content:"";
     position:absolute;
     inset:0;
-    border-radius:42px;
+    border-radius:44px;
     pointer-events:none;
     background:
-      radial-gradient(900px 420px at 50% 25%, rgba(255,255,255,.06), transparent 55%),
-      radial-gradient(1200px 700px at 50% 120%, rgba(0,0,0,.40), transparent 55%);
-    opacity:.70;
+      radial-gradient(900px 420px at 50% 20%, rgba(255,255,255,.055), transparent 55%),
+      radial-gradient(1200px 700px at 50% 130%, rgba(0,0,0,.40), transparent 55%);
+    z-index:0;
   }
 
-  .content{ position:relative; z-index:1; display:flex; flex-direction:column; flex:1; }
-  .gold{ color:var(--gold); letter-spacing:.08em; }
-  .muted{ color:var(--muted); }
+  .content {
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    flex:1;
+  }
 
-  .scroll{ overflow-y:auto; scrollbar-width:none; }
-  .scroll::-webkit-scrollbar{ display:none }
-
-  .btn-planning{
-    background: linear-gradient(180deg,var(--btnPlan-a),var(--btnPlan-b)) !important;
-    color:#fff !important;
-    padding:18px 16px;
-    border-radius:28px;
-    font-size:18px;
-    font-weight:1000;
+  /* ─────────────────────────────────────────
+     TYPOGRAPHY
+  ───────────────────────────────────────── */
+  .display { font-family:'Cormorant Garamond', serif; }
+  .gold { color:var(--gold); letter-spacing:.06em; }
+  .muted { color:var(--muted); }
+  .label-caps {
+    font-size:9px;
+    font-weight:700;
     text-transform:uppercase;
-    width:100%;
+    letter-spacing:.20em;
+    color:var(--muted);
+  }
+
+  /* ─────────────────────────────────────────
+     LOGO
+  ───────────────────────────────────────── */
+  .logo-wrap {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:4px 0 2px;
+  }
+  .logo-img {
+    height:52px;
+    cursor:pointer;
+    transition:opacity .25s, transform .35s cubic-bezier(.34,1.56,.64,1);
+    filter:drop-shadow(0 2px 12px rgba(255,200,90,.18));
+  }
+  .logo-img:active { transform:scale(.96); opacity:.85; }
+
+  /* ─────────────────────────────────────────
+     DIVIDER
+  ───────────────────────────────────────── */
+  .sep {
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
+    margin:14px 0;
+    flex-shrink:0;
+  }
+
+  /* ─────────────────────────────────────────
+     SESSION BAR
+  ───────────────────────────────────────── */
+  .session-bar {
+    margin:10px 0 4px;
     display:flex;
     align-items:center;
-    justify-content:center;
-    gap:12px;
-    box-shadow:0 18px 36px rgba(0,0,0,.35);
-    transition:.2s;
+    justify-content:space-between;
+    gap:8px;
+    padding:8px 12px;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--stroke);
+    border-radius:20px;
   }
-  .btn-planning:active{ transform:scale(.99); }
 
-  .btn-connexion{
-    background: linear-gradient(180deg,var(--btnConn-a),var(--btnConn-b)) !important;
-    color:#fff !important;
-    padding:18px 16px;
-    border-radius:28px;
-    font-size:18px;
-    font-weight:1000;
-    text-transform:uppercase;
-    width:100%;
-    display:flex;
+  .session-pill {
+    display:inline-flex;
     align-items:center;
-    justify-content:center;
-    gap:12px;
-    box-shadow:0 18px 36px rgba(0,0,0,.35);
-    transition:.2s;
+    gap:6px;
+    font-size:10px;
+    font-weight:700;
   }
-  .btn-connexion:active{ transform:scale(.99); }
+  .session-dot {
+    width:6px; height:6px;
+    border-radius:999px;
+    background:var(--green);
+    box-shadow:0 0 6px rgba(16,185,129,.7);
+    flex-shrink:0;
+  }
 
-  .btn-menu{
-    background: var(--btnAlt-bg);
-    border:1px solid var(--btnAlt-stroke);
-    color: var(--btnAlt-text);
-    padding:18px 16px;
-    border-radius:28px;
-    font-size:18px;
-    font-weight:1000;
+  .btn-logout {
+    font-size:9px;
+    font-weight:900;
     text-transform:uppercase;
-    width:100%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
+    letter-spacing:.12em;
+    padding:6px 12px;
+    border-radius:20px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    color:rgba(232,233,239,.65);
     transition:.2s;
-    box-shadow:0 14px 26px rgba(0,0,0,.25);
   }
-  .btn-menu:active{ transform:scale(.99); }
+  .btn-logout:active { opacity:.7; transform:scale(.97); }
 
-  .btn-main{
-    background: linear-gradient(180deg,var(--btnMain-a),var(--btnMain-b));
-    color:var(--btnMain-text);
-    font-weight:1000;
-    border-radius:26px;
-    padding:26px;
-    font-size:26px;
-    box-shadow: 0 14px 30px rgba(0,0,0,.28);
-    transition:.25s;
-  }
-  .btn-main:disabled{ opacity:.45; }
-
-  .banner-wrap{
+  /* ─────────────────────────────────────────
+     BANNER
+  ───────────────────────────────────────── */
+  .banner-wrap {
     display:none;
     gap:10px;
     align-items:stretch;
-    margin:12px 0;
+    margin:10px 0;
     position:sticky;
     top:0;
     z-index:20;
@@ -184,184 +235,475 @@
     border-radius:18px;
     border:1px solid var(--stroke);
   }
-  .banner{
+  .banner {
     flex:1;
-    border-radius:16px;
-    padding:12px;
-    font-weight:900;
-    font-size:13px;
+    border-radius:14px;
+    padding:11px 14px;
+    font-weight:700;
+    font-size:12px;
     text-align:center;
     border:1px solid var(--stroke);
     word-break:break-word;
     overflow-wrap:anywhere;
+    line-height:1.4;
   }
-  .msg-urgent{ background:#3a0d0d; color:#fff; border:1px solid #ff5a5a; }
-  .msg-info{
-    background:rgba(255,214,138,.10);
+  .msg-urgent { background:#3a0d0d; color:#fff; border:1px solid #ff5a5a; }
+  .msg-info {
+    background:var(--gold-dim);
     color:var(--gold);
-    border:1px solid rgba(255,214,138,.26);
+    border:1px solid var(--gold-stroke);
   }
 
-  .inpt{
-    width:100%;
-    background:var(--surface);
-    border:1px solid var(--stroke);
-    border-radius:16px;
-    padding:12px;
-    color:var(--text);
-    font-weight:800;
-    font-size:12px;
-    outline:none;
-  }
-  .inpt::placeholder{ color: rgba(232,233,239,.40); }
-  .inpt:focus{ border-color: rgba(255,214,138,.35); box-shadow: 0 0 0 3px rgba(255,214,138,.10); }
-
-  .btn-login{
-    width:100%;
-    border-radius:18px;
-    padding:12px;
-    font-size:12px;
-    font-weight:900;
-    text-transform:uppercase;
-    background:rgba(255,214,138,.14);
-    border:1px solid rgba(255,214,138,.24);
-    color:var(--gold);
-  }
-  .btn-login:disabled{ opacity:.55; }
-
-  .drawer-header{
-    background:var(--surface2);
-    border:1px solid var(--stroke);
-    border-radius:16px;
-    padding:14px;
-    margin-top:10px;
-    display:flex;
-    justify-content:space-between;
-    cursor:pointer;
-    user-select:none;
-  }
-  .staff-btn{
-    padding:14px;
-    border-radius:14px;
-    background:var(--surface2);
-    border:1px solid var(--stroke);
-    font-size:11px;
-    font-weight:800;
-    text-align:center;
-    color:var(--text);
-    transition:.15s;
-  }
-  .staff-btn:active{ transform:scale(.99); }
-
-  .toast{
-    position:fixed; left:50%; transform:translateX(-50%);
-    bottom:18px; z-index:9999;
-    background:var(--toastBg);
-    border:1px solid var(--toastStroke);
-    color:#fff; padding:10px 20px;
-    border-radius:14px; font-size:12px; font-weight:900;
-    display:none; max-width:min(420px, calc(100vw - 24px));
-    text-align:center;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  .pill{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:10px 12px; border-radius:999px;
-    border:1px solid var(--stroke);
-    background:var(--surface2);
-    font-size:11px; font-weight:900;
-  }
-
-  .home-box{
-    background:var(--surface2);
-    border:1px solid var(--stroke);
-    border-radius:18px;
-    padding:12px;
-    margin:10px 0 12px 0;
-  }
-
-  .sep{
-    height:1px;
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
-    margin:12px 0;
-  }
-
-  .hint{ font-size:10px; font-weight:900; color:var(--muted); line-height:1.25; }
-
-  .admin-wrap{
-    display:none;
-    flex-direction:column;
-    gap:10px;
-    background:var(--surface2);
-    border:1px solid var(--stroke);
-    border-radius:18px;
-    padding:12px;
-    margin-top:10px;
-  }
-  .admin-title{
-    display:flex; align-items:center; justify-content:space-between;
-    gap:10px;
-  }
-  .admin-list{
-    max-height:42vh;
-    overflow:auto;
-    border-radius:14px;
-    border:1px solid var(--stroke);
-    background:rgba(0,0,0,.12);
-  }
-  .admin-row{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 10px;
-    border-bottom:1px solid rgba(255,255,255,.06);
-    font-size:11px;
-  }
-  .admin-row:last-child{ border-bottom:none; }
-
-  .btn-reset-one{
-    background:rgba(239,68,68,.14);
-    color:#ffb5b5;
-    border:1px solid rgba(239,68,68,.22);
-    padding:6px 10px;
-    border-radius:12px;
-    font-weight:900;
-    font-size:11px;
-  }
-  .btn-reset-all{
-    background:#2a0f0f;
-    color:#ffb5b5;
-    border:1px solid rgba(255,90,90,.35);
-    padding:12px;
-    border-radius:14px;
-    font-weight:900;
-    font-size:11px;
-    text-transform:uppercase;
-  }
-
-  .public-stack{
+  /* ─────────────────────────────────────────
+     PUBLIC HOME BUTTONS
+  ───────────────────────────────────────── */
+  .public-stack {
     position:relative;
     z-index:2;
     display:flex;
     flex-direction:column;
-    gap:18px;
-    margin-top:16px;
+    gap:14px;
+    margin-top:14px;
   }
 
-  .btn-gps-retry{
-    margin-top:10px;
+  /* Base button shell */
+  .btn-base {
     width:100%;
-    border-radius:14px;
-    padding:10px 12px;
-    font-size:11px;
+    border-radius:26px;
+    padding:18px 20px;
+    font-size:15px;
     font-weight:900;
     text-transform:uppercase;
+    letter-spacing:.10em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, opacity .2s;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-base::before {
+    content:"";
+    position:absolute;
+    top:0; left:-60%; width:40%; height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent);
+    transform:skewX(-20deg);
+    transition:left .5s ease;
+    pointer-events:none;
+  }
+  .btn-base:hover::before { left:130%; }
+  .btn-base:active { transform:scale(.975); }
+
+  .btn-planning {
+    background:linear-gradient(160deg,#2563eb,#1A4ED8);
+    color:#fff;
+    box-shadow:0 16px 40px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .btn-planning:active { box-shadow:0 8px 20px rgba(37,99,235,.20); }
+
+  .btn-connexion {
+    background:linear-gradient(160deg,#f59e0b,#e07b00);
+    color:#fff;
+    box-shadow:0 16px 40px rgba(245,158,11,.28), inset 0 1px 0 rgba(255,255,255,.20);
+  }
+
+  .btn-menu {
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.12);
-    color:rgba(232,233,239,.92);
-    display:none;
+    color:rgba(232,233,239,.88);
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
   }
-  .btn-gps-retry:active{ transform:scale(.99); }
+
+  /* ─────────────────────────────────────────
+     HOME MSG
+  ───────────────────────────────────────── */
+  .home-box {
+    background:var(--surface2);
+    border:1px solid var(--stroke);
+    border-radius:20px;
+    padding:14px 16px;
+    margin:4px 0 0;
+  }
+
+  /* ─────────────────────────────────────────
+     LOGIN FORM
+  ───────────────────────────────────────── */
+  .login-wrap {
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:26px;
+    padding:18px;
+  }
+
+  .inpt {
+    width:100%;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:16px;
+    padding:13px 14px;
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    outline:none;
+    transition:.2s;
+  }
+  .inpt::placeholder { color:rgba(232,233,239,.32); }
+  .inpt:focus {
+    border-color:var(--gold-stroke);
+    box-shadow:0 0 0 3px rgba(255,214,138,.09);
+    background:rgba(255,255,255,.08);
+  }
+
+  .btn-login {
+    width:100%;
+    border-radius:16px;
+    padding:13px;
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    background:var(--gold-dim);
+    border:1px solid var(--gold-stroke);
+    color:var(--gold);
+    transition:.2s;
+  }
+  .btn-login:hover { background:rgba(255,214,138,.22); }
+  .btn-login:disabled { opacity:.45; cursor:not-allowed; }
+
+  .hint { font-size:10px; font-weight:600; color:var(--muted); line-height:1.35; }
+
+  /* ─────────────────────────────────────────
+     STAFF SELECTION
+  ───────────────────────────────────────── */
+  .drawer-header {
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:14px 16px;
+    margin-top:8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    user-select:none;
+    transition:.2s;
+  }
+  .drawer-header:active { background:rgba(255,255,255,.07); }
+
+  .poste-badge {
+    font-size:9px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    padding:4px 9px;
+    border-radius:999px;
+    background:rgba(255,214,138,.12);
+    border:1px solid rgba(255,214,138,.22);
+    color:var(--gold);
+  }
+
+  .staff-btn {
+    padding:15px 12px;
+    border-radius:16px;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.08);
+    font-size:11px;
+    font-weight:800;
+    text-align:center;
+    color:var(--text);
+    transition:.15s cubic-bezier(.34,1.56,.64,1);
+    line-height:1.3;
+  }
+  .staff-btn:hover {
+    background:rgba(255,214,138,.08);
+    border-color:rgba(255,214,138,.22);
+    color:var(--gold);
+  }
+  .staff-btn:active { transform:scale(.965); }
+
+  /* ─────────────────────────────────────────
+     ACTION ZONE (pointage)
+  ───────────────────────────────────────── */
+  .username-display {
+    font-family:'Cormorant Garamond', serif;
+    font-size:2.8rem;
+    font-weight:700;
+    color:var(--gold);
+    letter-spacing:.01em;
+    line-height:1.1;
+    text-shadow:0 0 40px rgba(255,200,90,.25);
+  }
+
+  /* GPS pill */
+  .gps-pill {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.09);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    transition:.3s;
+  }
+  .gps-dot {
+    width:7px; height:7px;
+    border-radius:999px;
+    flex-shrink:0;
+    transition:.3s;
+  }
+  .gps-dot.searching { background:var(--amber); box-shadow:0 0 6px rgba(245,158,11,.6); animation:blink 1s infinite; }
+  .gps-dot.ok        { background:var(--green); box-shadow:0 0 6px rgba(16,185,129,.7); }
+  .gps-dot.bad       { background:var(--red);   box-shadow:0 0 6px rgba(239,68,68,.6); }
+  .gps-dot.error     { background:var(--red);   box-shadow:0 0 6px rgba(239,68,68,.6); }
+  .gps-dot.denied    { background:var(--red);   box-shadow:0 0 6px rgba(239,68,68,.6); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* MAIN PUNCH BUTTON */
+  .btn-main-wrap {
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+  }
+
+  /* pulse ring when GPS OK */
+  .btn-main-wrap.gps-ready::before,
+  .btn-main-wrap.gps-ready::after {
+    content:"";
+    position:absolute;
+    inset:-12px;
+    border-radius:38px;
+    border:2px solid rgba(255,214,138,.25);
+    animation:pulse-ring 2s ease-out infinite;
+    pointer-events:none;
+  }
+  .btn-main-wrap.gps-ready::after { animation-delay:.7s; border-color:rgba(255,214,138,.12); }
+
+  @keyframes pulse-ring {
+    0%   { transform:scale(.94); opacity:0; }
+    30%  { opacity:1; }
+    100% { transform:scale(1.12); opacity:0; }
+  }
+
+  .btn-main {
+    width:100%;
+    border-radius:28px;
+    padding:26px;
+    font-size:15px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    position:relative;
+    overflow:hidden;
+    transition:.3s cubic-bezier(.34,1.56,.64,1);
+    background:linear-gradient(160deg, #ffd68a, #ffb347);
+    color:#1a1305;
+    box-shadow:0 18px 40px rgba(255,180,60,.22), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .btn-main::before {
+    content:"";
+    position:absolute;
+    top:0; left:-70%; width:45%; height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.30),transparent);
+    transform:skewX(-15deg);
+    transition:left .6s ease;
+    pointer-events:none;
+  }
+  .btn-main:not(:disabled):hover::before { left:130%; }
+  .btn-main:not(:disabled):active { transform:scale(.975); box-shadow:0 8px 20px rgba(255,180,60,.18); }
+  .btn-main:disabled {
+    background:rgba(255,255,255,.06);
+    color:rgba(232,233,239,.25);
+    box-shadow:none;
+    cursor:not-allowed;
+    letter-spacing:.12em;
+  }
+
+  /* RETRY GPS */
+  .btn-gps-retry {
+    display:none;
+    margin-top:12px;
+    width:100%;
+    border-radius:18px;
+    padding:12px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    background:rgba(255,255,255,.055);
+    border:1px solid rgba(255,255,255,.10);
+    color:rgba(232,233,239,.80);
+    transition:.2s;
+  }
+  .btn-gps-retry:active { transform:scale(.98); }
+
+  /* ─────────────────────────────────────────
+     POINTED SUCCESS STATE
+  ───────────────────────────────────────── */
+  .pointed-box {
+    padding:20px;
+    border-radius:26px;
+    background:linear-gradient(160deg,rgba(16,185,129,.10),rgba(16,185,129,.04));
+    border:1px solid rgba(16,185,129,.22);
+    text-align:center;
+    animation:popIn .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes popIn {
+    from { transform:scale(.88); opacity:0; }
+    to   { transform:scale(1);   opacity:1; }
+  }
+
+  .pointed-check {
+    width:52px; height:52px;
+    border-radius:999px;
+    background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(16,185,129,.08));
+    border:2px solid rgba(16,185,129,.35);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 12px;
+    font-size:24px;
+  }
+
+  .pointed-time {
+    font-family:'Cormorant Garamond',serif;
+    font-size:3rem;
+    font-weight:700;
+    color:var(--green);
+    letter-spacing:.03em;
+    text-shadow:0 0 30px rgba(16,185,129,.3);
+    line-height:1;
+  }
+
+  /* ─────────────────────────────────────────
+     PLANNING BUTTON (inside app)
+  ───────────────────────────────────────── */
+  .btn-planning-inner {
+    background:linear-gradient(160deg,#2563eb,#1A4ED8);
+    color:#fff;
+    box-shadow:0 14px 32px rgba(37,99,235,.24), inset 0 1px 0 rgba(255,255,255,.15);
+    width:100%;
+    border-radius:22px;
+    padding:16px 20px;
+    font-size:14px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.10em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    transition:.18s cubic-bezier(.34,1.56,.64,1);
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-planning-inner:active { transform:scale(.975); }
+
+  /* ─────────────────────────────────────────
+     RESET DEVICE LINK
+  ───────────────────────────────────────── */
+  .btn-reset-device {
+    font-size:9px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    color:rgba(232,233,239,.28);
+    transition:.2s;
+    padding:8px;
+  }
+  .btn-reset-device:hover { color:rgba(232,233,239,.50); }
+
+  /* ─────────────────────────────────────────
+     ADMIN PANEL
+  ───────────────────────────────────────── */
+  .admin-wrap {
+    display:none;
+    flex-direction:column;
+    gap:10px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:22px;
+    padding:14px;
+    margin-top:10px;
+  }
+  .admin-list {
+    max-height:42vh;
+    overflow:auto;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.07);
+    background:rgba(0,0,0,.14);
+  }
+  .admin-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    font-size:11px;
+    font-weight:700;
+  }
+  .admin-row:last-child { border-bottom:none; }
+
+  .btn-reset-one {
+    background:rgba(239,68,68,.12);
+    color:#ffb5b5;
+    border:1px solid rgba(239,68,68,.20);
+    padding:6px 12px;
+    border-radius:12px;
+    font-weight:900;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    transition:.2s;
+  }
+  .btn-reset-all {
+    background:#2a0f0f;
+    color:#ffb5b5;
+    border:1px solid rgba(255,90,90,.28);
+    padding:12px;
+    border-radius:16px;
+    font-weight:900;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  /* ─────────────────────────────────────────
+     TOAST
+  ───────────────────────────────────────── */
+  .toast {
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom:24px; z-index:9999;
+    background:var(--toastBg);
+    border:1px solid var(--toastStroke);
+    color:#fff;
+    padding:11px 22px;
+    border-radius:18px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.04em;
+    display:none;
+    max-width:min(400px, calc(100vw - 24px));
+    text-align:center;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 20px 50px rgba(0,0,0,.55);
+    animation:toastIn .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes toastIn {
+    from { transform:translateX(-50%) translateY(10px) scale(.94); opacity:0; }
+    to   { transform:translateX(-50%) translateY(0)    scale(1);    opacity:1; }
+  }
+
+  /* ─────────────────────────────────────────
+     SCROLL
+  ───────────────────────────────────────── */
+  .scroll { overflow-y:auto; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
 </style>
 </head>
 
@@ -370,112 +712,137 @@
     <div class="content">
 
       <!-- HEADER -->
-      <div class="text-center flex-shrink-0">
-        <img id="logo" src="images/LOGO GREY CORNER.png" class="h-14 mx-auto cursor-pointer" alt="Grey Corner" />
+      <div class="logo-wrap flex-shrink-0">
+        <img id="logo" src="images/LOGO GREY CORNER.png" class="logo-img" alt="Grey Corner" />
       </div>
 
-      <!-- SESSION BAR (après login) -->
-      <div id="sessionBar" class="hidden mt-3 mb-2 flex items-center justify-between gap-2">
-        <div class="pill">
-          <span class="muted">Connecté :</span>
-          <span id="roleLabel" class="text-yellow-200">—</span>
+      <!-- SESSION BAR -->
+      <div id="sessionBar" class="hidden session-bar mt-2">
+        <div class="session-pill">
+          <span class="session-dot"></span>
+          <span class="muted" style="font-size:10px">Connecté :</span>
+          <span id="roleLabel" class="gold" style="font-size:11px;font-weight:900">—</span>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="btnLogout" type="button" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">
-            Déconnexion
-          </button>
-        </div>
+        <button id="btnLogout" type="button" class="btn-logout">Déconnexion</button>
       </div>
 
-      <!-- PUBLIC HOME (avant login) -->
+      <!-- PUBLIC HOME -->
       <div id="publicHome" class="public-stack">
-        <button type="button" onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')" class="btn-planning">
-          🗓️ CONSULTER LE PLANNING
+        <button type="button"
+          onclick="window.open('https://grey-corner-app.pages.dev/', '_blank', 'noopener,noreferrer')"
+          class="btn-base btn-planning">
+          🗓️ Consulter le Planning
         </button>
 
-        <a href="https://greycorner.pages.dev/" target="_blank" rel="noopener noreferrer" class="btn-menu">
-          🌙 MENU
+        <a href="https://greycorner.pages.dev/" target="_blank" rel="noopener noreferrer"
+          class="btn-base btn-menu" style="text-decoration:none">
+          🌙 Menu
         </a>
 
-        <button id="btnShowLogin" type="button" class="btn-connexion">
-          🔐 CONNEXION
+        <button id="btnShowLogin" type="button" class="btn-base btn-connexion">
+          🔐 Connexion
         </button>
 
-        <!-- HOME MSG -->
+        <!-- NOTE DE SERVICE -->
         <div id="homeMsg" class="hidden home-box">
-          <div class="text-[10px] font-black gold uppercase mb-1">Note de service</div>
-          <div id="homeMsgContent" class="text-[12px] font-bold">Chargement…</div>
+          <div class="label-caps mb-2">Note de service</div>
+          <div id="homeMsgContent" style="font-size:12px;font-weight:600;line-height:1.5">Chargement…</div>
         </div>
 
         <!-- LOGIN -->
-        <div id="loginWrap" class="hidden bg-white/5 border border-white/10 rounded-[22px] p-4">
-          <div class="text-[10px] font-black uppercase tracking-widest muted mb-2">Connexion</div>
+        <div id="loginWrap" class="hidden login-wrap">
+          <div class="label-caps mb-3">Connexion</div>
           <div class="space-y-2">
             <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
             <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
 
             <div id="pinBlock" class="hidden">
-              <input id="loginPin" class="inpt" type="password" maxlength="4" placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" />
-              <div class="hint mt-1">Le PIN sert uniquement à réinitialiser cet appareil.</div>
+              <input id="loginPin" class="inpt" type="password" maxlength="4"
+                placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" style="margin-top:8px"/>
+              <div class="hint mt-2">Le PIN sert uniquement à réinitialiser cet appareil.</div>
             </div>
 
-            <button id="btnLogin" type="button" class="btn-login">Se connecter</button>
-            <div id="loginMsg" class="text-[10px] font-black text-red-300"></div>
+            <button id="btnLogin" type="button" class="btn-login" style="margin-top:4px">Se connecter</button>
+            <div id="loginMsg" style="font-size:10px;font-weight:700;color:var(--red)"></div>
           </div>
         </div>
       </div>
 
-      <!-- BANNER (après login) -->
+      <!-- BANNER -->
       <div id="banner-wrap" class="banner-wrap">
         <div id="banner" class="banner"></div>
       </div>
 
       <div class="sep"></div>
 
-      <!-- APP (après login) -->
+      <!-- APP POINTAGE -->
       <div id="app-pointage" class="flex flex-col flex-grow overflow-y-auto hidden">
+
         <div id="selection" class="scroll flex-grow"></div>
 
-        <div id="planningPanel" class="mt-3 mb-1">
-          <button
-            type="button"
-            onclick="window.open('https://grey-corner-app.pages.dev/', '_blank')"
-            class="btn-planning"
-          >
-            🗓️ CONSULTER LE PLANNING
+        <!-- Planning (inside app) -->
+        <div id="planningPanel" class="mt-3 mb-2">
+          <button type="button"
+            onclick="window.open('https://grey-corner-app.pages.dev/', '_blank', 'noopener,noreferrer')"
+            class="btn-planning-inner">
+            🗓️ Consulter le Planning
           </button>
         </div>
 
+        <!-- ACTION ZONE -->
         <div id="action" class="hidden flex flex-col flex-grow justify-center">
-          <div class="text-center mb-2">
-            <div class="text-[10px] muted uppercase font-black tracking-widest">Appareil assigné à</div>
-            <div id="username" class="text-3xl font-black mt-1" style="color:var(--gold)">--</div>
+
+          <!-- Identité -->
+          <div class="text-center mb-6">
+            <div class="label-caps mb-2">Appareil assigné à</div>
+            <div id="username" class="username-display">--</div>
           </div>
 
-          <div id="pointage-zone" class="text-center">
-            <div id="status" class="text-[10px] mb-4 muted uppercase">Localisation GPS…</div>
-            <button id="btn" type="button" class="btn-main w-full" disabled>APPUYER POUR VALIDER</button>
-            <button id="btnRetryGPS" type="button" class="btn-gps-retry">📍 Réessayer GPS</button>
+          <!-- Pointage zone -->
+          <div id="pointage-zone" class="text-center space-y-4">
+
+            <!-- GPS status pill -->
+            <div style="display:flex;justify-content:center">
+              <div class="gps-pill" id="gpsPill">
+                <span class="gps-dot searching" id="gpsDot"></span>
+                <span id="status">Localisation GPS…</span>
+              </div>
+            </div>
+
+            <!-- Punch button with pulse wrap -->
+            <div class="btn-main-wrap" id="btnMainWrap">
+              <button id="btn" type="button" class="btn-main" disabled>
+                Appuyer pour valider
+              </button>
+            </div>
+
+            <button id="btnRetryGPS" type="button" class="btn-gps-retry">
+              📍 Réessayer GPS
+            </button>
           </div>
 
-          <button id="btnResetDevice" type="button" class="mt-8 text-[10px] uppercase tracking-widest" style="color:var(--muted)">
-            Réinitialiser l’appareil (PIN)
-          </button>
+          <!-- Reset device -->
+          <div class="text-center mt-8">
+            <button id="btnResetDevice" type="button" class="btn-reset-device">
+              Réinitialiser l'appareil (PIN)
+            </button>
+          </div>
         </div>
 
-        <!-- ADMIN -->
+        <!-- ADMIN PANEL -->
         <div id="adminWrap" class="admin-wrap">
-          <div class="admin-title">
-            <div class="text-[10px] font-black gold uppercase">Supervision (gérant)</div>
-            <button id="btnCloseAdmin" type="button" class="text-[10px] font-black px-3 py-2 rounded-full bg-white/10 border border-white/10">Fermer</button>
+          <div class="flex items-center justify-between gap-3">
+            <div class="label-caps gold">Supervision gérant</div>
+            <button id="btnCloseAdmin" type="button" class="btn-logout">Fermer</button>
           </div>
           <div class="admin-list" id="adminList"></div>
           <button id="btnResetAll" type="button" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
         </div>
-      </div>
 
-    </div>
-  </div>
+      </div><!-- /app-pointage -->
+
+    </div><!-- /content -->
+  </div><!-- /card -->
 
   <div id="toast" class="toast"></div>
 
@@ -506,16 +873,16 @@
     // ===== GPS =====
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
 
-    // ===== Messages (Google Sheet gviz) =====
+    // ===== Messages =====
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
 
-    // ===== Apps Script WebApp (export Sheet) =====
+    // ===== Apps Script =====
     const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
     const SECRET = "greycorner2026";
     const EMP_NODE_DEFAULT = "pointage";
 
     // =========================================================
-    // ✅ Date/Time dynamiques (corrige le bug J-1)
+    // ✅ Date/Time
     // =========================================================
     function currentDateStr(){
       return new Intl.DateTimeFormat('fr-CA',{
@@ -529,35 +896,30 @@
     }
 
     // =========================================================
-    // ✅ Helpers / UI
+    // ✅ Helpers
     // =========================================================
     let equipe = [];
     let equipeIndex = new Map();
     let equipeListenerAttached = false;
 
-    function normalizeText(x){ return String(x || "").trim().toUpperCase().replace(/\s+/g, " "); }
+    function normalizeText(x){ return String(x||"").trim().toUpperCase().replace(/\s+/g," "); }
     function normalizeRole(x){
-      const r = String(x || "").trim().toLowerCase();
-      const ok = ["caisse","bar","cuisine","menage","service"];
-      return ok.includes(r) ? r : "service";
+      const r=String(x||"").trim().toLowerCase();
+      return ["caisse","bar","cuisine","menage","service"].includes(r)?r:"service";
     }
     function normalizeEquipeSnapshot(val){
       if(!val) return [];
-      const arr = Array.isArray(val)
-        ? val.filter(Boolean)
-        : Object.keys(val).sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]).filter(Boolean);
-
-      const out = [];
-      const seen = new Set();
+      const arr=Array.isArray(val)
+        ?val.filter(Boolean)
+        :Object.keys(val).sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]).filter(Boolean);
+      const out=[], seen=new Set();
       for(const x of arr){
-        const nom = normalizeText(x.nom);
-        const prenom = normalizeText(x.prenom);
-        const poste = normalizeRole(x.poste);
-        if(!nom || !prenom) continue;
-        const full = `${nom} ${prenom}`;
+        const nom=normalizeText(x.nom), prenom=normalizeText(x.prenom), poste=normalizeRole(x.poste);
+        if(!nom||!prenom) continue;
+        const full=`${nom} ${prenom}`;
         if(seen.has(full)) continue;
         seen.add(full);
-        out.push({ n: full, t: poste });
+        out.push({n:full,t:poste});
       }
       return out;
     }
@@ -567,393 +929,318 @@
       t.textContent=msg;
       t.style.display="block";
       clearTimeout(toast._t);
-      toast._t=setTimeout(()=>t.style.display="none",2500);
+      toast._t=setTimeout(()=>{ t.style.display="none"; },2600);
     }
 
     function keyStaff(n){ return String(n||'').trim().replace(/\s+/g,'_').toUpperCase(); }
 
-    // ===== Local storage keys (date dynamique) =====
-    function punchDoneKey(dateStr, staffKey){ return `gc_punch_done__${dateStr}__${staffKey}`; }
-    function punchTimeKey(dateStr, staffKey){ return `gc_punch_time__${dateStr}__${staffKey}`; }
-    function isPunchedLocal(dateStr, staffKey){ return localStorage.getItem(punchDoneKey(dateStr, staffKey)) === "1"; }
-    function getPunchedTimeLocal(dateStr, staffKey){ return localStorage.getItem(punchTimeKey(dateStr, staffKey)) || ""; }
-    function setPunchedLocal(dateStr, staffKey, hhmm){
-      localStorage.setItem(punchDoneKey(dateStr, staffKey), "1");
-      if(hhmm) localStorage.setItem(punchTimeKey(dateStr, staffKey), hhmm);
+    function punchDoneKey(d,k){ return `gc_punch_done__${d}__${k}`; }
+    function punchTimeKey(d,k){ return `gc_punch_time__${d}__${k}`; }
+    function isPunchedLocal(d,k){ return localStorage.getItem(punchDoneKey(d,k))==="1"; }
+    function getPunchedTimeLocal(d,k){ return localStorage.getItem(punchTimeKey(d,k))||""; }
+    function setPunchedLocal(d,k,hhmm){
+      localStorage.setItem(punchDoneKey(d,k),"1");
+      if(hhmm) localStorage.setItem(punchTimeKey(d,k),hhmm);
     }
 
     // =========================================================
     // ✅ Role
     // =========================================================
     async function fetchRole(uid){
-      const snap = await db.ref("users/"+uid).once("value");
-      return snap.val() || null;
+      const snap=await db.ref("users/"+uid).once("value");
+      return snap.val()||null;
     }
 
     // =========================================================
-    // ✅ Sheet message fetch (avec timeout)
+    // ✅ Sheet message
     // =========================================================
-    async function fetchWithTimeout(url, ms=6500){
-      const ctrl = new AbortController();
-      const t = setTimeout(()=>ctrl.abort(), ms);
-      try{
-        const r = await fetch(url, { cache:"no-store", signal: ctrl.signal });
-        return r;
-      } finally {
-        clearTimeout(t);
-      }
+    async function fetchWithTimeout(url,ms=6500){
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(),ms);
+      try{ return await fetch(url,{cache:"no-store",signal:ctrl.signal}); }
+      finally{ clearTimeout(t); }
     }
 
     async function fetchSheetMessage(){
-      const r = await fetchWithTimeout(URL_MSG_SHEET, 6500);
-      const t = await r.text();
-      const json = JSON.parse(t.substr(47).slice(0,-2));
-      const rows = json?.table?.rows || [];
-      const typeRaw = rows[0]?.c?.[0]?.v || "";
-      const msgRaw  = rows[0]?.c?.[1]?.v || "";
-      return { type:String(typeRaw||"").trim().toUpperCase(), msg:String(msgRaw||"").trim() };
+      const r=await fetchWithTimeout(URL_MSG_SHEET,6500);
+      const t=await r.text();
+      const json=JSON.parse(t.substr(47).slice(0,-2));
+      const rows=json?.table?.rows||[];
+      return {
+        type:String(rows[0]?.c?.[0]?.v||"").trim().toUpperCase(),
+        msg:String(rows[0]?.c?.[1]?.v||"").trim()
+      };
     }
 
     async function loadHomeMsg(){
-      const box = document.getElementById("homeMsg");
-      const content = document.getElementById("homeMsgContent");
+      const box=document.getElementById("homeMsg");
+      const content=document.getElementById("homeMsgContent");
       try{
-        const {type,msg} = await fetchSheetMessage();
+        const {type,msg}=await fetchSheetMessage();
         if(!msg){ box.classList.add("hidden"); return; }
-        content.textContent = msg;
-        box.classList.remove("hidden");
-        box.classList.remove("msg-urgent","msg-info");
-        const urgent = (type==="URGENT") || msg.toUpperCase().includes("URGENT");
-        box.classList.add(urgent ? "msg-urgent" : "msg-info");
-      }catch(e){
-        box.classList.add("hidden");
-      }
+        content.textContent=msg;
+        box.classList.remove("hidden","msg-urgent","msg-info");
+        box.classList.add((type==="URGENT"||msg.toUpperCase().includes("URGENT"))?"msg-urgent":"msg-info");
+      }catch(e){ box.classList.add("hidden"); }
     }
 
     async function loadBanner(){
-      const wrap = document.getElementById("banner-wrap");
-      const banner = document.getElementById("banner");
+      const wrap=document.getElementById("banner-wrap");
+      const banner=document.getElementById("banner");
       try{
-        const {type,msg} = await fetchSheetMessage();
+        const {type,msg}=await fetchSheetMessage();
         if(!msg){ wrap.style.display="none"; return; }
         wrap.style.display="flex";
-        banner.textContent = msg;
-        banner.className = "banner";
-        const urgent = (type==="URGENT") || msg.toUpperCase().includes("URGENT");
-        banner.classList.add(urgent ? "msg-urgent" : "msg-info");
-      }catch(e){
-        wrap.style.display="none";
-      }
+        banner.textContent=msg;
+        banner.className="banner";
+        banner.classList.add((type==="URGENT"||msg.toUpperCase().includes("URGENT"))?"msg-urgent":"msg-info");
+      }catch(e){ wrap.style.display="none"; }
     }
 
     // =========================================================
-    // ✅ Login UI
+    // ✅ Login UI helpers
     // =========================================================
     function hasDevicePin(){ return !!localStorage.getItem('gc_device_pin'); }
     function showPinBlockIfNeeded(){
-      const pinBlock = document.getElementById('pinBlock');
-      if(!pinBlock) return;
-      if(!hasDevicePin()) pinBlock.classList.remove('hidden');
-      else pinBlock.classList.add('hidden');
+      const pb=document.getElementById('pinBlock');
+      if(!pb) return;
+      if(!hasDevicePin()) pb.classList.remove('hidden');
+      else pb.classList.add('hidden');
     }
 
     function showLoggedUI(){
       document.getElementById('sessionBar').classList.remove('hidden');
-      document.getElementById('roleLabel').textContent = (role||"—").toUpperCase();
+      document.getElementById('roleLabel').textContent=(role||"—").toUpperCase();
       document.getElementById('publicHome').classList.add('hidden');
       document.getElementById('app-pointage').classList.remove('hidden');
-
       loadBanner();
       clearInterval(window.__bannerInt);
-      window.__bannerInt = setInterval(loadBanner, 30000);
+      window.__bannerInt=setInterval(loadBanner,30000);
     }
 
     function showLoginUI(){
       document.getElementById('sessionBar').classList.add('hidden');
       document.getElementById('publicHome').classList.remove('hidden');
       document.getElementById('app-pointage').classList.add('hidden');
-
       loadHomeMsg();
       clearInterval(window.__homeInt);
-      window.__homeInt = setInterval(loadHomeMsg, 30000);
+      window.__homeInt=setInterval(loadHomeMsg,30000);
     }
 
-    document.getElementById("btnShowLogin").addEventListener("click", () => {
-      const wrap = document.getElementById("loginWrap");
+    document.getElementById("btnShowLogin").addEventListener("click",()=>{
+      const wrap=document.getElementById("loginWrap");
       wrap.classList.toggle("hidden");
       showPinBlockIfNeeded();
     });
 
+    // Enter sur login
+    document.getElementById("loginPass").addEventListener("keydown", e=>{
+      if(e.key==="Enter") document.getElementById("btnLogin").click();
+    });
+
     function prettyAuthError(e){
-      const code = String(e?.code || "");
-      if(code === "auth/user-not-found") return "Compte introuvable.";
-      if(code === "auth/wrong-password") return "Mot de passe incorrect.";
-      if(code === "auth/invalid-email") return "Email invalide.";
-      if(code === "auth/too-many-requests") return "Trop de tentatives. Réessaie plus tard.";
-      if(code === "auth/network-request-failed") return "Problème réseau.";
-      return e?.message || "Erreur de connexion.";
+      const c=String(e?.code||"");
+      if(c==="auth/user-not-found") return "Compte introuvable.";
+      if(c==="auth/wrong-password") return "Mot de passe incorrect.";
+      if(c==="auth/invalid-email") return "Email invalide.";
+      if(c==="auth/too-many-requests") return "Trop de tentatives. Réessaie plus tard.";
+      if(c==="auth/network-request-failed") return "Problème réseau.";
+      return e?.message||"Erreur de connexion.";
     }
 
-    document.addEventListener("click", async (e) => {
-      const btn = e.target.closest("#btnLogin");
+    document.addEventListener("click",async(e)=>{
+      const btn=e.target.closest("#btnLogin");
       if(!btn) return;
-
-      const email = (document.getElementById("loginEmail").value||"").trim();
-      const pass  = (document.getElementById("loginPass").value||"").trim();
-      const pin   = (document.getElementById("loginPin")?.value||"").trim();
-      const msgEl = document.getElementById("loginMsg");
-      msgEl.textContent = "";
-
-      if(!email || !pass){
-        msgEl.textContent = "Email et mot de passe requis.";
-        return;
-      }
-      if(!hasDevicePin() && !/^\d{4}$/.test(pin)){
-        msgEl.textContent = "PIN requis (4 chiffres).";
-        return;
-      }
-
-      btn.disabled = true;
-
+      const email=(document.getElementById("loginEmail").value||"").trim();
+      const pass=(document.getElementById("loginPass").value||"").trim();
+      const pin=(document.getElementById("loginPin")?.value||"").trim();
+      const msgEl=document.getElementById("loginMsg");
+      msgEl.textContent="";
+      if(!email||!pass){ msgEl.textContent="Email et mot de passe requis."; return; }
+      if(!hasDevicePin()&&!/^\d{4}$/.test(pin)){ msgEl.textContent="PIN requis (4 chiffres)."; return; }
+      btn.disabled=true;
       try{
-        const res = await auth.signInWithEmailAndPassword(email, pass);
-        const r = await fetchRole(res.user.uid);
-
-        if(r !== "gerant" && r !== "equipe"){
+        const res=await auth.signInWithEmailAndPassword(email,pass);
+        const r=await fetchRole(res.user.uid);
+        if(r!=="gerant"&&r!=="equipe"){
           await auth.signOut();
-          msgEl.textContent = "Compte non autorisé.";
-          btn.disabled = false;
-          return;
+          msgEl.textContent="Compte non autorisé.";
+          btn.disabled=false; return;
         }
-
-        if(!hasDevicePin()) localStorage.setItem('gc_device_pin', pin);
+        if(!hasDevicePin()) localStorage.setItem('gc_device_pin',pin);
         location.reload();
       }catch(err){
-        msgEl.textContent = prettyAuthError(err);
-        btn.disabled = false;
+        msgEl.textContent=prettyAuthError(err);
+        btn.disabled=false;
       }
     });
 
-    document.getElementById("btnLogout").addEventListener("click", async () => {
+    document.getElementById("btnLogout").addEventListener("click",async()=>{
       try{ await auth.signOut(); }catch(e){}
       location.reload();
     });
 
-    document.getElementById("btnResetDevice").addEventListener("click", () => {
-      const currentPin = localStorage.getItem('gc_device_pin');
-
+    document.getElementById("btnResetDevice").addEventListener("click",()=>{
+      const currentPin=localStorage.getItem('gc_device_pin');
       if(!currentPin){
-        const newPin = prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
-        if(newPin === null) return;
+        const newPin=prompt("Aucun PIN sur cet appareil.\nCréez un PIN (4 chiffres) :");
+        if(newPin===null) return;
         if(!/^\d{4}$/.test(newPin)){ toast("PIN invalide ❌"); return; }
-        localStorage.setItem('gc_device_pin', newPin);
-        toast("PIN créé ✅");
-        return;
+        localStorage.setItem('gc_device_pin',newPin);
+        toast("PIN créé ✅"); return;
       }
-
-      const pin = prompt("Entrez votre PIN (4 chiffres) :");
-      if(pin === null) return;
-      if(pin === currentPin){
+      const pin=prompt("Entrez votre PIN (4 chiffres) :");
+      if(pin===null) return;
+      if(pin===currentPin){
         localStorage.clear();
         toast("Appareil réinitialisé ✅");
-        setTimeout(()=>location.reload(), 400);
-      }else{
-        toast("PIN incorrect ❌");
-      }
+        setTimeout(()=>location.reload(),400);
+      }else{ toast("PIN incorrect ❌"); }
     });
 
     // =========================================================
-    // ✅ Liste équipe
+    // ✅ Équipe UI
     // =========================================================
-    let role = null;
-    let selected = localStorage.getItem('gc_staff_name') || null;
+    let role=null;
+    let selected=localStorage.getItem('gc_staff_name')||null;
 
     function genererListeUI(){
-      const sel = document.getElementById('selection');
-      sel.innerHTML = `<div class="text-center text-[10px] muted uppercase font-black mb-2">Choisi ton nom (1ère fois)</div>`;
-
+      const sel=document.getElementById('selection');
+      sel.innerHTML=`<div class="label-caps text-center mb-3 mt-1">Choisir ton nom</div>`;
       if(!equipe.length){
-        const msg = document.createElement('div');
-        msg.className="text-center text-[11px] font-black mt-4";
-        msg.style.color = "var(--muted)";
+        const msg=document.createElement('div');
+        msg.style.cssText="text-align:center;font-size:11px;font-weight:700;color:var(--muted);margin-top:16px";
         msg.textContent="Aucun collaborateur (settings/equipe).";
-        sel.appendChild(msg);
-        return;
+        sel.appendChild(msg); return;
       }
-
-      const cats = ["caisse","bar","cuisine","menage","service"];
-      cats.forEach(cat => {
-        const staff = equipe.filter(e => e.t === cat);
-        if(staff.length === 0) return;
-
-        const h = document.createElement('div');
+      const cats=["caisse","bar","cuisine","menage","service"];
+      cats.forEach(cat=>{
+        const staff=equipe.filter(e=>e.t===cat);
+        if(!staff.length) return;
+        const h=document.createElement('div');
         h.className="drawer-header";
-        h.innerHTML=`<span class="gold text-[10px] font-black uppercase">${cat}</span><span class="gold text-[10px]">▼</span>`;
-
-        const cont = document.createElement('div');
+        h.innerHTML=`<span class="poste-badge">${cat}</span><span class="gold" style="font-size:11px;opacity:.7">▼</span>`;
+        const cont=document.createElement('div');
         cont.className="hidden grid grid-cols-2 gap-2 py-3";
-        h.onclick = () => cont.classList.toggle('hidden');
-
-        staff.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
-          const b = document.createElement('button');
-          b.className = "staff-btn";
-          b.textContent = emp.n;
-          b.onclick = () => {
-            if(confirm(emp.n + " ?")){
-              localStorage.setItem('gc_staff_name', emp.n);
+        h.onclick=()=>cont.classList.toggle('hidden');
+        staff.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp=>{
+          const b=document.createElement('button');
+          b.className="staff-btn"; b.textContent=emp.n;
+          b.onclick=()=>{
+            if(confirm(emp.n+" ?")){
+              localStorage.setItem('gc_staff_name',emp.n);
               location.reload();
             }
           };
           cont.appendChild(b);
         });
-
-        sel.appendChild(h);
-        sel.appendChild(cont);
+        sel.appendChild(h); sel.appendChild(cont);
       });
     }
 
     // =========================================================
-    // ✅ GPS: fiable + retry + bouton jamais actif pendant la recherche
+    // ✅ GPS
     // =========================================================
-    let gpsState = "idle";
-    let gpsLastCheckedKey = "";
+    let gpsState="idle";
+    let gpsLastCheckedKey="";
 
     function getDist(a,b,c,d){
-      const R=6371e3;
-      const dLat=(c-a)*Math.PI/180;
-      const dLon=(d-b)*Math.PI/180;
-      const q=Math.sin(dLat/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+      const R=6371e3,dLat=(c-a)*Math.PI/180,dLon=(d-b)*Math.PI/180;
+      const q=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
       return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
 
     function setPunchButtonEnabled(enabled){
-      const btn = document.getElementById('btn');
-      if(!btn) return;
-      btn.disabled = !enabled;
+      const btn=document.getElementById('btn');
+      const wrap=document.getElementById('btnMainWrap');
+      if(!btn||!wrap) return;
+      btn.disabled=!enabled;
+      if(enabled) wrap.classList.add('gps-ready');
+      else wrap.classList.remove('gps-ready');
     }
 
     function showRetryGPS(show){
-      const b = document.getElementById('btnRetryGPS');
-      if(!b) return;
-      b.style.display = show ? "block" : "none";
+      const b=document.getElementById('btnRetryGPS');
+      if(b) b.style.display=show?"block":"none";
     }
 
-    function updateGpsUI({msgHtml, canPunch, showRetry}){
-      const status = document.getElementById('status');
-      if(status) status.innerHTML = msgHtml;
+    function updateGpsDot(state){
+      const dot=document.getElementById('gpsDot');
+      if(!dot) return;
+      dot.className="gps-dot "+state;
+    }
+
+    function updateGpsUI({text, textColor, dotState, canPunch, showRetry}){
+      const status=document.getElementById('status');
+      if(status){
+        status.textContent=text||"";
+        status.style.color=textColor||"var(--muted)";
+      }
+      updateGpsDot(dotState||"searching");
       setPunchButtonEnabled(!!canPunch);
       showRetryGPS(!!showRetry);
     }
 
     async function checkGPS(force=false){
       if(!selected) return;
-
-      const staffKey = keyStaff(selected);
-      const dStr = currentDateStr();
-
-      if(isPunchedLocal(dStr, staffKey)){
-        setPunchButtonEnabled(false);
-        showRetryGPS(false);
-        return;
-      }
-
-      const lockKey = `${dStr}__${staffKey}`;
-      if(!force && gpsLastCheckedKey === lockKey && (gpsState==="ok" || gpsState==="bad" || gpsState==="denied" || gpsState==="error")){
-        return;
-      }
-      gpsLastCheckedKey = lockKey;
-
-      gpsState = "searching";
-      updateGpsUI({
-        msgHtml: `<span style="color:rgba(232,233,239,.75);font-weight:900;text-transform:uppercase">Recherche GPS…</span>`,
-        canPunch: false,
-        showRetry: false
-      });
-
+      const staffKey=keyStaff(selected);
+      const dStr=currentDateStr();
+      if(isPunchedLocal(dStr,staffKey)){ setPunchButtonEnabled(false); showRetryGPS(false); return; }
+      const lockKey=`${dStr}__${staffKey}`;
+      if(!force&&gpsLastCheckedKey===lockKey&&(gpsState==="ok"||gpsState==="bad"||gpsState==="denied"||gpsState==="error")) return;
+      gpsLastCheckedKey=lockKey;
+      gpsState="searching";
+      updateGpsUI({text:"Recherche GPS…",textColor:"var(--muted)",dotState:"searching",canPunch:false,showRetry:false});
       if(!navigator.geolocation){
-        gpsState = "error";
-        updateGpsUI({
-          msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS indisponible sur cet appareil</span>`,
-          canPunch: false,
-          showRetry: true
-        });
-        return;
+        gpsState="error";
+        updateGpsUI({text:"GPS indisponible",textColor:"var(--red)",dotState:"error",canPunch:false,showRetry:true}); return;
       }
-
-      navigator.geolocation.getCurrentPosition(p => {
-        const d = getDist(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
-
-        if(d <= RAYON_MAX){
-          gpsState = "ok";
-          updateGpsUI({
-            msgHtml: `<span style="color:#10b981;font-weight:900;text-transform:uppercase">Zone Grey Corner OK</span>`,
-            canPunch: true,
-            showRetry: false
-          });
+      navigator.geolocation.getCurrentPosition(p=>{
+        const d=getDist(p.coords.latitude,p.coords.longitude,CAFE_LAT,CAFE_LON);
+        if(d<=RAYON_MAX){
+          gpsState="ok";
+          updateGpsUI({text:"Zone Grey Corner ✓",textColor:"var(--green)",dotState:"ok",canPunch:true,showRetry:false});
         }else{
-          gpsState = "bad";
-          updateGpsUI({
-            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">Hors zone (${Math.round(d)}m)</span>`,
-            canPunch: false,
-            showRetry: true
-          });
+          gpsState="bad";
+          updateGpsUI({text:`Hors zone · ${Math.round(d)}m`,textColor:"var(--red)",dotState:"bad",canPunch:false,showRetry:true});
         }
-      }, err => {
-        const code = err?.code;
-        if(code === 1){
-          gpsState = "denied";
-          updateGpsUI({
-            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS refusé — autorise “Position” puis réessaye</span>`,
-            canPunch: false,
-            showRetry: true
-          });
-        }else if(code === 3){
-          gpsState = "error";
-          updateGpsUI({
-            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">GPS trop lent — réessaye</span>`,
-            canPunch: false,
-            showRetry: true
-          });
-        }else{
-          gpsState = "error";
-          updateGpsUI({
-            msgHtml: `<span style="color:#ef4444;font-weight:900;text-transform:uppercase">Erreur GPS — réessaye</span>`,
-            canPunch: false,
-            showRetry: true
-          });
-        }
-      }, {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0
-      });
+      },err=>{
+        const code=err?.code;
+        gpsState=code===1?"denied":"error";
+        const txt=code===1?"GPS refusé — autorise la position":code===3?"GPS trop lent":"Erreur GPS";
+        updateGpsUI({text:txt,textColor:"var(--red)",dotState:gpsState,canPunch:false,showRetry:true});
+      },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
     }
 
-    document.getElementById("btnRetryGPS").addEventListener("click", () => checkGPS(true));
+    document.getElementById("btnRetryGPS").addEventListener("click",()=>checkGPS(true));
 
     // =========================================================
-    // ✅ Pointage UI (sans remplacer tout pointage-zone)
+    // ✅ Pointage success UI
     // =========================================================
-    function renderPointedUI(hhmm, dStr){
-      const zone = document.getElementById('pointage-zone');
+    function renderPointedUI(hhmm,dStr){
+      const zone=document.getElementById('pointage-zone');
       if(!zone) return;
 
-      const status = document.getElementById('status');
-      if(status) status.innerHTML = `<span style="color:#10b981;font-weight:900;text-transform:uppercase">POINTÉ ✅</span>`;
-
-      let box = document.getElementById("pointedBox");
-      if(!box){
-        box = document.createElement("div");
-        box.id = "pointedBox";
-        box.className = "mt-3 p-4 rounded-3xl";
-        box.style.background = "var(--surface2)";
-        box.style.border = "1px solid var(--stroke)";
-        zone.insertBefore(box, document.getElementById("btn"));
+      const status=document.getElementById('status');
+      if(status){
+        status.textContent="Pointé ✓";
+        status.style.color="var(--green)";
       }
-      box.innerHTML = `
-        <div style="color:#10b981" class="font-black text-xl">POINTÉ ✅</div>
-        <div class="text-2xl font-black mt-1">${hhmm ? hhmm : "—"}</div>
-        <div class="text-[10px] font-black mt-2" style="color:var(--muted)">${dStr}</div>
+      updateGpsDot("ok");
+
+      let box=document.getElementById("pointedBox");
+      if(!box){
+        box=document.createElement("div");
+        box.id="pointedBox";
+        box.className="pointed-box";
+        const btnEl=document.getElementById("btn");
+        zone.insertBefore(box,btnEl);
+      }
+      box.innerHTML=`
+        <div class="pointed-check">✅</div>
+        <div class="label-caps mb-1" style="color:var(--green);opacity:.8">Présence enregistrée</div>
+        <div class="pointed-time">${hhmm||"—"}</div>
+        <div class="label-caps mt-3" style="font-size:9px;opacity:.5">${dStr}</div>
       `;
 
       setPunchButtonEnabled(false);
@@ -961,174 +1248,101 @@
     }
 
     // =========================================================
-    // ✅ Export Sheet (en arrière-plan, non bloquant)
+    // ✅ Export Sheet
     // =========================================================
-    function buildGasUrl(paramsObj){
-      const sp = new URLSearchParams(paramsObj);
-      return GAS_EXEC_URL + "?" + sp.toString();
-    }
+    function buildGasUrl(p){ return GAS_EXEC_URL+"?"+new URLSearchParams(p).toString(); }
 
-    async function sendPunchToSheetBackground({date, empNode, empKey, hA, timestamp}){
-      const url = buildGasUrl({
-        action: "punch",
-        secret: SECRET,
-        date: date,
-        empNode: empNode,
-        empKey: empKey,
-        hA: hA,
-        status: "punch",
-        timestamp: String(timestamp)
-      });
-
-      try{
-        await fetchWithTimeout(url, 6000);
-      }catch(e){
-      }
+    async function sendPunchToSheetBackground({date,empNode,empKey,hA,timestamp}){
+      const url=buildGasUrl({action:"punch",secret:SECRET,date,empNode,empKey,hA,status:"punch",timestamp:String(timestamp)});
+      try{ await fetchWithTimeout(url,6000); }catch(e){}
     }
 
     // =========================================================
-    // ✅ Punch: Firebase bloquant, Sheet en arrière-plan
+    // ✅ Punch
     // =========================================================
-    document.getElementById('btn').addEventListener("click", async () => {
+    document.getElementById('btn').addEventListener("click",async()=>{
       if(!selected) return;
-
-      const staffKey = keyStaff(selected);
-      const dStr = currentDateStr();
-      const hA   = currentTimeHHMM();
-      const ts   = Date.now();
-
+      const staffKey=keyStaff(selected);
+      const dStr=currentDateStr();
+      const hA=currentTimeHHMM();
+      const ts=Date.now();
       setPunchButtonEnabled(false);
-
-      if(isPunchedLocal(dStr, staffKey)){
-        toast("Déjà pointé aujourd’hui ✅");
-        renderPointedUI(getPunchedTimeLocal(dStr, staffKey), dStr);
-        return;
-      }
-
-      if(gpsState !== "ok"){
-        toast("GPS non validé ❌");
-        checkGPS(true);
-        return;
-      }
-
-      const payload = { empKey: staffKey, hA, retard:false, retardMin:0, timestamp: ts };
-      try{
-        await db.ref('punches/'+dStr+'/'+staffKey).set(payload);
-      }catch(e){
-        toast("Erreur Firebase ❌");
-        setPunchButtonEnabled(gpsState==="ok");
-        showRetryGPS(gpsState!=="ok");
-        return;
-      }
-
-      setPunchedLocal(dStr, staffKey, hA);
+      if(isPunchedLocal(dStr,staffKey)){ toast("Déjà pointé aujourd'hui ✅"); renderPointedUI(getPunchedTimeLocal(dStr,staffKey),dStr); return; }
+      if(gpsState!=="ok"){ toast("GPS non validé ❌"); checkGPS(true); return; }
+      const payload={empKey:staffKey,hA,retard:false,retardMin:0,timestamp:ts};
+      try{ await db.ref('punches/'+dStr+'/'+staffKey).set(payload); }
+      catch(e){ toast("Erreur Firebase ❌"); setPunchButtonEnabled(gpsState==="ok"); showRetryGPS(gpsState!=="ok"); return; }
+      setPunchedLocal(dStr,staffKey,hA);
       toast("Pointage enregistré ✅");
-      renderPointedUI(hA, dStr);
-
-      sendPunchToSheetBackground({
-        date: dStr,
-        empNode: selected || EMP_NODE_DEFAULT,
-        empKey: staffKey,
-        hA,
-        timestamp: ts
-      });
+      renderPointedUI(hA,dStr);
+      sendPunchToSheetBackground({date:dStr,empNode:selected||EMP_NODE_DEFAULT,empKey:staffKey,hA,timestamp:ts});
     });
 
     // =========================================================
     // ✅ Reset listeners
     // =========================================================
     function attachResetListener(){
-      const bc = db.ref('broadcast');
-
+      const bc=db.ref('broadcast');
       if(selected){
-        const staffKey = keyStaff(selected);
-        bc.child('resets/'+staffKey).on('value', s => {
-          const v = s.val();
-          if(!v) return;
-
-          const ackKey = `gc_ack_reset_one__${staffKey}`;
-          const last = Number(sessionStorage.getItem(ackKey) || 0);
-          if(Number(v) <= last) return;
-
-          sessionStorage.setItem(ackKey, String(v));
-          toast("Reset reçu ✅");
-          localStorage.clear();
-          setTimeout(()=>location.reload(), 250);
+        const staffKey=keyStaff(selected);
+        bc.child('resets/'+staffKey).on('value',s=>{
+          const v=s.val(); if(!v) return;
+          const ackKey=`gc_ack_reset_one__${staffKey}`;
+          const last=Number(sessionStorage.getItem(ackKey)||0);
+          if(Number(v)<=last) return;
+          sessionStorage.setItem(ackKey,String(v));
+          toast("Reset reçu ✅"); localStorage.clear();
+          setTimeout(()=>location.reload(),250);
         });
       }
-
-      bc.child('resetPunchesAt').on('value', s => {
-        const v = s.val();
-        if(!v) return;
-
-        const last = Number(sessionStorage.getItem('gc_ack_resetPunchesAt') || 0);
-        if(Number(v) <= last) return;
-
-        sessionStorage.setItem('gc_ack_resetPunchesAt', String(v));
-        toast("Reset global reçu ✅");
-        localStorage.clear();
-        setTimeout(()=>location.reload(), 250);
+      bc.child('resetPunchesAt').on('value',s=>{
+        const v=s.val(); if(!v) return;
+        const last=Number(sessionStorage.getItem('gc_ack_resetPunchesAt')||0);
+        if(Number(v)<=last) return;
+        sessionStorage.setItem('gc_ack_resetPunchesAt',String(v));
+        toast("Reset global reçu ✅"); localStorage.clear();
+        setTimeout(()=>location.reload(),250);
       });
-
-      bc.child('resetPinsAt').on('value', s => {
-        const v = s.val();
-        if(!v) return;
-
-        const last = Number(sessionStorage.getItem('gc_ack_resetPinsAt') || 0);
-        if(Number(v) <= last) return;
-
-        sessionStorage.setItem('gc_ack_resetPinsAt', String(v));
+      bc.child('resetPinsAt').on('value',s=>{
+        const v=s.val(); if(!v) return;
+        const last=Number(sessionStorage.getItem('gc_ack_resetPinsAt')||0);
+        if(Number(v)<=last) return;
+        sessionStorage.setItem('gc_ack_resetPinsAt',String(v));
         toast("Reset PIN reçu ✅");
-        localStorage.removeItem('gc_device_pin');
-        localStorage.removeItem('gc_staff_name');
-        setTimeout(()=>location.reload(), 250);
+        localStorage.removeItem('gc_device_pin'); localStorage.removeItem('gc_staff_name');
+        setTimeout(()=>location.reload(),250);
       });
     }
 
     // =========================================================
-    // ✅ Admin (safe-ish: pas de HTML injecté via noms)
+    // ✅ Admin
     // =========================================================
     function openAdmin(silent=false){
-      if(role !== "gerant") return;
-
-      document.getElementById('adminWrap').style.display = "flex";
+      if(role!=="gerant") return;
+      document.getElementById('adminWrap').style.display="flex";
       document.getElementById('selection').classList.add('hidden');
       document.getElementById('action').classList.add('hidden');
-      document.getElementById('planningPanel').style.display = "none";
-
-      const list = document.getElementById('adminList');
-      list.innerHTML = "";
-
-      equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp => {
-        const row = document.createElement('div');
-        row.className = "admin-row";
-
-        const left = document.createElement("div");
-        left.className = "font-black";
-        left.textContent = emp.n;
-
-        const btn = document.createElement("button");
-        btn.className = "btn-reset-one";
-        btn.type = "button";
-        btn.textContent = "Reset";
-        btn.onclick = () => {
-          if(confirm("Réinitialiser le mobile de " + emp.n + " ?")){
+      document.getElementById('planningPanel').style.display="none";
+      const list=document.getElementById('adminList');
+      list.innerHTML="";
+      equipe.slice().sort((a,b)=>a.n.localeCompare(b.n)).forEach(emp=>{
+        const row=document.createElement('div'); row.className="admin-row";
+        const left=document.createElement("div"); left.className="font-black"; left.textContent=emp.n;
+        const btn=document.createElement("button"); btn.className="btn-reset-one"; btn.type="button"; btn.textContent="Reset";
+        btn.onclick=()=>{
+          if(confirm("Réinitialiser le mobile de "+emp.n+" ?")){
             db.ref(`broadcast/resets/${keyStaff(emp.n)}`).set(Date.now());
             toast("Signal reset envoyé ✅");
           }
         };
-
-        row.appendChild(left);
-        row.appendChild(btn);
-        list.appendChild(row);
+        row.appendChild(left); row.appendChild(btn); list.appendChild(row);
       });
-
       if(!silent) toast("Supervision activée 🛠️");
     }
 
-    document.getElementById('btnCloseAdmin').addEventListener("click", () => {
-      document.getElementById('adminWrap').style.display = "none";
-      document.getElementById('planningPanel').style.display = "block";
+    document.getElementById('btnCloseAdmin').addEventListener("click",()=>{
+      document.getElementById('adminWrap').style.display="none";
+      document.getElementById('planningPanel').style.display="block";
       if(selected){
         document.getElementById('selection').classList.add('hidden');
         document.getElementById('action').classList.remove('hidden');
@@ -1138,102 +1352,72 @@
       }
     });
 
-    document.getElementById('btnResetAll').addEventListener("click", () => {
-      if(role !== "gerant") return;
+    document.getElementById('btnResetAll').addEventListener("click",()=>{
+      if(role!=="gerant") return;
       if(confirm("Réinitialiser TOUS les mobiles ?")){
         db.ref('broadcast/resetPunchesAt').set(Date.now());
         toast("Reset global envoyé ✅");
       }
     });
 
-    let logoClicks=0, logoTimer;
-    document.getElementById("logo").addEventListener("click", () => {
+    let logoClicks=0,logoTimer;
+    document.getElementById("logo").addEventListener("click",()=>{
       logoClicks++;
       clearTimeout(logoTimer);
-      if(logoClicks === 3){
-        logoClicks = 0;
-        if(role === "gerant") openAdmin(false);
+      if(logoClicks===3){
+        logoClicks=0;
+        if(role==="gerant") openAdmin(false);
         else toast("Supervision: réservé au gérant");
       }
-      logoTimer = setTimeout(()=>logoClicks=0, 650);
+      logoTimer=setTimeout(()=>logoClicks=0,650);
     });
 
     // =========================================================
-    // ✅ Équipe listener (NE relance PAS GPS à chaque update)
+    // ✅ Équipe listener
     // =========================================================
     function attachEquipeListener(){
       if(equipeListenerAttached) return;
-      equipeListenerAttached = true;
-
-      db.ref("settings/equipe").on("value", (snap) => {
-        equipe = normalizeEquipeSnapshot(snap.val());
-
-        equipeIndex = new Map();
-        equipe.forEach(e => equipeIndex.set(keyStaff(e.n), e));
-
+      equipeListenerAttached=true;
+      db.ref("settings/equipe").on("value",(snap)=>{
+        equipe=normalizeEquipeSnapshot(snap.val());
+        equipeIndex=new Map();
+        equipe.forEach(e=>equipeIndex.set(keyStaff(e.n),e));
         if(selected){
-          const k = keyStaff(selected);
-          if(!equipeIndex.has(k)){
-            localStorage.removeItem('gc_staff_name');
-            selected = null;
-          }
+          const k=keyStaff(selected);
+          if(!equipeIndex.has(k)){ localStorage.removeItem('gc_staff_name'); selected=null; }
         }
-
         if(selected){
           document.getElementById('selection').classList.add('hidden');
           document.getElementById('action').classList.remove('hidden');
-          document.getElementById('planningPanel').style.display = "block";
-          document.getElementById('username').textContent = selected;
-
-          const dStr = currentDateStr();
-          const staffKey = keyStaff(selected);
-
-          if(isPunchedLocal(dStr, staffKey)){
-            renderPointedUI(getPunchedTimeLocal(dStr, staffKey), dStr);
-          }else{
-            checkGPS(false);
-          }
+          document.getElementById('planningPanel').style.display="block";
+          document.getElementById('username').textContent=selected;
+          const dStr=currentDateStr();
+          const staffKey=keyStaff(selected);
+          if(isPunchedLocal(dStr,staffKey)) renderPointedUI(getPunchedTimeLocal(dStr,staffKey),dStr);
+          else checkGPS(false);
         }else{
           document.getElementById('selection').classList.remove('hidden');
           document.getElementById('action').classList.add('hidden');
-          document.getElementById('planningPanel').style.display = "block";
+          document.getElementById('planningPanel').style.display="block";
           genererListeUI();
         }
-
-        if(document.getElementById('adminWrap').style.display === "flex"){
-          openAdmin(true);
-        }
+        if(document.getElementById('adminWrap').style.display==="flex") openAdmin(true);
       });
     }
 
     // =========================================================
     // ✅ Auth
     // =========================================================
-    auth.onAuthStateChanged(async (user) => {
-      if(!user){
-        role = null;
-        showLoginUI();
-        showPinBlockIfNeeded();
-        return;
+    auth.onAuthStateChanged(async(user)=>{
+      if(!user){ role=null; showLoginUI(); showPinBlockIfNeeded(); return; }
+      role=await fetchRole(user.uid);
+      if(role!=="gerant"&&role!=="equipe"){
+        await auth.signOut(); role=null; showLoginUI(); showPinBlockIfNeeded(); return;
       }
-
-      role = await fetchRole(user.uid);
-      if(role !== "gerant" && role !== "equipe"){
-        await auth.signOut();
-        role = null;
-        showLoginUI();
-        showPinBlockIfNeeded();
-        return;
-      }
-
-      showLoggedUI();
-      showPinBlockIfNeeded();
-
-      attachEquipeListener();
-      attachResetListener();
-
-      document.getElementById('adminWrap').style.display = "none";
-      document.getElementById('planningPanel').style.display = "block";
+      showLoggedUI(); showPinBlockIfNeeded();
+      attachEquipeListener(); attachResetListener();
+      document.getElementById('adminWrap').style.display="none";
+      document.getElementById('planningPanel').style.display="block";
       document.getElementById('selection').classList.remove('hidden');
       document.getElementById('action').classList.add('hidden');
     });
