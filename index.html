@@ -8,46 +8,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
 
 <style>
-  /* ─────────────────────────────────────────
-     DESIGN TOKENS
-  ───────────────────────────────────────── */
   :root{
     --bg-a:#111827;
     --bg-b:#1a2540;
     --radial1:rgba(255,200,90,.11);
     --radial2:rgba(37,99,235,.10);
-
     --card-a:rgba(22,28,48,.88);
     --card-b:rgba(14,20,38,.94);
     --card-stroke:rgba(255,255,255,.10);
     --card-inset:rgba(255,255,255,.05);
     --card-shadow:0 48px 100px rgba(5,10,30,.85);
     --card-glow:0 0 70px rgba(255,200,90,.09);
-
     --text:#e8e9ef;
     --muted:rgba(232,233,239,.58);
-
     --gold:#ffd68a;
     --gold2:#ffb347;
     --gold-dim:rgba(255,214,138,.18);
     --gold-stroke:rgba(255,214,138,.28);
-
     --surface:rgba(255,255,255,.06);
     --surface2:rgba(255,255,255,.045);
     --stroke:rgba(255,255,255,.09);
-
     --green:#10b981;
     --red:#ef4444;
     --amber:#f59e0b;
-
     --toastBg:rgba(0,0,0,.88);
     --toastStroke:rgba(255,255,255,.12);
     --bannerBar:rgba(3,4,10,0.80);
   }
 
-  /* ─────────────────────────────────────────
-     BASE
-  ───────────────────────────────────────── */
   *, *::before, *::after { box-sizing:border-box; }
 
   html, body {
@@ -65,7 +53,6 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* noise overlay */
   body::before {
     content:"";
     position:fixed;
@@ -77,9 +64,6 @@
     background-size:180px;
   }
 
-  /* ─────────────────────────────────────────
-     CARD
-  ───────────────────────────────────────── */
   .card {
     width:100%;
     max-width:420px;
@@ -101,7 +85,6 @@
     overflow:hidden;
   }
 
-  /* shimmer halo top */
   .card::before {
     content:"";
     position:absolute;
@@ -133,9 +116,6 @@
     flex:1;
   }
 
-  /* ─────────────────────────────────────────
-     TYPOGRAPHY
-  ───────────────────────────────────────── */
   .display { font-family:'Cormorant Garamond', serif; }
   .gold { color:var(--gold); letter-spacing:.06em; }
   .muted { color:var(--muted); }
@@ -147,9 +127,6 @@
     color:var(--muted);
   }
 
-  /* ─────────────────────────────────────────
-     LOGO
-  ───────────────────────────────────────── */
   .logo-wrap {
     display:flex;
     justify-content:center;
@@ -164,9 +141,6 @@
   }
   .logo-img:active { transform:scale(.96); opacity:.85; }
 
-  /* ─────────────────────────────────────────
-     DIVIDER
-  ───────────────────────────────────────── */
   .sep {
     height:1px;
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
@@ -174,9 +148,6 @@
     flex-shrink:0;
   }
 
-  /* ─────────────────────────────────────────
-     SESSION BAR
-  ───────────────────────────────────────── */
   .session-bar {
     margin:10px 0 4px;
     display:flex;
@@ -218,9 +189,6 @@
   }
   .btn-logout:active { opacity:.7; transform:scale(.97); }
 
-  /* ─────────────────────────────────────────
-     BANNER
-  ───────────────────────────────────────── */
   .banner-wrap {
     display:none;
     gap:10px;
@@ -254,9 +222,6 @@
     border:1px solid var(--gold-stroke);
   }
 
-  /* ─────────────────────────────────────────
-     PUBLIC HOME BUTTONS
-  ───────────────────────────────────────── */
   .public-stack {
     position:relative;
     z-index:2;
@@ -266,7 +231,6 @@
     margin-top:14px;
   }
 
-  /* Base button shell */
   .btn-base {
     width:100%;
     border-radius:26px;
@@ -315,9 +279,6 @@
     box-shadow:0 10px 24px rgba(0,0,0,.25);
   }
 
-  /* ─────────────────────────────────────────
-     HOME MSG
-  ───────────────────────────────────────── */
   .home-box {
     background:var(--surface2);
     border:1px solid var(--stroke);
@@ -326,9 +287,6 @@
     margin:4px 0 0;
   }
 
-  /* ─────────────────────────────────────────
-     LOGIN FORM
-  ───────────────────────────────────────── */
   .login-wrap {
     background:rgba(255,255,255,.04);
     border:1px solid rgba(255,255,255,.10);
@@ -374,9 +332,6 @@
 
   .hint { font-size:10px; font-weight:600; color:var(--muted); line-height:1.35; }
 
-  /* ─────────────────────────────────────────
-     STAFF SELECTION
-  ───────────────────────────────────────── */
   .drawer-header {
     background:rgba(255,255,255,.04);
     border:1px solid rgba(255,255,255,.08);
@@ -423,9 +378,6 @@
   }
   .staff-btn:active { transform:scale(.965); }
 
-  /* ─────────────────────────────────────────
-     ACTION ZONE (pointage)
-  ───────────────────────────────────────── */
   .username-display {
     font-family:'Cormorant Garamond', serif;
     font-size:2.8rem;
@@ -436,7 +388,6 @@
     text-shadow:0 0 40px rgba(255,200,90,.25);
   }
 
-  /* GPS pill */
   .gps-pill {
     display:inline-flex;
     align-items:center;
@@ -465,7 +416,6 @@
 
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-  /* MAIN PUNCH BUTTON */
   .btn-main-wrap {
     position:relative;
     display:inline-flex;
@@ -474,7 +424,6 @@
     width:100%;
   }
 
-  /* pulse ring when GPS OK */
   .btn-main-wrap.gps-ready::before,
   .btn-main-wrap.gps-ready::after {
     content:"";
@@ -527,7 +476,6 @@
     letter-spacing:.12em;
   }
 
-  /* RETRY GPS */
   .btn-gps-retry {
     display:none;
     margin-top:12px;
@@ -545,9 +493,6 @@
   }
   .btn-gps-retry:active { transform:scale(.98); }
 
-  /* ─────────────────────────────────────────
-     POINTED SUCCESS STATE
-  ───────────────────────────────────────── */
   .pointed-box {
     padding:20px;
     border-radius:26px;
@@ -581,9 +526,6 @@
     line-height:1;
   }
 
-  /* ─────────────────────────────────────────
-     PLANNING BUTTON (inside app)
-  ───────────────────────────────────────── */
   .btn-planning-inner {
     background:linear-gradient(160deg,#2563eb,#1A4ED8);
     color:#fff;
@@ -605,9 +547,6 @@
   }
   .btn-planning-inner:active { transform:scale(.975); }
 
-  /* ─────────────────────────────────────────
-     RESET DEVICE LINK
-  ───────────────────────────────────────── */
   .btn-reset-device {
     font-size:9px;
     font-weight:700;
@@ -619,9 +558,6 @@
   }
   .btn-reset-device:hover { color:rgba(232,233,239,.50); }
 
-  /* ─────────────────────────────────────────
-     ADMIN PANEL
-  ───────────────────────────────────────── */
   .admin-wrap {
     display:none;
     flex-direction:column;
@@ -672,9 +608,6 @@
     letter-spacing:.08em;
   }
 
-  /* ─────────────────────────────────────────
-     TOAST
-  ───────────────────────────────────────── */
   .toast {
     position:fixed; left:50%; transform:translateX(-50%);
     bottom:24px; z-index:9999;
@@ -699,9 +632,6 @@
     to   { transform:translateX(-50%) translateY(0)    scale(1);    opacity:1; }
   }
 
-  /* ─────────────────────────────────────────
-     SCROLL
-  ───────────────────────────────────────── */
   .scroll { overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
 </style>
@@ -711,12 +641,10 @@
   <div class="card">
     <div class="content">
 
-      <!-- HEADER -->
       <div class="logo-wrap flex-shrink-0">
         <img id="logo" src="images/LOGO GREY CORNER.png" class="logo-img" alt="Grey Corner" />
       </div>
 
-      <!-- SESSION BAR -->
       <div id="sessionBar" class="hidden session-bar mt-2">
         <div class="session-pill">
           <span class="session-dot"></span>
@@ -726,7 +654,6 @@
         <button id="btnLogout" type="button" class="btn-logout">Déconnexion</button>
       </div>
 
-      <!-- PUBLIC HOME -->
       <div id="publicHome" class="public-stack">
         <button type="button"
           onclick="window.open('https://grey-corner-app.pages.dev/', '_blank', 'noopener,noreferrer')"
@@ -743,44 +670,37 @@
           🔐 Connexion
         </button>
 
-        <!-- NOTE DE SERVICE -->
         <div id="homeMsg" class="hidden home-box">
           <div class="label-caps mb-2">Note de service</div>
           <div id="homeMsgContent" style="font-size:12px;font-weight:600;line-height:1.5">Chargement…</div>
         </div>
 
-        <!-- LOGIN -->
         <div id="loginWrap" class="hidden login-wrap">
           <div class="label-caps mb-3">Connexion</div>
           <div class="space-y-2">
             <input id="loginEmail" class="inpt" type="email" placeholder="Email" autocomplete="username" />
             <input id="loginPass" class="inpt" type="password" placeholder="Mot de passe" autocomplete="current-password" />
-
             <div id="pinBlock" class="hidden">
               <input id="loginPin" class="inpt" type="password" maxlength="4"
                 placeholder="Créer votre PIN (4 chiffres)" inputmode="numeric" style="margin-top:8px"/>
               <div class="hint mt-2">Le PIN sert uniquement à réinitialiser cet appareil.</div>
             </div>
-
             <button id="btnLogin" type="button" class="btn-login" style="margin-top:4px">Se connecter</button>
             <div id="loginMsg" style="font-size:10px;font-weight:700;color:var(--red)"></div>
           </div>
         </div>
       </div>
 
-      <!-- BANNER -->
       <div id="banner-wrap" class="banner-wrap">
         <div id="banner" class="banner"></div>
       </div>
 
       <div class="sep"></div>
 
-      <!-- APP POINTAGE -->
       <div id="app-pointage" class="flex flex-col flex-grow overflow-y-auto hidden">
 
         <div id="selection" class="scroll flex-grow"></div>
 
-        <!-- Planning (inside app) -->
         <div id="planningPanel" class="mt-3 mb-2">
           <button type="button"
             onclick="window.open('https://grey-corner-app.pages.dev/', '_blank', 'noopener,noreferrer')"
@@ -789,39 +709,29 @@
           </button>
         </div>
 
-        <!-- ACTION ZONE -->
         <div id="action" class="hidden flex flex-col flex-grow justify-center">
-
-          <!-- Identité -->
           <div class="text-center mb-6">
             <div class="label-caps mb-2">Appareil assigné à</div>
             <div id="username" class="username-display">--</div>
           </div>
 
-          <!-- Pointage zone -->
           <div id="pointage-zone" class="text-center space-y-4">
-
-            <!-- GPS status pill -->
             <div style="display:flex;justify-content:center">
               <div class="gps-pill" id="gpsPill">
                 <span class="gps-dot searching" id="gpsDot"></span>
                 <span id="status">Localisation GPS…</span>
               </div>
             </div>
-
-            <!-- Punch button with pulse wrap -->
             <div class="btn-main-wrap" id="btnMainWrap">
               <button id="btn" type="button" class="btn-main" disabled>
                 Appuyer pour valider
               </button>
             </div>
-
             <button id="btnRetryGPS" type="button" class="btn-gps-retry">
               📍 Réessayer GPS
             </button>
           </div>
 
-          <!-- Reset device -->
           <div class="text-center mt-8">
             <button id="btnResetDevice" type="button" class="btn-reset-device">
               Réinitialiser l'appareil (PIN)
@@ -829,7 +739,6 @@
           </div>
         </div>
 
-        <!-- ADMIN PANEL -->
         <div id="adminWrap" class="admin-wrap">
           <div class="flex items-center justify-between gap-3">
             <div class="label-caps gold">Supervision gérant</div>
@@ -839,22 +748,18 @@
           <button id="btnResetAll" type="button" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
         </div>
 
-      </div><!-- /app-pointage -->
+      </div>
 
-    </div><!-- /content -->
-  </div><!-- /card -->
+    </div>
+  </div>
 
   <div id="toast" class="toast"></div>
 
-  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    // =========================================================
-    // ✅ Firebase init
-    // =========================================================
     const firebaseConfig = {
       apiKey: "AIzaSyC5al_6xWbJC8S0FAvaEnRmx9BvYtGgnAM",
       authDomain: "grey-corner-presence.firebaseapp.com",
@@ -870,20 +775,12 @@
     const auth = firebase.auth();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
-    // ===== GPS =====
     const CAFE_LAT=34.0343959, CAFE_LON=-5.0155941, RAYON_MAX=200;
-
-    // ===== Messages =====
     const URL_MSG_SHEET="https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent";
-
-    // ===== Apps Script =====
     const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec";
     const SECRET = "greycorner2026";
     const EMP_NODE_DEFAULT = "pointage";
 
-    // =========================================================
-    // ✅ Date/Time
-    // =========================================================
     function currentDateStr(){
       return new Intl.DateTimeFormat('fr-CA',{
         timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'
@@ -895,9 +792,6 @@
       }).format(new Date());
     }
 
-    // =========================================================
-    // ✅ Helpers
-    // =========================================================
     let equipe = [];
     let equipeIndex = new Map();
     let equipeListenerAttached = false;
@@ -943,17 +837,11 @@
       if(hhmm) localStorage.setItem(punchTimeKey(d,k),hhmm);
     }
 
-    // =========================================================
-    // ✅ Role
-    // =========================================================
     async function fetchRole(uid){
       const snap=await db.ref("users/"+uid).once("value");
       return snap.val()||null;
     }
 
-    // =========================================================
-    // ✅ Sheet message
-    // =========================================================
     async function fetchWithTimeout(url,ms=6500){
       const ctrl=new AbortController();
       const t=setTimeout(()=>ctrl.abort(),ms);
@@ -997,9 +885,6 @@
       }catch(e){ wrap.style.display="none"; }
     }
 
-    // =========================================================
-    // ✅ Login UI helpers
-    // =========================================================
     function hasDevicePin(){ return !!localStorage.getItem('gc_device_pin'); }
     function showPinBlockIfNeeded(){
       const pb=document.getElementById('pinBlock');
@@ -1033,7 +918,6 @@
       showPinBlockIfNeeded();
     });
 
-    // Enter sur login
     document.getElementById("loginPass").addEventListener("keydown", e=>{
       if(e.key==="Enter") document.getElementById("btnLogin").click();
     });
@@ -1098,9 +982,6 @@
       }else{ toast("PIN incorrect ❌"); }
     });
 
-    // =========================================================
-    // ✅ Équipe UI
-    // =========================================================
     let role=null;
     let selected=localStorage.getItem('gc_staff_name')||null;
 
@@ -1138,9 +1019,6 @@
       });
     }
 
-    // =========================================================
-    // ✅ GPS
-    // =========================================================
     let gpsState="idle";
     let gpsLastCheckedKey="";
 
@@ -1214,20 +1092,12 @@
 
     document.getElementById("btnRetryGPS").addEventListener("click",()=>checkGPS(true));
 
-    // =========================================================
-    // ✅ Pointage success UI
-    // =========================================================
     function renderPointedUI(hhmm,dStr){
       const zone=document.getElementById('pointage-zone');
       if(!zone) return;
-
       const status=document.getElementById('status');
-      if(status){
-        status.textContent="Pointé ✓";
-        status.style.color="var(--green)";
-      }
+      if(status){ status.textContent="Pointé ✓"; status.style.color="var(--green)"; }
       updateGpsDot("ok");
-
       let box=document.getElementById("pointedBox");
       if(!box){
         box=document.createElement("div");
@@ -1242,14 +1112,10 @@
         <div class="pointed-time">${hhmm||"—"}</div>
         <div class="label-caps mt-3" style="font-size:9px;opacity:.5">${dStr}</div>
       `;
-
       setPunchButtonEnabled(false);
       showRetryGPS(false);
     }
 
-    // =========================================================
-    // ✅ Export Sheet
-    // =========================================================
     function buildGasUrl(p){ return GAS_EXEC_URL+"?"+new URLSearchParams(p).toString(); }
 
     async function sendPunchToSheetBackground({date,empNode,empKey,hA,timestamp}){
@@ -1257,9 +1123,6 @@
       try{ await fetchWithTimeout(url,6000); }catch(e){}
     }
 
-    // =========================================================
-    // ✅ Punch
-    // =========================================================
     document.getElementById('btn').addEventListener("click",async()=>{
       if(!selected) return;
       const staffKey=keyStaff(selected);
@@ -1278,9 +1141,6 @@
       sendPunchToSheetBackground({date:dStr,empNode:selected||EMP_NODE_DEFAULT,empKey:staffKey,hA,timestamp:ts});
     });
 
-    // =========================================================
-    // ✅ Reset listeners
-    // =========================================================
     function attachResetListener(){
       const bc=db.ref('broadcast');
       if(selected){
@@ -1314,9 +1174,6 @@
       });
     }
 
-    // =========================================================
-    // ✅ Admin
-    // =========================================================
     function openAdmin(silent=false){
       if(role!=="gerant") return;
       document.getElementById('adminWrap').style.display="flex";
@@ -1372,9 +1229,6 @@
       logoTimer=setTimeout(()=>logoClicks=0,650);
     });
 
-    // =========================================================
-    // ✅ Équipe listener
-    // =========================================================
     function attachEquipeListener(){
       if(equipeListenerAttached) return;
       equipeListenerAttached=true;
@@ -1405,9 +1259,6 @@
       });
     }
 
-    // =========================================================
-    // ✅ Auth
-    // =========================================================
     auth.onAuthStateChanged(async(user)=>{
       if(!user){ role=null; showLoginUI(); showPinBlockIfNeeded(); return; }
       role=await fetchRole(user.uid);
