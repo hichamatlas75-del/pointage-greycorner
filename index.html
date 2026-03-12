@@ -82,7 +82,7 @@
       var(--card-glow);
     position:relative;
     margin:auto;
-    overflow:hidden;
+    overflow:visible;
   }
 
   .card::before {
@@ -94,6 +94,7 @@
     border-radius:999px;
     pointer-events:none;
     z-index:2;
+    overflow:hidden;
   }
 
   .card::after {
@@ -634,6 +635,67 @@
 
   .scroll { overflow-y:auto; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
+
+  /* ─────────────────────────────────────────
+     HISTORIQUE 7 JOURS
+  ───────────────────────────────────────── */
+  .histo-wrap {
+    margin-top:20px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:22px;
+    overflow:hidden;
+  }
+  .histo-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:11px 16px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    background:rgba(255,255,255,.03);
+  }
+  .histo-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    border-bottom:1px solid rgba(255,255,255,.04);
+    font-size:11px;
+    font-weight:700;
+    transition:.15s;
+  }
+  .histo-row:last-child { border-bottom:none; }
+  .histo-date {
+    color:var(--muted);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.06em;
+    min-width:90px;
+  }
+  .histo-day {
+    font-size:9px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:rgba(232,233,239,.35);
+    min-width:36px;
+  }
+  .histo-status {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11px;
+    font-weight:900;
+  }
+  .histo-dot {
+    width:6px; height:6px;
+    border-radius:999px;
+    flex-shrink:0;
+  }
+  .histo-present  { color:var(--green); }
+  .histo-absent   { color:rgba(232,233,239,.28); }
+  .histo-conge    { color:var(--amber); }
+  .histo-today    { background:rgba(255,214,138,.04); }
 </style>
 </head>
 
@@ -709,8 +771,8 @@
           </button>
         </div>
 
-        <div id="action" class="hidden flex flex-col flex-grow justify-center">
-          <div class="text-center mb-6">
+        <div id="action" class="hidden flex flex-col flex-grow overflow-y-auto scroll" style="padding-bottom:16px">
+          <div class="text-center mb-6" style="margin-top:24px">
             <div class="label-caps mb-2">Appareil assigné à</div>
             <div id="username" class="username-display">--</div>
           </div>
@@ -732,7 +794,16 @@
             </button>
           </div>
 
-          <div class="text-center mt-8">
+          <!-- HISTORIQUE 7 JOURS -->
+          <div class="histo-wrap" id="histoWrap" style="display:none">
+            <div class="histo-header">
+              <div class="label-caps" style="letter-spacing:.14em">Mes 7 derniers jours</div>
+              <div id="histoLoading" class="label-caps" style="color:rgba(255,214,138,.5)">…</div>
+            </div>
+            <div id="histoList"></div>
+          </div>
+
+          <div class="text-center mt-6">
             <button id="btnResetDevice" type="button" class="btn-reset-device">
               Réinitialiser l'appareil (PIN)
             </button>
@@ -1116,6 +1187,93 @@
       showRetryGPS(false);
     }
 
+    // =========================================================
+    // ✅ Historique 7 jours
+    // =========================================================
+    const JOURS_FR = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+    const MOIS_FR  = ["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];
+
+    function getLast7Dates(){
+      const dates = [];
+      const todayStr = currentDateStr();
+      const [y,m,d] = todayStr.split('-').map(Number);
+      const base = new Date(y, m-1, d);
+      for(let i=0;i<7;i++){
+        const dd = new Date(base);
+        dd.setDate(dd.getDate() - i);
+        const iso = `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
+        dates.push({ iso, dd });
+      }
+      return dates;
+    }
+
+    async function loadHistorique(staffKey){
+      const wrap    = document.getElementById('histoWrap');
+      const list    = document.getElementById('histoList');
+      const loading = document.getElementById('histoLoading');
+      if(!wrap||!list) return;
+      wrap.style.display = "block";
+      list.innerHTML = "";
+      loading.textContent = "…";
+
+      const dates  = getLast7Dates();
+      const today  = dates[0].iso;
+
+      const snaps = await Promise.all(
+        dates.map(({iso}) =>
+          db.ref(`punches/${iso}/${staffKey}`).once('value')
+            .then(s => ({ iso, val: s.val() }))
+            .catch(() => ({ iso, val: null }))
+        )
+      );
+
+      loading.textContent = "";
+      list.innerHTML = "";
+
+      snaps.forEach(({iso, val}) => {
+        const [yy,mm,dd] = iso.split('-').map(Number);
+        const dt   = new Date(yy, mm-1, dd);
+        const jour = JOURS_FR[dt.getDay()];
+        const date = `${String(dd).padStart(2,'0')} ${MOIS_FR[mm-1]}`;
+        const isToday = iso === today;
+
+        const row = document.createElement('div');
+        row.className = 'histo-row' + (isToday ? ' histo-today' : '');
+
+        let statusHTML = '';
+        if(val && val.hA){
+          statusHTML = `
+            <div class="histo-status histo-present">
+              <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.5)"></span>
+              ${val.hA}
+              ${val.retard ? `<span style="font-size:9px;color:var(--amber);margin-left:2px">retard</span>` : ''}
+            </div>`;
+        } else if(isPunchedLocal(iso, staffKey)){
+          const t = getPunchedTimeLocal(iso, staffKey);
+          statusHTML = `
+            <div class="histo-status histo-present">
+              <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.5)"></span>
+              ${t||"✓"}
+            </div>`;
+        } else {
+          statusHTML = `
+            <div class="histo-status histo-absent">
+              <span class="histo-dot" style="background:rgba(232,233,239,.18)"></span>
+              ${isToday ? 'Pas encore pointé' : 'Absent'}
+            </div>`;
+        }
+
+        row.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="histo-day">${jour}</div>
+            <div class="histo-date">${date}${isToday ? '&nbsp;<span style="color:var(--gold);font-size:9px">auj.</span>' : ''}</div>
+          </div>
+          ${statusHTML}
+        `;
+        list.appendChild(row);
+      });
+    }
+
     function buildGasUrl(p){ return GAS_EXEC_URL+"?"+new URLSearchParams(p).toString(); }
 
     async function sendPunchToSheetBackground({date,empNode,empKey,hA,timestamp}){
@@ -1138,6 +1296,7 @@
       setPunchedLocal(dStr,staffKey,hA);
       toast("Pointage enregistré ✅");
       renderPointedUI(hA,dStr);
+      loadHistorique(staffKey);
       sendPunchToSheetBackground({date:dStr,empNode:selected||EMP_NODE_DEFAULT,empKey:staffKey,hA,timestamp:ts});
     });
 
@@ -1249,6 +1408,7 @@
           const staffKey=keyStaff(selected);
           if(isPunchedLocal(dStr,staffKey)) renderPointedUI(getPunchedTimeLocal(dStr,staffKey),dStr);
           else checkGPS(false);
+          loadHistorique(staffKey);
         }else{
           document.getElementById('selection').classList.remove('hidden');
           document.getElementById('action').classList.add('hidden');
