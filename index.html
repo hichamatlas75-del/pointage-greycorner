@@ -1218,19 +1218,31 @@
 
       const dates  = getLast7Dates();
       const today  = dates[0].iso;
+      const minDate = dates[dates.length - 1].iso;
 
-      const snaps = await Promise.all(
-        dates.map(({iso}) =>
-          db.ref(`punches/${iso}/${staffKey}`).once('value')
-            .then(s => ({ iso, val: s.val() }))
-            .catch(() => ({ iso, val: null }))
-        )
-      );
+      let punchesMap = {};
+      try {
+        const snap = await db.ref('punches').orderByKey().startAt(minDate).endAt(today).once('value');
+        punchesMap = snap.val() || {};
+      } catch (e) {
+        // Fallback de sécurité
+        const snaps = await Promise.all(
+          dates.map(({iso}) =>
+            db.ref(`punches/${iso}/${staffKey}`).once('value')
+              .then(s => ({ iso, val: s.val() }))
+              .catch(() => ({ iso, val: null }))
+          )
+        );
+        snaps.forEach(({iso, val}) => {
+          if (val) punchesMap[iso] = { [staffKey]: val };
+        });
+      }
 
       loading.textContent = "";
       list.innerHTML = "";
 
-      snaps.forEach(({iso, val}) => {
+      dates.forEach(({iso}) => {
+        const val = punchesMap[iso]?.[staffKey] || null;
         const [yy,mm,dd] = iso.split('-').map(Number);
         const dt   = new Date(yy, mm-1, dd);
         const jour = JOURS_FR[dt.getDay()];
