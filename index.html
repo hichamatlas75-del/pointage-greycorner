@@ -900,8 +900,9 @@
 
     function normalizeText(x){ return String(x||"").trim().toUpperCase().replace(/\s+/g," "); }
     function normalizeRole(x){
-      const r=String(x||"").trim().toLowerCase();
-      return ["caisse","bar","cuisine","menage","service"].includes(r)?r:"service";
+      const r=String(x||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const known=["service","bar","cuisine","caisse","menage","securite","economat"];
+      return known.includes(r)?r:(r||"service");
     }
     function normalizeEquipeSnapshot(val){
       if(!val) return [];
@@ -1096,7 +1097,9 @@
         msg.textContent="Aucun collaborateur (settings/equipe).";
         sel.appendChild(msg); return;
       }
-      const cats=["caisse","bar","cuisine","menage","service"];
+      const defaultCats = ["service", "bar", "cuisine", "caisse", "menage", "securite", "economat"];
+      const existingCats = Array.from(new Set(equipe.map(e => e.t)));
+      const cats = Array.from(new Set([...defaultCats, ...existingCats]));
       cats.forEach(cat=>{
         const staff=equipe.filter(e=>e.t===cat);
         if(!staff.length) return;
