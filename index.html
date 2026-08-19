@@ -1234,10 +1234,26 @@
       return h*60+m;
     }
 
+    function isSecuriteRole(empKey){
+      if(!empKey) return false;
+      const e = equipeIndex ? equipeIndex.get(empKey) : null;
+      if(e && (e.t === "securite" || e.t === "sécurité")) return true;
+      if(selected){
+        const s = equipe.find(x => keyStaff(x.n) === empKey || x.n === selected);
+        if(s && (s.t === "securite" || s.t === "sécurité")) return true;
+      }
+      return false;
+    }
+
     function calculateLateMinutes(hP, hA, empKey){
       if(empKey === "BOUCHNAK_NAOUAL") return 0;
-      if(!hA || !hP) return 0;
-      const p = timeToMin(hP);
+      if(!hA) return 0;
+      let scheduled = hP;
+      if(!scheduled && isSecuriteRole(empKey)){
+        scheduled = "09:00";
+      }
+      if(!scheduled) return 0;
+      const p = timeToMin(scheduled);
       const a = timeToMin(hA);
       if(p === null || a === null) return 0;
       return Math.max(0, a - p);
@@ -1269,6 +1285,7 @@
       const dates  = getLast7Dates();
       const today  = dates[0].iso;
       const minDate = dates[dates.length - 1].iso;
+      const isSec = isSecuriteRole(staffKey);
 
       let punchesMap = {};
       let presencesMap = {};
@@ -1304,23 +1321,24 @@
         const pu = punchesMap[iso]?.[staffKey] || null;
         const pr = presencesMap[iso]?.[staffKey] || null;
 
+        const [yy,mm,dd] = iso.split('-').map(Number);
+        const dt   = new Date(yy, mm-1, dd);
+        const isMonday = (dt.getDay() === 1);
+
         const hA = pu?.hA || pr?.hA || (isPunchedLocal(iso, staffKey) ? getPunchedTimeLocal(iso, staffKey) : "");
-        const hP = pr?.hP || pu?.hP || "";
-        const isOff = pr?.off === true;
+        const hP = pr?.hP || pu?.hP || (isSec ? "09:00" : "");
+        const isOff = pr?.off === true || (isSec && isMonday && !hA);
 
         let lateMin = 0;
         if(pu && typeof pu.retardMin === "number" && pu.retardMin > 0){
           lateMin = pu.retardMin;
         } else if(pr && typeof pr.retardMin === "number" && pr.retardMin > 0){
           lateMin = pr.retardMin;
-        } else if(hA && hP){
-          lateMin = calculateLateMinutes(hP, hA, staffKey);
+        } else if(hA && (hP || isSec)){
+          lateMin = calculateLateMinutes(hP || "09:00", hA, staffKey);
         }
 
         const isLate = (lateMin > 0);
-
-        const [yy,mm,dd] = iso.split('-').map(Number);
-        const dt   = new Date(yy, mm-1, dd);
         const jour = JOURS_FR[dt.getDay()];
         const date = `${String(dd).padStart(2,'0')} ${MOIS_FR[mm-1]}`;
         const isToday = iso === today;
@@ -1342,14 +1360,14 @@
               <div class="histo-status histo-present">
                 <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.6)"></span>
                 <span style="font-weight:900">${hA}</span>
-                ${hP ? `<span class="histo-ontime-badge">À l'heure</span>` : ''}
+                ${(hP || isSec) ? `<span class="histo-ontime-badge">À l'heure</span>` : ''}
               </div>`;
           }
         } else if(isOff){
           statusHTML = `
             <div class="histo-status">
-              <span class="histo-dot" style="background:rgba(148,163,184,.5)"></span>
-              <span class="histo-off-badge">OFF</span>
+              <span class="histo-dot" style="background:rgba(99,102,241,.6)"></span>
+              <span class="histo-off-badge" style="border-color:rgba(99,102,241,.3);color:#a5b4fc">${isSec && isMonday ? 'OFF (Lundi)' : 'OFF'}</span>
             </div>`;
         } else {
           statusHTML = `
@@ -1392,8 +1410,9 @@
       try {
         const presSnap = await db.ref(`presences/${dStr}/${staffKey}`).once('value');
         const presVal = presSnap.val();
-        if(presVal && presVal.hP){
-          const lm = calculateLateMinutes(presVal.hP, hA, staffKey);
+        let effectiveHP = presVal?.hP || (isSecuriteRole(staffKey) ? "09:00" : "");
+        if(effectiveHP){
+          const lm = calculateLateMinutes(effectiveHP, hA, staffKey);
           if(lm > 0){
             retard = true;
             retardMin = lm;
