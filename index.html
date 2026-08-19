@@ -695,6 +695,37 @@
   .histo-present  { color:var(--green); }
   .histo-absent   { color:rgba(232,233,239,.28); }
   .histo-conge    { color:var(--amber); }
+  .histo-retard   { color:#f87171; }
+  .histo-retard-badge {
+    font-size:9px;
+    font-weight:900;
+    padding:2px 7px;
+    border-radius:999px;
+    background:rgba(239,68,68,.16);
+    border:1px solid rgba(239,68,68,.38);
+    color:#fca5a5;
+    letter-spacing:.02em;
+    white-space:nowrap;
+  }
+  .histo-ontime-badge {
+    font-size:8px;
+    font-weight:700;
+    padding:2px 5px;
+    border-radius:999px;
+    background:rgba(16,185,129,.12);
+    border:1px solid rgba(16,185,129,.25);
+    color:#6ee7b7;
+    white-space:nowrap;
+  }
+  .histo-off-badge {
+    font-size:9px;
+    font-weight:800;
+    padding:2px 6px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);
+    color:rgba(232,233,239,.6);
+  }
   .histo-today    { background:rgba(255,214,138,.04); }
 </style>
 </head>
@@ -1188,10 +1219,26 @@
     }
 
     // =========================================================
-    // ✅ Historique 7 jours
+    // ✅ Historique 7 jours & Calculs de Retard
     // =========================================================
     const JOURS_FR = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
     const MOIS_FR  = ["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];
+
+    function timeToMin(t){
+      if(!t || typeof t !== "string" || !t.includes(":")) return null;
+      const [h,m] = t.split(":").map(Number);
+      if(Number.isNaN(h) || Number.isNaN(m)) return null;
+      return h*60+m;
+    }
+
+    function calculateLateMinutes(hP, hA, empKey){
+      if(empKey === "BOUCHNAK_NAOUAL") return 0;
+      if(!hA || !hP) return 0;
+      const p = timeToMin(hP);
+      const a = timeToMin(hA);
+      if(p === null || a === null) return 0;
+      return Math.max(0, a - p);
+    }
 
     function getLast7Dates(){
       const dates = [];
@@ -1221,20 +1268,29 @@
       const minDate = dates[dates.length - 1].iso;
 
       let punchesMap = {};
+      let presencesMap = {};
+
       try {
-        const snap = await db.ref('punches').orderByKey().startAt(minDate).endAt(today).once('value');
-        punchesMap = snap.val() || {};
+        const [punchSnap, presSnap] = await Promise.all([
+          db.ref('punches').orderByKey().startAt(minDate).endAt(today).once('value'),
+          db.ref('presences').orderByKey().startAt(minDate).endAt(today).once('value')
+        ]);
+        punchesMap = punchSnap.val() || {};
+        presencesMap = presSnap.val() || {};
       } catch (e) {
         // Fallback de sécurité
         const snaps = await Promise.all(
-          dates.map(({iso}) =>
-            db.ref(`punches/${iso}/${staffKey}`).once('value')
-              .then(s => ({ iso, val: s.val() }))
-              .catch(() => ({ iso, val: null }))
-          )
+          dates.map(async ({iso}) => {
+            const [pu, pr] = await Promise.all([
+              db.ref(`punches/${iso}/${staffKey}`).once('value').then(s=>s.val()).catch(()=>null),
+              db.ref(`presences/${iso}/${staffKey}`).once('value').then(s=>s.val()).catch(()=>null)
+            ]);
+            return { iso, pu, pr };
+          })
         );
-        snaps.forEach(({iso, val}) => {
-          if (val) punchesMap[iso] = { [staffKey]: val };
+        snaps.forEach(({iso, pu, pr}) => {
+          if (pu) punchesMap[iso] = { [staffKey]: pu };
+          if (pr) presencesMap[iso] = { [staffKey]: pr };
         });
       }
 
@@ -1242,7 +1298,24 @@
       list.innerHTML = "";
 
       dates.forEach(({iso}) => {
-        const val = punchesMap[iso]?.[staffKey] || null;
+        const pu = punchesMap[iso]?.[staffKey] || null;
+        const pr = presencesMap[iso]?.[staffKey] || null;
+
+        const hA = pu?.hA || pr?.hA || (isPunchedLocal(iso, staffKey) ? getPunchedTimeLocal(iso, staffKey) : "");
+        const hP = pr?.hP || pu?.hP || "";
+        const isOff = pr?.off === true;
+
+        let lateMin = 0;
+        if(pu && typeof pu.retardMin === "number" && pu.retardMin > 0){
+          lateMin = pu.retardMin;
+        } else if(pr && typeof pr.retardMin === "number" && pr.retardMin > 0){
+          lateMin = pr.retardMin;
+        } else if(hA && hP){
+          lateMin = calculateLateMinutes(hP, hA, staffKey);
+        }
+
+        const isLate = (lateMin > 0);
+
         const [yy,mm,dd] = iso.split('-').map(Number);
         const dt   = new Date(yy, mm-1, dd);
         const jour = JOURS_FR[dt.getDay()];
@@ -1253,19 +1326,27 @@
         row.className = 'histo-row' + (isToday ? ' histo-today' : '');
 
         let statusHTML = '';
-        if(val && val.hA){
+        if(hA){
+          if(isLate){
+            statusHTML = `
+              <div class="histo-status histo-retard">
+                <span class="histo-dot" style="background:var(--red);box-shadow:0 0 6px rgba(239,68,68,.7)"></span>
+                <span style="font-weight:900;color:#fff">${hA}</span>
+                <span class="histo-retard-badge">+${lateMin} min</span>
+              </div>`;
+          } else {
+            statusHTML = `
+              <div class="histo-status histo-present">
+                <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.6)"></span>
+                <span style="font-weight:900">${hA}</span>
+                ${hP ? `<span class="histo-ontime-badge">À l'heure</span>` : ''}
+              </div>`;
+          }
+        } else if(isOff){
           statusHTML = `
-            <div class="histo-status histo-present">
-              <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.5)"></span>
-              ${val.hA}
-              ${val.retard ? `<span style="font-size:9px;color:var(--amber);margin-left:2px">retard</span>` : ''}
-            </div>`;
-        } else if(isPunchedLocal(iso, staffKey)){
-          const t = getPunchedTimeLocal(iso, staffKey);
-          statusHTML = `
-            <div class="histo-status histo-present">
-              <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.5)"></span>
-              ${t||"✓"}
+            <div class="histo-status">
+              <span class="histo-dot" style="background:rgba(148,163,184,.5)"></span>
+              <span class="histo-off-badge">OFF</span>
             </div>`;
         } else {
           statusHTML = `
@@ -1302,11 +1383,26 @@
       setPunchButtonEnabled(false);
       if(isPunchedLocal(dStr,staffKey)){ toast("Déjà pointé aujourd'hui ✅"); renderPointedUI(getPunchedTimeLocal(dStr,staffKey),dStr); return; }
       if(gpsState!=="ok"){ toast("GPS non validé ❌"); checkGPS(true); return; }
-      const payload={empKey:staffKey,hA,retard:false,retardMin:0,timestamp:ts};
+
+      let retard = false;
+      let retardMin = 0;
+      try {
+        const presSnap = await db.ref(`presences/${dStr}/${staffKey}`).once('value');
+        const presVal = presSnap.val();
+        if(presVal && presVal.hP){
+          const lm = calculateLateMinutes(presVal.hP, hA, staffKey);
+          if(lm > 0){
+            retard = true;
+            retardMin = lm;
+          }
+        }
+      } catch(e){}
+
+      const payload={empKey:staffKey,hA,retard,retardMin,timestamp:ts};
       try{ await db.ref('punches/'+dStr+'/'+staffKey).set(payload); }
       catch(e){ toast("Erreur Firebase ❌"); setPunchButtonEnabled(gpsState==="ok"); showRetryGPS(gpsState!=="ok"); return; }
       setPunchedLocal(dStr,staffKey,hA);
-      toast("Pointage enregistré ✅");
+      toast(retard ? `Pointage enregistré (Retard +${retardMin} min) ⚠️` : "Pointage enregistré ✅");
       renderPointedUI(hA,dStr);
       loadHistorique(staffKey);
       sendPunchToSheetBackground({date:dStr,empNode:selected||EMP_NODE_DEFAULT,empKey:staffKey,hA,timestamp:ts});
