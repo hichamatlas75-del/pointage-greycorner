@@ -134,49 +134,106 @@ const SecurityService = (() => {
 // 3b. STAFF PHOTO SERVICE (Cartographie & Résolution Photos Équipe)
 // ─────────────────────────────────────────────────────────────────────────
 const StaffPhotoService = (() => {
+  // Liste exhaustive des correspondances directes et variantes orthographiques
   const PHOTO_MAP = {
-    "BAJJOU": "images/BAJJOU.jpeg",
+    // Cuisine
+    "BELQASSE_KHAOULA": "images/BELQASIM_KHAOULA.jpg",
     "BELQASIM_KHAOULA": "images/BELQASIM_KHAOULA.jpg",
+    "BELQASSE": "images/BELQASIM_KHAOULA.jpg",
+    "BELQASIM": "images/BELQASIM_KHAOULA.jpg",
+    "BOUCHNAK_NAOUAL": "images/BOUCHNAK_NAOUAL.jpg",
+    "BOUCHNAK": "images/BOUCHNAK_NAOUAL.jpg",
+    "BOURAHMA_ANAS": "images/BOURAHMA_ANAS.jpg",
+    "BOURAHMA": "images/BOURAHMA_ANAS.jpg",
+    "IDRISSI_SAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
+    "IDRISSI_OUDGHRI_SAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
+    "IDRISSI_OUDGHRISSAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
+    "IDRISSI": "images/IDRISSI_OUDGHRI_SAAD.jpg",
+    "LEMSSIEH_JAWAD": "images/LAMSSIAH_JAOUAD.jpg",
+    "LAMSSIAH_JAOUAD": "images/LAMSSIAH_JAOUAD.jpg",
+    "LEMSSIEH": "images/LAMSSIAH_JAOUAD.jpg",
+    "LAMSSIAH": "images/LAMSSIAH_JAOUAD.jpg",
+    "MAJDOUB_JIHANE": "images/MAJDOUB_JIHANE.jpg",
+    "MAJDOUB": "images/MAJDOUB_JIHANE.jpg",
+    "MOUJAHID_IMANE": "images/MOUJAHID_IMANE.jpg",
+    "MOUJAHID": "images/MOUJAHID_IMANE.jpg",
+    "ZAIR_FATIMA": "images/ZAIR_FATIMA.jpg",
+    "ZAIR": "images/ZAIR_FATIMA.jpg",
+
+    // Service
+    "ALAOUI_LAZIZ": "images/HAMID_ALAOUI_ABDELAZIZ.jpg",
+    "HAMID_ALAOUI_ABDELAZIZ": "images/HAMID_ALAOUI_ABDELAZIZ.jpg",
+    "ALAOUI": "images/HAMID_ALAOUI_ABDELAZIZ.jpg",
+    "HATTAF_MOHAMED": "images/HATTAF_MOHAMMED.jpg",
+    "HATTAF_MOHAMMED": "images/HATTAF_MOHAMMED.jpg",
+    "HATIAF_MOHAMMED": "images/HATTAF_MOHAMMED.jpg",
+    "HATTAF": "images/HATTAF_MOHAMMED.jpg",
+    "HIDARA_YOUSSEF": "images/HIDARA-LACHKAR_YOUSSEF.jpg",
+    "HIDARA_LACHKAR_YOUSSEF": "images/HIDARA-LACHKAR_YOUSSEF.jpg",
+    "HIDARA-LACHKAR_YOUSSEF": "images/HIDARA-LACHKAR_YOUSSEF.jpg",
+    "HIDARA": "images/HIDARA-LACHKAR_YOUSSEF.jpg",
+    "KAFOUNI_ZAKARIAE": "images/KAFOUNI_ZAKARIAE.jpg",
+    "KAFQUNI_ZAKARIAE": "images/KAFOUNI_ZAKARIAE.jpg",
+    "KAFOUNI": "images/KAFOUNI_ZAKARIAE.jpg",
+    "KTAMI_EL_MOKHTAR": "images/Mokhtar.jpg",
+    "EL_MOKHTAR": "images/Mokhtar.jpg",
+    "MOKHTAR": "images/Mokhtar.jpg",
+    "KTAMI": "images/Mokhtar.jpg",
+    "MOHSINE_YOUNESS": "images/MOHSSINE_YOUNESS.jpg",
+    "MOHSSINE_YOUNESS": "images/MOHSSINE_YOUNESS.jpg",
+    "MOHSINE": "images/MOHSSINE_YOUNESS.jpg",
+    "MOHSSINE": "images/MOHSSINE_YOUNESS.jpg",
+
+    // Caisse
+    "BENKHADA_ABDESLAM": "images/BENKHADA_ABDESSLAM.jpg",
     "BENKHADA_ABDESSLAM": "images/BENKHADA_ABDESSLAM.jpg",
     "BENKHADA_ABDELSSAM": "images/BENKHADA_ABDESSLAM.jpg",
-    "BOUCHNAK_NAOUAL": "images/BOUCHNAK_NAOUAL.jpg",
-    "BOURAHMA_ANAS": "images/BOURAHMA_ANAS.jpg",
-    "CHKAIRI_YOUSSEF": "images/CHKAIRI_YOUSSEF.jpg",
-    "CH_KAIRI_YOUSSEF": "images/CHKAIRI_YOUSSEF.jpg",
-    "ELGORRAMY_SOUAD": "images/ELGORRAMY_SOUAD.jpg",
-    "EL_KOBBI_MOSTAFA": "images/EL_KOBBI_MOSTAFA.jpg",
-    "EL_MOBARAKI_MOHAMED": "images/EL_MOBARAKI_MOHAMED.jpg",
+    "BENKHADA": "images/BENKHADA_ABDESSLAM.jpg",
+    "ENNHAILI_SOUMIA": "images/EN-NHAILI_SOUMIA.jpg",
     "EN_NHAILI_SOUMIA": "images/EN-NHAILI_SOUMIA.jpg",
     "EN_NHAJLI_SOUMIA": "images/EN-NHAILI_SOUMIA.jpg",
+    "EN-NHAILI_SOUMIA": "images/EN-NHAILI_SOUMIA.jpg",
     "EN-NHAJLI_SOUMIA": "images/EN-NHAILI_SOUMIA.jpg",
+    "NHAILI": "images/EN-NHAILI_SOUMIA.jpg",
+    "NHAJLI": "images/EN-NHAILI_SOUMIA.jpg",
+    "SALIL_HOUDA": "images/SALIL_HOUDA.jpg",
+    "SALIH_HOUDA": "images/SALIL_HOUDA.jpg",
+    "SALIL": "images/SALIL_HOUDA.jpg",
+    "SALIH": "images/SALIL_HOUDA.jpg",
+
+    // Bar / Autres
+    "EL_KOBBI_MOSTAFA": "images/EL_KOBBI_MOSTAFA.jpg",
+    "ELKOBBI_MOSTAFA": "images/EL_KOBBI_MOSTAFA.jpg",
+    "KOBBI": "images/EL_KOBBI_MOSTAFA.jpg",
+    "EL_MOBARAKI_MOHAMED": "images/EL_MOBARAKI_MOHAMED.jpg",
+    "ELMOBARAKI_MOHAMED": "images/EL_MOBARAKI_MOHAMED.jpg",
+    "MOBARAKI": "images/EL_MOBARAKI_MOHAMED.jpg",
+    "ELGORRAMY_SOUAD": "images/ELGORRAMY_SOUAD.jpg",
+    "EL_GORRAMY_SOUAD": "images/ELGORRAMY_SOUAD.jpg",
+    "GORRAMY": "images/ELGORRAMY_SOUAD.jpg",
+    "CHKAIRI_YOUSSEF": "images/CHKAIRI_YOUSSEF.jpg",
+    "CH_KAIRI_YOUSSEF": "images/CHKAIRI_YOUSSEF.jpg",
+    "CHKAIRI": "images/CHKAIRI_YOUSSEF.jpg",
+    "JIRA_MOHAMED": "images/JIRA_MOHAMED.jpg",
+    "JRA_MOHAMED": "images/JIRA_MOHAMED.jpg",
+    "JIRA": "images/JIRA_MOHAMED.jpg",
+    "JRA": "images/JIRA_MOHAMED.jpg",
+    "KHALOUQ_RACHID": "images/KHALOUQ_RACHID.jpg",
+    "KHALOUQ": "images/KHALOUQ_RACHID.jpg",
+    "QUASSIR_HICHAM": "images/QUASSIR_HICHAM.jpg",
+    "OUASSIR_HICHAM": "images/QUASSIR_HICHAM.jpg",
+    "QUASSIR": "images/QUASSIR_HICHAM.jpg",
+    "OUASSIR": "images/QUASSIR_HICHAM.jpg",
+    "SBAI_HAKIMA": "images/SBAI_HAKIMA.jpg",
+    "SBAI": "images/SBAI_HAKIMA.jpg",
+    "TOUATI_OMAR": "images/TOUATI_OMAR.jpg",
+    "TOUATI": "images/TOUATI_OMAR.jpg",
+    "WALID": "images/WALID.jpg",
+    "BAJJOU": "images/BAJJOU.jpeg",
     "FOUZIA": "images/FOUZIA.jpg",
     "FOUZIA6ZHAR": "images/FOUZIA6ZHAR.jpg",
     "FOUZIA_ZHAR": "images/FOUZIA6ZHAR.jpg",
-    "HAMID_ALAOUI_ABDELAZIZ": "images/HAMID_ALAOUI_ABDELAZIZ.jpg",
-    "HATTAF_MOHAMMED": "images/HATTAF_MOHAMMED.jpg",
-    "HATIAF_MOHAMMED": "images/HATTAF_MOHAMMED.jpg",
-    "HIDARA_LACHKAR_YOUSSEF": "images/HIDARA-LACHKAR_YOUSSEF.jpg",
-    "HIDARA-LACHKAR_YOUSSEF": "images/HIDARA-LACHKAR_YOUSSEF.jpg",
-    "IDRISSI_OUDGHRI_SAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
-    "IDRISSI_OUDGHRISSAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
-    "JIRA_MOHAMED": "images/JIRA_MOHAMED.jpg",
-    "JRA_MOHAMED": "images/JIRA_MOHAMED.jpg",
-    "KAFOUNI_ZAKARIAE": "images/KAFOUNI_ZAKARIAE.jpg",
-    "KAFQUNI_ZAKARIAE": "images/KAFOUNI_ZAKARIAE.jpg",
-    "KHALOUQ_RACHID": "images/KHALOUQ_RACHID.jpg",
-    "LAMSSIAH_JAOUAD": "images/LAMSSIAH_JAOUAD.jpg",
-    "MAJDOUB_JIHANE": "images/MAJDOUB_JIHANE.jpg",
-    "MOHSSINE_YOUNESS": "images/MOHSSINE_YOUNESS.jpg",
-    "MOUJAHID_IMANE": "images/MOUJAHID_IMANE.jpg",
-    "MOKHTAR": "images/Mokhtar.jpg",
-    "QUASSIR_HICHAM": "images/QUASSIR_HICHAM.jpg",
-    "OUASSIR_HICHAM": "images/QUASSIR_HICHAM.jpg",
-    "SALIL_HOUDA": "images/SALIL_HOUDA.jpg",
-    "SALIH_HOUDA": "images/SALIL_HOUDA.jpg",
-    "SBAI_HAKIMA": "images/SBAI_HAKIMA.jpg",
-    "TOUATI_OMAR": "images/TOUATI_OMAR.jpg",
-    "WALID": "images/WALID.jpg",
-    "ZAIR_FATIMA": "images/ZAIR_FATIMA.jpg"
+    "FOUZIA_EZHAR": "images/FOUZIA6ZHAR.jpg"
   };
 
   function normalize(str) {
@@ -189,6 +246,20 @@ const StaffPhotoService = (() => {
       .replace(/^_|_$/g, "");
   }
 
+  // Normalisation phonétique tolérante aux doubles consonnes et variations
+  function simplify(str) {
+    return normalize(str)
+      .replace(/SS/g, "S")
+      .replace(/MM/g, "M")
+      .replace(/TT/g, "T")
+      .replace(/LL/g, "L")
+      .replace(/BB/g, "B")
+      .replace(/DD/g, "D")
+      .replace(/FF/g, "F")
+      .replace(/OU/g, "U")
+      .replace(/_/g, "");
+  }
+
   function getInitials(name) {
     if (!name) return "GC";
     const parts = name.trim().split(/\s+/);
@@ -199,20 +270,33 @@ const StaffPhotoService = (() => {
   function getPhotoUrl(name) {
     if (!name) return null;
     const clean = normalize(name);
+    
+    // 1. Correspondance exacte dans PHOTO_MAP
     if (PHOTO_MAP[clean]) return PHOTO_MAP[clean];
 
+    // 2. Correspondance simplifiée
+    const simpleClean = simplify(clean);
     for (const [key, url] of Object.entries(PHOTO_MAP)) {
-      if (clean === key || clean.replace(/_/g, "") === key.replace(/_/g, "")) return url;
+      if (simplify(key) === simpleClean) return url;
     }
 
+    // 3. Inclusion sous-chaîne directe
     for (const [key, url] of Object.entries(PHOTO_MAP)) {
       if (clean.includes(key) || key.includes(clean)) return url;
     }
 
-    const words = clean.split("_").filter(w => w.length >= 3);
+    // 4. Correspondance par mot clé principal (longueur >= 4)
+    const words = clean.split("_").filter(w => w.length >= 4);
     for (const w of words) {
       if (PHOTO_MAP[w]) return PHOTO_MAP[w];
+      const sw = simplify(w);
+      for (const [key, url] of Object.entries(PHOTO_MAP)) {
+        if (simplify(key).includes(sw) || sw.includes(simplify(key))) {
+          return url;
+        }
+      }
     }
+
     return null;
   }
 
