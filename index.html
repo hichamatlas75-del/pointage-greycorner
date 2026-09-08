@@ -637,10 +637,10 @@
   .scroll::-webkit-scrollbar { display:none; }
 
   /* ─────────────────────────────────────────
-     HISTORIQUE 7 JOURS
+     HISTORIQUE MENSUEL & 7 JOURS
   ───────────────────────────────────────── */
   .histo-wrap {
-    margin-top:20px;
+    margin-top:18px;
     background:rgba(255,255,255,.03);
     border:1px solid rgba(255,255,255,.07);
     border-radius:22px;
@@ -650,15 +650,127 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:11px 16px;
+    padding:10px 14px;
     border-bottom:1px solid rgba(255,255,255,.06);
-    background:rgba(255,255,255,.03);
+    background:rgba(255,255,255,.04);
+  }
+  .histo-nav-btn {
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    color:var(--gold);
+    border-radius:999px;
+    width:26px;
+    height:26px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    cursor:pointer;
+    transition:.15s;
+    user-select:none;
+  }
+  .histo-nav-btn:hover:not(:disabled) {
+    background:rgba(255,214,138,.16);
+    border-color:rgba(255,214,138,.35);
+  }
+  .histo-nav-btn:active:not(:disabled) {
+    transform:scale(.92);
+  }
+  .histo-nav-btn:disabled {
+    opacity:.25;
+    cursor:not-allowed;
+  }
+  .histo-month-title {
+    font-size:11px;
+    font-weight:800;
+    color:var(--gold);
+    letter-spacing:.05em;
+    text-transform:capitalize;
+    min-width:105px;
+    text-align:center;
+  }
+  .histo-toggle {
+    display:inline-flex;
+    background:rgba(0,0,0,.30);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:999px;
+    padding:2px;
+    gap:2px;
+  }
+  .histo-tab-btn {
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    font-size:9px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:3px 8px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:.18s;
+  }
+  .histo-tab-btn.active {
+    background:var(--gold-dim);
+    border:1px solid var(--gold-stroke);
+    color:var(--gold);
+    font-weight:900;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+  }
+  .histo-kpis {
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:4px;
+    padding:8px 10px;
+    background:rgba(0,0,0,.18);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  .histo-kpi-item {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:3px 2px;
+    border-radius:8px;
+    background:rgba(255,255,255,.02);
+  }
+  .histo-kpi-num {
+    font-size:13px;
+    font-weight:900;
+    line-height:1.1;
+    color:var(--text);
+  }
+  .histo-kpi-lbl {
+    font-size:7.5px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--muted);
+    margin-top:2px;
+    white-space:nowrap;
+  }
+  .histo-list-scroll {
+    max-height:360px;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,214,138,.25) transparent;
+  }
+  .histo-list-scroll::-webkit-scrollbar {
+    width:4px;
+  }
+  .histo-list-scroll::-webkit-scrollbar-track {
+    background:transparent;
+  }
+  .histo-list-scroll::-webkit-scrollbar-thumb {
+    background:rgba(255,214,138,.25);
+    border-radius:999px;
   }
   .histo-row {
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:10px 16px;
+    padding:9px 14px;
     border-bottom:1px solid rgba(255,255,255,.04);
     font-size:11px;
     font-weight:700;
@@ -670,7 +782,7 @@
     font-size:10px;
     font-weight:700;
     letter-spacing:.06em;
-    min-width:90px;
+    min-width:85px;
   }
   .histo-day {
     font-size:9px;
@@ -678,7 +790,7 @@
     text-transform:uppercase;
     letter-spacing:.12em;
     color:rgba(232,233,239,.35);
-    min-width:36px;
+    min-width:32px;
   }
   .histo-status {
     display:flex;
@@ -825,13 +937,44 @@
             </button>
           </div>
 
-          <!-- HISTORIQUE 7 JOURS -->
+          <!-- HISTORIQUE DU MOIS & 7 JOURS -->
           <div class="histo-wrap" id="histoWrap" style="display:none">
             <div class="histo-header">
-              <div class="label-caps" style="letter-spacing:.14em">Mes 7 derniers jours</div>
-              <div id="histoLoading" class="label-caps" style="color:rgba(255,214,138,.5)">…</div>
+              <div class="flex items-center gap-1">
+                <button id="btnHistoPrev" type="button" class="histo-nav-btn" aria-label="Mois précédent">◀</button>
+                <span id="histoMonthLabel" class="histo-month-title">--</span>
+                <button id="btnHistoNext" type="button" class="histo-nav-btn" aria-label="Mois suivant">▶</button>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="histo-toggle">
+                  <button id="btnTab7d" type="button" class="histo-tab-btn">7j</button>
+                  <button id="btnTabMonth" type="button" class="histo-tab-btn active">Mois</button>
+                </div>
+                <div id="histoLoading" class="label-caps" style="color:rgba(255,214,138,.5);font-size:8px">…</div>
+              </div>
             </div>
-            <div id="histoList"></div>
+
+            <!-- Indicateurs clés du mois -->
+            <div id="histoKpis" class="histo-kpis">
+              <div class="histo-kpi-item">
+                <span class="histo-kpi-num" id="kpiPresentCount" style="color:var(--green)">0</span>
+                <span class="histo-kpi-lbl">Présents</span>
+              </div>
+              <div class="histo-kpi-item">
+                <span class="histo-kpi-num" id="kpiLateCount" style="color:#f87171">0</span>
+                <span class="histo-kpi-lbl">Retards</span>
+              </div>
+              <div class="histo-kpi-item">
+                <span class="histo-kpi-num" id="kpiTotalLateMin" style="color:var(--gold)">0m</span>
+                <span class="histo-kpi-lbl">Cumul</span>
+              </div>
+              <div class="histo-kpi-item">
+                <span class="histo-kpi-num" id="kpiOffCount" style="color:#a5b4fc">0</span>
+                <span class="histo-kpi-lbl">Repos</span>
+              </div>
+            </div>
+
+            <div id="histoList" class="histo-list-scroll"></div>
           </div>
 
           <div class="text-center mt-6">
@@ -1222,10 +1365,14 @@
     }
 
     // =========================================================
-    // ✅ Historique 7 jours & Calculs de Retard
+    // ✅ Historique Mensuel & 7 jours + Calculs de Retard
     // =========================================================
     const JOURS_FR = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
     const MOIS_FR  = ["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];
+    const MOIS_LONGS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+    let histoMode = "month"; // "7d" ou "month"
+    let histoDate = new Date(); // Mois affiché
 
     function timeToMin(t){
       if(!t || typeof t !== "string" || !t.includes(":")) return null;
@@ -1273,32 +1420,93 @@
       return dates;
     }
 
+    function getMonthDates(year, month){
+      const dates = [];
+      const todayStr = currentDateStr();
+      const [todayY, todayM, todayD] = todayStr.split('-').map(Number);
+      const isCurrentMonth = (year === todayY && month === (todayM - 1));
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const maxDay = isCurrentMonth ? Math.min(todayD, daysInMonth) : daysInMonth;
+
+      for(let day = maxDay; day >= 1; day--){
+        const dd = new Date(year, month, day);
+        const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        dates.push({ iso, dd });
+      }
+      return dates;
+    }
+
     async function loadHistorique(staffKey){
+      if(!staffKey && selected) staffKey = keyStaff(selected);
+      if(!staffKey) return;
+
       const wrap    = document.getElementById('histoWrap');
       const list    = document.getElementById('histoList');
       const loading = document.getElementById('histoLoading');
-      if(!wrap||!list) return;
+      const label   = document.getElementById('histoMonthLabel');
+      const btnNext = document.getElementById('btnHistoNext');
+      const btnPrev = document.getElementById('btnHistoPrev');
+      if(!wrap || !list) return;
+
       wrap.style.display = "block";
-      list.innerHTML = "";
-      loading.textContent = "…";
+      if(loading) loading.textContent = "…";
 
-      const dates  = getLast7Dates();
-      const today  = dates[0].iso;
-      const minDate = dates[dates.length - 1].iso;
+      const todayStr = currentDateStr();
+      const [todayY, todayM] = todayStr.split('-').map(Number);
+      const currentYear = histoDate.getFullYear();
+      const currentMonth = histoDate.getMonth();
+
+      // Titre affiché
+      if(label){
+        if(histoMode === "7d"){
+          label.textContent = "7 derniers jours";
+        } else {
+          label.textContent = `${MOIS_LONGS_FR[currentMonth]} ${currentYear}`;
+        }
+      }
+
+      // Gestion de la navigabilité
+      const isLatestMonth = (currentYear > todayY) || (currentYear === todayY && currentMonth >= (todayM - 1));
+      if(btnNext){
+        btnNext.disabled = (histoMode === "7d") || isLatestMonth;
+      }
+      if(btnPrev){
+        btnPrev.disabled = (histoMode === "7d");
+      }
+
+      // Dates à afficher & intervalle Firebase
+      let dates = [];
+      let minDate = "";
+      let maxDate = "";
+
+      if(histoMode === "7d"){
+        dates = getLast7Dates();
+        minDate = dates[dates.length - 1].iso;
+        maxDate = dates[0].iso;
+      } else {
+        dates = getMonthDates(currentYear, currentMonth);
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        minDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+        maxDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+      }
+
       const isSec = isSecuriteRole(staffKey);
-
       let punchesMap = {};
       let presencesMap = {};
 
       try {
-        const [punchSnap, presSnap] = await Promise.all([
-          db.ref('punches').orderByKey().startAt(minDate).endAt(today).once('value'),
-          db.ref('presences').orderByKey().startAt(minDate).endAt(today).once('value')
+        const [punchRes, presRes] = await Promise.allSettled([
+          db.ref('punches').orderByKey().startAt(minDate).endAt(maxDate).once('value'),
+          db.ref('presences').orderByKey().startAt(minDate).endAt(maxDate).once('value')
         ]);
-        punchesMap = punchSnap.val() || {};
-        presencesMap = presSnap.val() || {};
-      } catch (e) {
-        // Fallback de sécurité
+        if(punchRes.status === "fulfilled" && punchRes.value){
+          punchesMap = punchRes.value.val() || {};
+        }
+        if(presRes.status === "fulfilled" && presRes.value){
+          presencesMap = presRes.value.val() || {};
+        }
+      } catch(e){
         const snaps = await Promise.all(
           dates.map(async ({iso}) => {
             const [pu, pr] = await Promise.all([
@@ -1314,15 +1522,19 @@
         });
       }
 
-      loading.textContent = "";
+      if(loading) loading.textContent = "";
       list.innerHTML = "";
 
-      dates.forEach(({iso}) => {
+      let countPresent = 0;
+      let countLate = 0;
+      let totalLateMin = 0;
+      let countOff = 0;
+
+      dates.forEach(({iso, dd: dt}) => {
         const pu = punchesMap[iso]?.[staffKey] || null;
         const pr = presencesMap[iso]?.[staffKey] || null;
 
-        const [yy,mm,dd] = iso.split('-').map(Number);
-        const dt   = new Date(yy, mm-1, dd);
+        const [, mm, dd] = iso.split('-').map(Number);
         const isMonday = (dt.getDay() === 1);
 
         const hA = pu?.hA || pr?.hA || (isPunchedLocal(iso, staffKey) ? getPunchedTimeLocal(iso, staffKey) : "");
@@ -1339,9 +1551,21 @@
         }
 
         const isLate = (lateMin > 0);
+        const isToday = (iso === todayStr);
+
+        // Cumul des indicateurs
+        if(hA){
+          countPresent++;
+          if(isLate){
+            countLate++;
+            totalLateMin += lateMin;
+          }
+        } else if(isOff){
+          countOff++;
+        }
+
         const jour = JOURS_FR[dt.getDay()];
-        const date = `${String(dd).padStart(2,'0')} ${MOIS_FR[mm-1]}`;
-        const isToday = iso === today;
+        const dateFormatted = `${String(dd).padStart(2,'0')} ${MOIS_FR[mm-1]}`;
 
         const row = document.createElement('div');
         row.className = 'histo-row' + (isToday ? ' histo-today' : '');
@@ -1378,15 +1602,76 @@
         }
 
         row.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
             <div class="histo-day">${jour}</div>
-            <div class="histo-date">${date}${isToday ? '&nbsp;<span style="color:var(--gold);font-size:9px">auj.</span>' : ''}</div>
+            <div class="histo-date">${dateFormatted}${isToday ? '&nbsp;<span style="color:var(--gold);font-size:9px">auj.</span>' : ''}</div>
           </div>
           ${statusHTML}
         `;
         list.appendChild(row);
       });
+
+      // Mettre à jour les compteurs KPIs
+      const elPresent = document.getElementById('kpiPresentCount');
+      const elLate    = document.getElementById('kpiLateCount');
+      const elTotalMin= document.getElementById('kpiTotalLateMin');
+      const elOff     = document.getElementById('kpiOffCount');
+      if(elPresent) elPresent.textContent = countPresent;
+      if(elLate) elLate.textContent = countLate;
+      if(elTotalMin) elTotalMin.textContent = totalLateMin > 0 ? `+${totalLateMin}m` : '0m';
+      if(elOff) elOff.textContent = countOff;
     }
+
+    function initHistoControls(){
+      const btnPrev = document.getElementById('btnHistoPrev');
+      const btnNext = document.getElementById('btnHistoNext');
+      const tab7d   = document.getElementById('btnTab7d');
+      const tabMonth= document.getElementById('btnTabMonth');
+
+      if(btnPrev){
+        btnPrev.addEventListener('click', () => {
+          if(histoMode === "7d") return;
+          histoDate.setMonth(histoDate.getMonth() - 1);
+          if(selected) loadHistorique(keyStaff(selected));
+        });
+      }
+
+      if(btnNext){
+        btnNext.addEventListener('click', () => {
+          if(histoMode === "7d") return;
+          const todayStr = currentDateStr();
+          const [todayY, todayM] = todayStr.split('-').map(Number);
+          const nextDate = new Date(histoDate);
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          if(nextDate.getFullYear() > todayY || (nextDate.getFullYear() === todayY && nextDate.getMonth() >= todayM)){
+            return;
+          }
+          histoDate = nextDate;
+          if(selected) loadHistorique(keyStaff(selected));
+        });
+      }
+
+      if(tab7d){
+        tab7d.addEventListener('click', () => {
+          if(histoMode === "7d") return;
+          histoMode = "7d";
+          tab7d.classList.add('active');
+          if(tabMonth) tabMonth.classList.remove('active');
+          if(selected) loadHistorique(keyStaff(selected));
+        });
+      }
+
+      if(tabMonth){
+        tabMonth.addEventListener('click', () => {
+          if(histoMode === "month") return;
+          histoMode = "month";
+          tabMonth.classList.add('active');
+          if(tab7d) tab7d.classList.remove('active');
+          if(selected) loadHistorique(keyStaff(selected));
+        });
+      }
+    }
+    initHistoControls();
 
     function buildGasUrl(p){ return GAS_EXEC_URL+"?"+new URLSearchParams(p).toString(); }
 
