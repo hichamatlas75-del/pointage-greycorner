@@ -54,21 +54,37 @@ const TimeService = (() => {
   }
 
   function currentDateStr() {
-    return new Intl.DateTimeFormat("fr-CA", {
-      timeZone: Config.timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(getTrustedDate());
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: Config.timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(getTrustedDate());
+      const y = parts.find(p => p.type === "year")?.value;
+      const m = parts.find(p => p.type === "month")?.value;
+      const d = parts.find(p => p.type === "day")?.value;
+      if (y && m && d) return `${y}-${m}-${d}`;
+    } catch (e) {}
+    const d = getTrustedDate();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
   function currentTimeHHMM() {
-    return new Intl.DateTimeFormat("fr-FR", {
-      timeZone: Config.timeZone,
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    }).format(getTrustedDate());
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: Config.timeZone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).formatToParts(getTrustedDate());
+      let h = parts.find(p => p.type === "hour")?.value || "00";
+      let m = parts.find(p => p.type === "minute")?.value || "00";
+      if (h === "24") h = "00";
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    } catch (e) {}
+    const d = getTrustedDate();
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   }
 
   function timeToMin(t) {
@@ -908,7 +924,10 @@ const PunchController = (() => {
 
   async function handlePunch() {
     const selected = StorageService.getSelectedStaff();
-    if (!selected) return;
+    if (!selected) {
+      UIService.toast("Aucun profil sélectionné ❌");
+      return;
+    }
 
     const staffKey = SecurityService.keyStaff(selected);
     const dStr = TimeService.currentDateStr();
@@ -916,6 +935,7 @@ const PunchController = (() => {
     const ts = TimeService.getTrustedDate().getTime();
 
     UIService.setPunchButtonEnabled(false);
+    UIService.toast("Enregistrement en cours… ⏳");
 
     if (StorageService.isPunchedLocal(dStr, staffKey)) {
       UIService.toast("Déjà pointé aujourd'hui ✅");
@@ -945,20 +965,20 @@ const PunchController = (() => {
       }
     } catch (e) {}
 
-    const coords = GpsService.getLastPosition();
+    // Schéma exact validé par les règles Firebase Database (pas de champs tiers rejetés par $other: false)
     const payload = {
       empKey: staffKey,
-      hA,
-      retard,
-      retardMin,
-      timestamp: ts,
-      coords: coords ? { lat: coords.lat, lon: coords.lon, acc: Math.round(coords.accuracy || 0) } : null
+      hA: String(hA),
+      retard: Boolean(retard),
+      retardMin: Number(retardMin) || 0,
+      timestamp: Number(ts)
     };
 
     try {
       await db.ref(`punches/${dStr}/${staffKey}`).set(payload);
     } catch (e) {
-      UIService.toast("Erreur de connexion Firebase ❌");
+      console.error("Firebase Punch Error:", e);
+      UIService.toast("Erreur Firebase : " + (e?.message || "Écriture refusée") + " ❌");
       UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
       UIService.showRetryGPS(GpsService.getState() !== "ok");
       return;
