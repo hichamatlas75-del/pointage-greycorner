@@ -779,6 +779,11 @@ const HistoryService = (() => {
           countLate++;
           totalLateMin += lateMin;
         }
+        // Si le pointage d'aujourd'hui est présent sur Firebase, synchroniser l'affichage
+        if (isToday) {
+          StorageService.setPunchedLocal(todayStr, staffKey, hA);
+          UIService.renderPointedBox(hA, todayStr);
+        }
       } else if (isOff) {
         countOff++;
       }
@@ -935,19 +940,42 @@ const PunchController = (() => {
     const ts = TimeService.getTrustedDate().getTime();
 
     UIService.setPunchButtonEnabled(false);
-    UIService.toast("Enregistrement en cours… ⏳");
-
+    // 1. Vérification locale
     if (StorageService.isPunchedLocal(dStr, staffKey)) {
+      const localTime = StorageService.getPunchedTimeLocal(dStr, staffKey);
       UIService.toast("Déjà pointé aujourd'hui ✅");
-      UIService.renderPointedBox(StorageService.getPunchedTimeLocal(dStr, staffKey), dStr);
+      UIService.renderPointedBox(localTime || hA, dStr);
       return;
     }
 
+    // 2. Vérification sur Firebase (cas déconnexion/reconnexion ou saisie gérant dans la feuille)
+    try {
+      const [punchSnap, presSnap] = await Promise.all([
+        db.ref(`punches/${dStr}/${staffKey}`).once("value"),
+        db.ref(`presences/${dStr}/${staffKey}`).once("value")
+      ]);
+      const pVal = punchSnap.val();
+      const prVal = presSnap.val();
+      const existingHA = pVal?.hA || prVal?.hA || null;
+
+      if (existingHA) {
+        StorageService.setPunchedLocal(dStr, staffKey, existingHA);
+        UIService.toast("Déjà pointé aujourd'hui ✅");
+        UIService.renderPointedBox(existingHA, dStr);
+        HistoryService.loadHistorique(staffKey);
+        return;
+      }
+    } catch (e) {}
+
+    // 3. Vérification GPS
     if (GpsService.getState() !== "ok") {
       UIService.toast("GPS non validé ❌");
       GpsService.checkGPS(true);
       return;
     }
+
+    UIService.setPunchButtonEnabled(false);
+    UIService.toast("Enregistrement en cours… ⏳");
 
     let retard = false;
     let retardMin = 0;
@@ -977,8 +1005,24 @@ const PunchController = (() => {
     try {
       await db.ref(`punches/${dStr}/${staffKey}`).set(payload);
     } catch (e) {
-      console.error("Firebase Punch Error:", e);
-      UIService.toast("Erreur Firebase : " + (e?.message || "Écriture refusée") + " ❌");
+      console.warn("Firebase Punch write caught, checking remote status:", e);
+      // Si refusé (ex: pointage déjà existant sur Firebase), récupérer l'heure et afficher Déjà pointé
+      try {
+        const [pCheck, prCheck] = await Promise.all([
+          db.ref(`punches/${dStr}/${staffKey}`).once("value"),
+          db.ref(`presences/${dStr}/${staffKey}`).once("value")
+        ]);
+        const serverHA = pCheck.val()?.hA || prCheck.val()?.hA || null;
+        if (serverHA) {
+          StorageService.setPunchedLocal(dStr, staffKey, serverHA);
+          UIService.toast("Déjà pointé aujourd'hui ✅");
+          UIService.renderPointedBox(serverHA, dStr);
+          HistoryService.loadHistorique(staffKey);
+          return;
+        }
+      } catch (errCheck) {}
+
+      UIService.toast("Erreur de connexion Firebase ❌");
       UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
       UIService.showRetryGPS(GpsService.getState() !== "ok");
       return;
@@ -1440,7 +1484,24 @@ const App = (() => {
           if (StorageService.isPunchedLocal(dStr, staffKey)) {
             UIService.renderPointedBox(StorageService.getPunchedTimeLocal(dStr, staffKey), dStr);
           } else {
-            GpsService.checkGPS(false);
+            // Vérification directe sur Firebase (cas déconnexion/reconnexion ou saisie gérant)
+            Promise.allSettled([
+              db.ref(`punches/${dStr}/${staffKey}`).once("value"),
+              db.ref(`presences/${dStr}/${staffKey}`).once("value")
+            ]).then(([pRes, prRes]) => {
+              const pVal = pRes.status === "fulfilled" ? pRes.value?.val() : null;
+              const prVal = prRes.status === "fulfilled" ? prRes.value?.val() : null;
+              const serverTime = pVal?.hA || prVal?.hA || null;
+
+              if (serverTime) {
+                StorageService.setPunchedLocal(dStr, staffKey, serverTime);
+                UIService.renderPointedBox(serverTime, dStr);
+              } else {
+                GpsService.checkGPS(false);
+              }
+            }).catch(() => {
+              GpsService.checkGPS(false);
+            });
           }
           HistoryService.loadHistorique(staffKey);
         } else {
