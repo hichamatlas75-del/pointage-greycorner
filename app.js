@@ -719,6 +719,20 @@ const HistoryService = (() => {
     let punchesMap = {};
     let presencesMap = {};
 
+    function getStaffRecord(dayMap, key) {
+      if (!dayMap || typeof dayMap !== "object") return null;
+      if (dayMap[key]) return dayMap[key];
+      const clean = SecurityService.keyStaff(key);
+      if (dayMap[clean]) return dayMap[clean];
+      const simple = StaffPhotoService.normalize(key);
+      for (const k of Object.keys(dayMap)) {
+        if (SecurityService.keyStaff(k) === clean || StaffPhotoService.normalize(k) === simple) {
+          return dayMap[k];
+        }
+      }
+      return null;
+    }
+
     try {
       const [punchRes, presRes] = await Promise.allSettled([
         db.ref("punches").orderByKey().startAt(minDate).endAt(maxDate).once("value"),
@@ -730,8 +744,8 @@ const HistoryService = (() => {
       const snaps = await Promise.all(
         dates.map(async ({ iso }) => {
           const [pu, pr] = await Promise.all([
-            db.ref(`punches/${iso}/${staffKey}`).once("value").then(s => s.val()).catch(() => null),
-            db.ref(`presences/${iso}/${staffKey}`).once("value").then(s => s.val()).catch(() => null)
+            db.ref(`punches/${iso}`).once("value").then(s => getStaffRecord(s.val(), staffKey)).catch(() => null),
+            db.ref(`presences/${iso}`).once("value").then(s => getStaffRecord(s.val(), staffKey)).catch(() => null)
           ]);
           return { iso, pu, pr };
         })
@@ -751,23 +765,25 @@ const HistoryService = (() => {
     let countOff = 0;
 
     dates.forEach(({ iso, dd: dt }) => {
-      const pu = punchesMap[iso]?.[staffKey] || null;
-      const pr = presencesMap[iso]?.[staffKey] || null;
+      const pu = getStaffRecord(punchesMap[iso], staffKey);
+      const pr = getStaffRecord(presencesMap[iso], staffKey);
 
       const [, mm, dd] = iso.split("-").map(Number);
       const isMonday = (dt.getDay() === 1);
 
       const hA = pu?.hA || pr?.hA || (StorageService.isPunchedLocal(iso, staffKey) ? StorageService.getPunchedTimeLocal(iso, staffKey) : "");
+      // hP mis à jour en priorité depuis presences (modifié par le gérant), ou pu.hP
       const hP = pr?.hP || pu?.hP || (isSec ? "09:00" : "");
       const isOff = pr?.off === true || (isSec && isMonday && !hA);
 
+      // Calcul DYNAMIQUE prioritaire : si hA et hP existent, recalculer le retard en direct
       let lateMin = 0;
-      if (pu && typeof pu.retardMin === "number" && pu.retardMin > 0) {
-        lateMin = pu.retardMin;
+      if (hA && (hP || isSec)) {
+        lateMin = calculateLateMinutes(hP || "09:00", hA, staffKey);
       } else if (pr && typeof pr.retardMin === "number" && pr.retardMin > 0) {
         lateMin = pr.retardMin;
-      } else if (hA && (hP || isSec)) {
-        lateMin = calculateLateMinutes(hP || "09:00", hA, staffKey);
+      } else if (pu && typeof pu.retardMin === "number" && pu.retardMin > 0) {
+        lateMin = pu.retardMin;
       }
 
       const isLate = (lateMin > 0);
