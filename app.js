@@ -28,7 +28,7 @@ const Config = Object.freeze({
     secret: "greycorner2026",
     empNodeDefault: "pointage"
   },
-  timeZone: "Africa/Casablanca",
+  timeZone: "GMT",
   categories: ["service", "bar", "cuisine", "caisse", "menage", "securite", "economat"]
 });
 
@@ -39,7 +39,7 @@ const auth = firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
 // ─────────────────────────────────────────────────────────────────────────
-// 2. TIME SERVICE (Anti-fraude Horodatage Serveur)
+// 2. TIME SERVICE (Anti-fraude Horodatage Serveur GMT)
 // ─────────────────────────────────────────────────────────────────────────
 const TimeService = (() => {
   let serverOffset = 0;
@@ -67,7 +67,7 @@ const TimeService = (() => {
       if (y && m && d) return `${y}-${m}-${d}`;
     } catch (e) {}
     const d = getTrustedDate();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
   }
 
   function currentTimeHHMM() {
@@ -84,7 +84,7 @@ const TimeService = (() => {
       return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
     } catch (e) {}
     const d = getTrustedDate();
-    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
   }
 
   function timeToMin(t) {
