@@ -430,21 +430,39 @@ const UIService = (() => {
         <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
       `;
     } else if (hasHP && isLate) {
-      // 2. En retard avec HP : Emoji sad avec pouce à l'envers 😔👎
-      box.className = "pointed-box pointed-late";
-      if (status) {
-        status.textContent = `Retard +${lateMin} min 😔👎`;
-        status.style.color = "var(--coral-electric)";
+      if (lateMin <= 10) {
+        // 2a. Léger retard (1 à 10 min) : Emoji spécial sans pouce à l'envers ⏰😐
+        box.className = "pointed-box pointed-mild-late";
+        if (status) {
+          status.textContent = `Retard +${lateMin} min ⏰😐`;
+          status.style.color = "var(--amber-electric)";
+        }
+        updateGpsDot("ok");
+        box.innerHTML = `
+          <div class="pointed-check pointed-check-mild-late">
+            <span style="font-size:22px;line-height:1">⏰😐</span>
+          </div>
+          <div class="pointed-msg pointed-msg-mild-late">Léger retard : +${lateMin} min ⏰😐</div>
+          <div class="pointed-time pointed-time-mild-late">${hhmm || "—"}</div>
+          <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+        `;
+      } else {
+        // 2b. Retard avéré (> 10 min) : Emoji sad avec pouce à l'envers 😔👎
+        box.className = "pointed-box pointed-late";
+        if (status) {
+          status.textContent = `Retard +${lateMin} min 😔👎`;
+          status.style.color = "var(--coral-electric)";
+        }
+        updateGpsDot("ok");
+        box.innerHTML = `
+          <div class="pointed-check pointed-check-late">
+            <span style="font-size:22px;line-height:1">😔👎</span>
+          </div>
+          <div class="pointed-msg pointed-msg-late">Attention : Retard de +${lateMin} min 😔👎</div>
+          <div class="pointed-time pointed-time-late">${hhmm || "—"}</div>
+          <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+        `;
       }
-      updateGpsDot("ok");
-      box.innerHTML = `
-        <div class="pointed-check pointed-check-late">
-          <span style="font-size:22px;line-height:1">😔👎</span>
-        </div>
-        <div class="pointed-msg pointed-msg-late">Attention : Retard de +${lateMin} min 😔👎</div>
-        <div class="pointed-time pointed-time-late">${hhmm || "—"}</div>
-        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
-      `;
     } else {
       // 3. HP non attribué : Pas d'emoji
       box.className = "pointed-box";
@@ -853,12 +871,21 @@ const HistoryService = (() => {
       let statusHTML = "";
       if (hA) {
         if (isLate) {
-          statusHTML = `
-            <div class="histo-status histo-retard">
-              <span class="histo-dot" style="background:var(--red);box-shadow:0 0 6px rgba(239,68,68,.7)"></span>
-              <span style="font-weight:900;color:#fff">${hA}</span>
-              <span class="histo-retard-badge">+${lateMin} min 😔👎</span>
-            </div>`;
+          if (lateMin <= 10) {
+            statusHTML = `
+              <div class="histo-status histo-retard-mild">
+                <span class="histo-dot" style="background:var(--amber);box-shadow:0 0 6px rgba(245,158,11,.7)"></span>
+                <span style="font-weight:900;color:#fff">${hA}</span>
+                <span class="histo-retard-badge histo-retard-badge-mild">+${lateMin} min ⏰😐</span>
+              </div>`;
+          } else {
+            statusHTML = `
+              <div class="histo-status histo-retard">
+                <span class="histo-dot" style="background:var(--red);box-shadow:0 0 6px rgba(239,68,68,.7)"></span>
+                <span style="font-weight:900;color:#fff">${hA}</span>
+                <span class="histo-retard-badge">+${lateMin} min 😔👎</span>
+              </div>`;
+          }
         } else {
           statusHTML = `
             <div class="histo-status histo-present">
@@ -1096,7 +1123,11 @@ const PunchController = (() => {
     StorageService.setPunchedLocal(dStr, staffKey, hA);
     if (hasHP) {
       if (retard) {
-        UIService.toast(`Pointage validé : Retard +${retardMin} min 😔👎`);
+        if (retardMin <= 10) {
+          UIService.toast(`Pointage validé : Léger retard +${retardMin} min ⏰😐`);
+        } else {
+          UIService.toast(`Pointage validé : Retard +${retardMin} min 😔👎`);
+        }
       } else {
         UIService.toast(`Pointage validé ! Bravo, à l'heure 😊👍`);
       }

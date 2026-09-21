@@ -637,6 +637,12 @@ body::before {
   box-shadow: 0 14px 35px rgba(16, 185, 129, 0.25);
 }
 
+.pointed-box.pointed-mild-late {
+  background: linear-gradient(160deg, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  box-shadow: 0 14px 35px rgba(245, 158, 11, 0.25);
+}
+
 .pointed-box.pointed-late {
   background: linear-gradient(160deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.05));
   border: 1px solid rgba(239, 68, 68, 0.55);
@@ -660,6 +666,12 @@ body::before {
   box-shadow: 0 0 20px var(--emerald-glow);
 }
 
+.pointed-check.pointed-check-mild-late {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(245, 158, 11, 0.12));
+  border: 2px solid var(--amber-electric);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
+}
+
 .pointed-check.pointed-check-late {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.12));
   border: 2px solid var(--coral-electric);
@@ -676,6 +688,10 @@ body::before {
   color: var(--emerald-neon);
   text-shadow: 0 0 12px var(--emerald-glow);
 }
+.pointed-msg-mild-late {
+  color: #fde68a;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
 .pointed-msg-late {
   color: #fca5a5;
   text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
@@ -688,6 +704,10 @@ body::before {
   letter-spacing: -0.02em;
   text-shadow: 0 0 24px var(--emerald-glow);
   line-height: 1;
+}
+.pointed-time.pointed-time-mild-late {
+  color: #fbbf24;
+  text-shadow: 0 0 24px rgba(245, 158, 11, 0.5);
 }
 .pointed-time.pointed-time-late {
   color: #f87171;
@@ -921,6 +941,7 @@ body::before {
 .histo-absent  { color: var(--text-muted); }
 .histo-conge   { color: var(--amber-electric); }
 .histo-retard  { color: var(--coral-electric); }
+.histo-retard-mild { color: var(--amber-electric); }
 
 .histo-retard-badge {
   font-size: 9px;
@@ -932,6 +953,11 @@ body::before {
   color: #fca5a5;
   letter-spacing: .02em;
   white-space: nowrap;
+}
+.histo-retard-badge-mild {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fde68a;
 }
 .histo-ontime-badge {
   font-size: 8.5px;
