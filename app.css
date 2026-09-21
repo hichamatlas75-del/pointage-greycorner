@@ -618,7 +618,7 @@ body::before {
 .btn-gps-retry:active { transform: scale(.98); }
 
 .pointed-box {
-  padding: 20px;
+  padding: 22px 18px;
   border-radius: 26px;
   background: linear-gradient(160deg, rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.04));
   border: 1px solid rgba(16, 185, 129, 0.40);
@@ -630,8 +630,21 @@ body::before {
   from { transform: scale(.88); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
 }
+
+.pointed-box.pointed-ontime {
+  background: linear-gradient(160deg, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.55);
+  box-shadow: 0 14px 35px rgba(16, 185, 129, 0.25);
+}
+
+.pointed-box.pointed-late {
+  background: linear-gradient(160deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  box-shadow: 0 14px 35px rgba(239, 68, 68, 0.25);
+}
+
 .pointed-check {
-  width: 50px; height: 50px;
+  width: 54px; height: 54px;
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.30), rgba(16, 185, 129, 0.10));
   border: 2px solid var(--emerald-neon);
@@ -640,6 +653,34 @@ body::before {
   font-size: 22px;
   box-shadow: 0 0 16px var(--emerald-glow);
 }
+
+.pointed-check.pointed-check-ontime {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(16, 185, 129, 0.12));
+  border: 2px solid var(--emerald-neon);
+  box-shadow: 0 0 20px var(--emerald-glow);
+}
+
+.pointed-check.pointed-check-late {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.12));
+  border: 2px solid var(--coral-electric);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.45);
+}
+
+.pointed-msg {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+.pointed-msg-ontime {
+  color: var(--emerald-neon);
+  text-shadow: 0 0 12px var(--emerald-glow);
+}
+.pointed-msg-late {
+  color: #fca5a5;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
 .pointed-time {
   font-size: 2.6rem;
   font-weight: 900;
@@ -647,6 +688,10 @@ body::before {
   letter-spacing: -0.02em;
   text-shadow: 0 0 24px var(--emerald-glow);
   line-height: 1;
+}
+.pointed-time.pointed-time-late {
+  color: #f87171;
+  text-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
 }
 
 .btn-planning-inner {

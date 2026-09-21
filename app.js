@@ -392,35 +392,75 @@ const UIService = (() => {
     showRetryGPS(!!showRetry);
   }
 
-  function renderPointedBox(hhmm, dStr) {
+  function renderPointedBox(hhmm, dStr, meta = null) {
     const zone = document.getElementById("pointage-zone");
     if (!zone) return;
     const status = document.getElementById("status");
-    if (status) {
-      status.textContent = "Pointé ✓";
-      status.style.color = "var(--emerald-neon)";
-    }
-    updateGpsDot("ok");
 
     const wrap = document.getElementById("btnMainWrap");
     if (wrap) wrap.style.display = "none";
     showRetryGPS(false);
+    setPunchButtonEnabled(false);
 
     let box = document.getElementById("pointedBox");
     if (!box) {
       box = document.createElement("div");
       box.id = "pointedBox";
-      box.className = "pointed-box";
       zone.appendChild(box);
     }
+
+    const hasHP = meta ? Boolean(meta.hasHP) : false;
+    const isLate = meta ? Boolean(meta.isLate) : false;
+    const lateMin = meta ? Number(meta.lateMin || 0) : 0;
+
+    if (hasHP && !isLate) {
+      // 1. À l'heure avec HP : Smiley souriant avec pouce de bravo 😊👍
+      box.className = "pointed-box pointed-ontime";
+      if (status) {
+        status.textContent = "À l'heure 😊👍";
+        status.style.color = "var(--emerald-neon)";
+      }
+      updateGpsDot("ok");
+      box.innerHTML = `
+        <div class="pointed-check pointed-check-ontime">
+          <span style="font-size:22px;line-height:1">😊👍</span>
+        </div>
+        <div class="pointed-msg pointed-msg-ontime">Bravo ! Vous êtes à l'heure 😊👍</div>
+        <div class="pointed-time">${hhmm || "—"}</div>
+        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+      `;
+    } else if (hasHP && isLate) {
+      // 2. En retard avec HP : Emoji sad avec pouce à l'envers 😔👎
+      box.className = "pointed-box pointed-late";
+      if (status) {
+        status.textContent = `Retard +${lateMin} min 😔👎`;
+        status.style.color = "var(--coral-electric)";
+      }
+      updateGpsDot("ok");
+      box.innerHTML = `
+        <div class="pointed-check pointed-check-late">
+          <span style="font-size:22px;line-height:1">😔👎</span>
+        </div>
+        <div class="pointed-msg pointed-msg-late">Attention : Retard de +${lateMin} min 😔👎</div>
+        <div class="pointed-time pointed-time-late">${hhmm || "—"}</div>
+        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+      `;
+    } else {
+      // 3. HP non attribué : Pas d'emoji
+      box.className = "pointed-box";
+      if (status) {
+        status.textContent = "Pointé ✓";
+        status.style.color = "var(--emerald-neon)";
+      }
+      updateGpsDot("ok");
+      box.innerHTML = `
+        <div class="pointed-check">✓</div>
+        <div class="label-caps mb-1" style="color:var(--emerald-neon);letter-spacing:.15em">Présence enregistrée</div>
+        <div class="pointed-time">${hhmm || "—"}</div>
+        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+      `;
+    }
     box.style.display = "block";
-    box.innerHTML = `
-      <div class="pointed-check">✓</div>
-      <div class="label-caps mb-1" style="color:var(--emerald-neon);letter-spacing:.15em">Présence enregistrée</div>
-      <div class="pointed-time">${hhmm || "—"}</div>
-      <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
-    `;
-    setPunchButtonEnabled(false);
   }
 
   function initNetworkListener() {
@@ -798,7 +838,7 @@ const HistoryService = (() => {
         // Si le pointage d'aujourd'hui est présent sur Firebase, synchroniser l'affichage
         if (isToday) {
           StorageService.setPunchedLocal(todayStr, staffKey, hA);
-          UIService.renderPointedBox(hA, todayStr);
+          UIService.renderPointedBox(hA, todayStr, { hasHP: Boolean(hP || isSec), isLate, lateMin });
         }
       } else if (isOff) {
         countOff++;
@@ -817,14 +857,14 @@ const HistoryService = (() => {
             <div class="histo-status histo-retard">
               <span class="histo-dot" style="background:var(--red);box-shadow:0 0 6px rgba(239,68,68,.7)"></span>
               <span style="font-weight:900;color:#fff">${hA}</span>
-              <span class="histo-retard-badge">+${lateMin} min</span>
+              <span class="histo-retard-badge">+${lateMin} min 😔👎</span>
             </div>`;
         } else {
           statusHTML = `
             <div class="histo-status histo-present">
               <span class="histo-dot" style="background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.6)"></span>
               <span style="font-weight:900">${hA}</span>
-              ${(hP || isSec) ? `<span class="histo-ontime-badge">À l'heure</span>` : ""}
+              ${(hP || isSec) ? `<span class="histo-ontime-badge">À l'heure 😊👍</span>` : ""}
             </div>`;
         }
       } else if (isOff) {
@@ -977,7 +1017,10 @@ const PunchController = (() => {
       if (existingHA) {
         StorageService.setPunchedLocal(dStr, staffKey, existingHA);
         UIService.toast("Déjà pointé aujourd'hui ✅");
-        UIService.renderPointedBox(existingHA, dStr);
+        const effectiveHP = prVal?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+        const chkHasHP = Boolean(effectiveHP);
+        const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, existingHA, staffKey) : 0;
+        UIService.renderPointedBox(existingHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
         HistoryService.loadHistorique(staffKey);
         return;
       }
@@ -993,6 +1036,7 @@ const PunchController = (() => {
     UIService.setPunchButtonEnabled(false);
     UIService.toast("Enregistrement en cours… ⏳");
 
+    let hasHP = false;
     let retard = false;
     let retardMin = 0;
 
@@ -1001,6 +1045,7 @@ const PunchController = (() => {
       const presVal = presSnap.val();
       const effectiveHP = presVal?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
       if (effectiveHP) {
+        hasHP = true;
         const lm = HistoryService.calculateLateMinutes(effectiveHP, hA, staffKey);
         if (lm > 0) {
           retard = true;
@@ -1032,7 +1077,11 @@ const PunchController = (() => {
         if (serverHA) {
           StorageService.setPunchedLocal(dStr, staffKey, serverHA);
           UIService.toast("Déjà pointé aujourd'hui ✅");
-          UIService.renderPointedBox(serverHA, dStr);
+          const prV = prCheck.val();
+          const effectiveHP = prV?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+          const chkHasHP = Boolean(effectiveHP);
+          const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverHA, staffKey) : 0;
+          UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
           HistoryService.loadHistorique(staffKey);
           return;
         }
@@ -1045,8 +1094,16 @@ const PunchController = (() => {
     }
 
     StorageService.setPunchedLocal(dStr, staffKey, hA);
-    UIService.toast(retard ? `Pointage validé (Retard +${retardMin} min) ⚠️` : "Pointage validé avec succès ✅");
-    UIService.renderPointedBox(hA, dStr);
+    if (hasHP) {
+      if (retard) {
+        UIService.toast(`Pointage validé : Retard +${retardMin} min 😔👎`);
+      } else {
+        UIService.toast(`Pointage validé ! Bravo, à l'heure 😊👍`);
+      }
+    } else {
+      UIService.toast("Pointage validé avec succès ✅");
+    }
+    UIService.renderPointedBox(hA, dStr, { hasHP, isLate: retard, lateMin: retardMin });
     HistoryService.loadHistorique(staffKey);
 
     sendToSheetBackground({
@@ -1511,7 +1568,10 @@ const App = (() => {
 
               if (serverTime) {
                 StorageService.setPunchedLocal(dStr, staffKey, serverTime);
-                UIService.renderPointedBox(serverTime, dStr);
+                const effectiveHP = prVal?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+                const chkHasHP = Boolean(effectiveHP);
+                const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverTime, staffKey) : 0;
+                UIService.renderPointedBox(serverTime, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
               } else {
                 GpsService.checkGPS(false);
               }
