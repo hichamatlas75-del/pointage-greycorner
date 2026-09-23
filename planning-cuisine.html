@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Planning Cuisine — Grey Corner</title>
+  <link rel="icon" type="image/jpeg" href="LOGO.jpg" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="global.css" />
+  <script src="shared.js"></script>
+
+  <style>
+    /* Styles spécifiques Cuisine intégrés dans le thème Automne */
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin: 0 auto 18px;
+      position: relative;
+      z-index: 2;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .legend-dot.f { background: var(--terracotta); }
+    .legend-dot.h { background: var(--sage); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      max-width: 560px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .staff-list {
+      padding: 6px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .staff-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--paper);
+      border: 1px solid var(--hairline);
+      border-radius: 4px;
+    }
+
+    .staff-name {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+    }
+    .staff-name.femme {
+      color: var(--terracotta);
+    }
+    .staff-name.femme::before {
+      content: '●';
+      color: var(--terracotta);
+      margin-right: 8px;
+      font-size: 11px;
+    }
+    .staff-name.homme {
+      color: var(--sage);
+    }
+    .staff-name.homme::before {
+      content: '●';
+      color: var(--sage);
+      margin-right: 8px;
+      font-size: 11px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--hairline-gold);
+      background: var(--paper2);
+      color: var(--ink);
+      white-space: nowrap;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .badge.off {
+      background: var(--paper);
+      border-color: var(--hairline);
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+    .badge:focus {
+      background: #fff;
+      border-color: var(--brass);
+      box-shadow: 0 0 8px rgba(156, 122, 60, 0.25);
+    }
+
+    /* Mode Édition Admin */
+    body.admin-edit .staff-row {
+      border-style: dashed;
+      border-color: var(--brass-deep);
+    }
+    body.admin-edit .badge {
+      margin-left: auto;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="glow-a"></div>
+  <div class="glow-b"></div>
+
+  <!-- ─── ADMIN LOCKSCREEN MODAL (PIN SÉCURISÉ SHA-256) ─── -->
+  <div id="lockscreen" class="lockscreen hidden-app">
+    <div class="pin-panel" id="pinPanel">
+      <button id="close-lockscreen" style="position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 20px; color: var(--ink-dim); cursor: pointer; padding: 4px;">✕</button>
+      <div class="pin-top">
+        <div class="pin-badge">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0110 0v4"></path>
+          </svg>
+        </div>
+        <h2 class="pin-title">Admin Cuisine</h2>
+        <p class="pin-sub">Saisissez le code PIN Administrateur pour déverrouiller l'édition du planning.</p>
+      </div>
+
+      <div class="pin-dots" id="pinDots">
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+      </div>
+
+      <div class="pin-error" id="pin-error"></div>
+
+      <div class="pin-pad">
+        <button class="pin-key" data-num="1">1</button>
+        <button class="pin-key" data-num="2">2</button>
+        <button class="pin-key" data-num="3">3</button>
+        <button class="pin-key" data-num="4">4</button>
+        <button class="pin-key" data-num="5">5</button>
+        <button class="pin-key" data-num="6">6</button>
+        <button class="pin-key" data-num="7">7</button>
+        <button class="pin-key" data-num="8">8</button>
+        <button class="pin-key" data-num="9">9</button>
+        <button class="pin-key func" id="pin-clear">⌫</button>
+        <button class="pin-key" data-num="0">0</button>
+        <button class="pin-key func enter" id="pin-enter">↵</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── HEADER ─── -->
+  <header class="fade-up" style="animation-delay: 0s;">
+    <div class="logo-wrap">
+      <img src="LOGO.jpg" alt="Grey Corner" onerror="this.src='https://ui-avatars.com/api/?name=GC&background=faf7f0&color=9c7a3c&size=256'" />
+    </div>
+    <div class="eyebrow">Production & Cadence</div>
+    <h1 class="page-title">Planning <span>Cuisine</span></h1>
+    <p class="page-sub">Organisation et suivi de l'équipe en cuisine.</p>
+    <div class="festive-week-badge" id="festive-badge">✨ Chargement...</div>
+    <div class="gold-rule"></div>
+
+    <div class="header-actions" id="admin-actions">
+      <a href="index.html" class="back-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+        Retour Menu
+      </a>
+      <button id="admin-btn" class="admin-btn" title="Mode Édition Admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:11px; height:11px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+        Admin
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="legend fade-up" style="animation-delay: 0.06s;">
+      <div class="legend-item"><span class="legend-dot f"></span> Femme</div>
+      <div class="legend-item"><span class="legend-dot h"></span> Homme</div>
+    </div>
+
+    <!-- ─── GRILLE DES JOURS ─── -->
+    <div class="grid fade-up" style="animation-delay: 0.1s;">
+
+      <!-- LUNDI -->
+      <div class="day-card" data-day="0" style="--accent: var(--acc-1);">
+        <div class="card-header"><span class="day-name">Lundi</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge">12h — 21h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge off">OFF</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge off">OFF</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge">14h — F.S</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MARDI -->
+      <div class="day-card" data-day="1" style="--accent: var(--acc-2);">
+        <div class="card-header"><span class="day-name">Mardi</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge off">OFF</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge">15h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge">12h — 21h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge">12h — 15h / 17h - F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge off">OFF</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MERCREDI -->
+      <div class="day-card" data-day="2" style="--accent: var(--acc-3);">
+        <div class="card-header"><span class="day-name">Mercredi</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge off">OFF</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge off">OFF</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge">15h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge">12h — 15h / 17h - F.S</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JEUDI -->
+      <div class="day-card" data-day="3" style="--accent: var(--acc-4);">
+        <div class="card-header"><span class="day-name">Jeudi</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge off">OFF</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge">12h — 21h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge">15h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge">12h — 21h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge">14h — F.S</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VENDREDI -->
+      <div class="day-card" data-day="4" style="--accent: var(--acc-5);">
+        <div class="card-header"><span class="day-name">Vendredi</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge">06h — 14h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge">12h — 15h / 17h - F.S</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge">12h — 21h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge">13h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge">15h — F.S</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAMEDI -->
+      <div class="day-card" data-day="5" style="--accent: var(--acc-6);">
+        <div class="card-header"><span class="day-name">Samedi</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge">06h — 15h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge">06h — 15h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge">10h — 18h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge">13h — F.S</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIMANCHE -->
+      <div class="day-card" data-day="6" style="--accent: var(--acc-7);">
+        <div class="card-header"><span class="day-name">Dimanche</span></div>
+        <div class="card-body">
+          <div class="staff-list">
+            <div class="staff-row"><span class="staff-name femme">Khaoula</span><span class="badge">06h — 15h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Fatima</span><span class="badge">06h — 15h</span></div>
+            <div class="staff-row"><span class="staff-name femme">Jihane</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name femme">Imane</span><span class="badge">10h — 18h</span></div>
+            <div class="staff-row"><span class="staff-name homme">Anass</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Jawad</span><span class="badge">14h — F.S</span></div>
+            <div class="staff-row"><span class="staff-name homme">Saad</span><span class="badge">14h — 21h</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="footer">Grey Corner · Fès, Maroc</footer>
+
+  <!-- ─── SCRIPTS INTERACTIFS CUISINE ─── -->
+  <script>
+    let pinCode = "";
+    
+    const lockscreen = document.getElementById('lockscreen');
+    const adminBtn = document.getElementById('admin-btn');
+    const adminActions = document.getElementById('admin-actions');
+    const closeLock = document.getElementById('close-lockscreen');
+    const dots = Array.from(document.querySelectorAll('#pinDots .pin-dot'));
+    const pinError = document.getElementById('pin-error');
+    const pinPanel = document.getElementById('pinPanel');
+    const clearBtn = document.getElementById('pin-clear');
+    const enterBtn = document.getElementById('pin-enter');
+
+    // 1. RESTAURATION STRUCTURÉE DU PLANNING DEPUIS LOCALSTORAGE
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedData = localStorage.getItem('planningGreyCornerCuisineData');
+      if (savedData) {
+        try {
+          const planningData = JSON.parse(savedData);
+          const dayCards = document.querySelectorAll('.day-card');
+          
+          planningData.forEach((dayData, dayIndex) => {
+            const card = dayCards[dayIndex];
+            if (!card) return;
+            const list = card.querySelector('.staff-list');
+            if (!list) return;
+            
+            list.querySelectorAll('.staff-row').forEach(row => row.remove());
+            
+            dayData.staff.forEach(s => {
+              const row = document.createElement('div');
+              row.className = 'staff-row';
+              row.innerHTML = `<span class="staff-name ${s.gender}">${escapeHtml(s.name)}</span><span class="badge ${s.badge.toLowerCase() === 'off' ? 'off' : ''}">${escapeHtml(s.badge)}</span>`;
+              list.appendChild(row);
+            });
+          });
+        } catch (e) {
+          console.error("Erreur lors de la lecture des données Cuisine:", e);
+        }
+      }
+
+      // Identification du jour courant et centrage automatique au milieu de l'écran
+      const todayLabel = new Intl.DateTimeFormat('fr-FR', { weekday: 'long' }).format(new Date()).toLowerCase().trim();
+      document.querySelectorAll('.day-card').forEach(card => {
+        const name = card.querySelector('.day-name')?.innerText.toLowerCase().trim();
+        if (name === todayLabel) {
+          card.classList.add('is-today');
+          card.id = 'today-card';
+          const header = card.querySelector('.card-header');
+          if (header && !header.querySelector('.today-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'today-badge';
+            badge.innerHTML = `<span class="today-dot"></span>Aujourd'hui`;
+            header.appendChild(badge);
+          }
+        }
+      });
+
+      if (window.GC && GC.scrollToToday) {
+        GC.scrollToToday(200);
+        GC.initTodayFAB();
+      }
+    });
+
+    // 2. MOTEUR DE SAUVEGARDE EN LOCALSTORAGE
+    function savePlanningToLocal() {
+      const planningData = [];
+      document.querySelectorAll('.day-card').forEach((card) => {
+        const dayName = card.querySelector('.day-name')?.innerText || '';
+        const staff = [];
+        card.querySelectorAll('.staff-row').forEach(row => {
+          const nameEl = row.querySelector('.staff-name');
+          const badgeEl = row.querySelector('.badge');
+          if (nameEl && badgeEl) {
+            staff.push({
+              name: nameEl.innerText.trim(),
+              gender: nameEl.classList.contains('femme') ? 'femme' : 'homme',
+              badge: badgeEl.innerText.trim()
+            });
+          }
+        });
+        planningData.push({ dayName, staff });
+      });
+      localStorage.setItem('planningGreyCornerCuisineData', JSON.stringify(planningData));
+    }
+
+    function updateBadgeStyle(badge) {
+      if (badge.innerText.toLowerCase().trim() === 'off') {
+        badge.classList.add('off');
+      } else {
+        badge.classList.remove('off');
+      }
+    }
+
+    // Gestion du code PIN
+    const updateDots = () => dots.forEach((dot, index) => dot.classList.toggle('filled', index < pinCode.length));
+    const resetPin = () => { pinCode = ""; pinError.innerText = ""; updateDots(); };
+
+    adminBtn?.addEventListener('click', () => {
+      if (window.GC && GC.isSessionAuth && GC.isSessionAuth('gc_cuisine_admin')) {
+        unlockEditMode();
+      } else {
+        lockscreen?.classList.remove('hidden-app');
+        resetPin();
+      }
+    });
+
+    closeLock?.addEventListener('click', () => {
+      lockscreen?.classList.add('hidden-app');
+      resetPin();
+    });
+
+    document.querySelectorAll('#pinPanel [data-num]').forEach(key => {
+      key.addEventListener('click', () => {
+        if (pinCode.length >= 4) return;
+        pinCode += key.dataset.num;
+        pinError.innerText = "";
+        updateDots();
+        if (pinCode.length === 4) setTimeout(submitPin, 130);
+      });
+    });
+
+    clearBtn?.addEventListener('click', resetPin);
+    enterBtn?.addEventListener('click', submitPin);
+
+    async function submitPin() {
+      if (pinCode.length !== 4) { pinError.innerText = "Entrez 4 chiffres."; return; }
+      const isValid = (window.GC && GC.verifyAdminPin) ? await GC.verifyAdminPin(pinCode) : (pinCode === "1234");
+      if (isValid) {
+        if (window.GC && GC.setSessionAuth) GC.setSessionAuth('gc_cuisine_admin');
+        unlockEditMode();
+      } else {
+        pinError.innerText = "Code Admin incorrect. Réessayez.";
+        pinPanel?.classList.remove("shake");
+        if (pinPanel) void pinPanel.offsetWidth;
+        pinPanel?.classList.add("shake");
+        pinCode = "";
+        updateDots();
+      }
+    }
+
+    /* Support clavier */
+    document.addEventListener("keydown", (e) => {
+      if (!lockscreen || lockscreen.classList.contains("hidden-app")) return;
+      if (e.key >= "0" && e.key <= "9") {
+        if (pinCode.length >= 4) return;
+        pinCode += e.key;
+        pinError.innerText = "";
+        updateDots();
+        if (pinCode.length === 4) setTimeout(submitPin, 130);
+      } else if (e.key === "Backspace") {
+        pinCode = pinCode.slice(0, -1);
+        pinError.innerText = "";
+        updateDots();
+      } else if (e.key === "Enter") {
+        submitPin();
+      }
+    });
+
+    // 3. ACTIVATION DU MODE ÉDITION ADMIN
+    function setupRowEditing(row) {
+      const name = row.querySelector('.staff-name');
+      const badge = row.querySelector('.badge');
+      if (!name || !badge) return;
+      
+      name.setAttribute('contenteditable', 'true');
+      name.style.border = "1px dashed var(--brass)";
+      name.style.cursor = "text";
+      name.title = "Double-cliquez pour basculer Homme / Femme";
+      
+      name.addEventListener('input', savePlanningToLocal);
+      name.addEventListener('dblclick', () => {
+        name.classList.toggle('femme');
+        name.classList.toggle('homme');
+        savePlanningToLocal();
+      });
+
+      badge.setAttribute('contenteditable', 'true');
+      badge.style.border = "1px dashed var(--terracotta)";
+      badge.style.cursor = "text";
+      
+      badge.addEventListener('input', () => {
+        updateBadgeStyle(badge);
+        savePlanningToLocal();
+      });
+
+      if (!row.querySelector('.del-row-btn')) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'del-row-btn';
+        delBtn.innerHTML = '&times;';
+        delBtn.title = "Supprimer ce membre";
+        delBtn.addEventListener('click', () => {
+          row.remove();
+          savePlanningToLocal();
+        });
+        row.appendChild(delBtn);
+      }
+    }
+
+    function unlockEditMode() {
+      lockscreen?.classList.add('hidden-app');
+      document.body.classList.add('admin-edit');
+      
+      if (adminBtn) {
+        adminBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg> Édition Active`;
+        adminBtn.style.color = "var(--terracotta)";
+        adminBtn.style.borderColor = "var(--terracotta)";
+        adminBtn.style.background = "var(--terracotta-soft)";
+      }
+      
+      if (!document.getElementById('export-btn') && adminActions && adminBtn) {
+        const exportBtn = document.createElement('button');
+        exportBtn.id = 'export-btn';
+        exportBtn.className = 'back-btn';
+        exportBtn.style.color = "var(--brass-deep)";
+        exportBtn.style.borderColor = "var(--brass)";
+        exportBtn.style.background = "var(--brass-soft)";
+        exportBtn.innerHTML = `📥 Exporter le HTML`;
+        exportBtn.addEventListener('click', exportHTMLFile);
+        adminActions.insertBefore(exportBtn, adminBtn);
+      }
+      
+      document.querySelectorAll('.staff-row').forEach(row => setupRowEditing(row));
+      
+      document.querySelectorAll('.staff-list').forEach(list => {
+        if (!list.querySelector('.add-row-btn')) {
+          const addBtn = document.createElement('button');
+          addBtn.className = 'add-row-btn';
+          addBtn.innerText = '+ Ajouter un membre';
+          addBtn.addEventListener('click', () => {
+            const newRow = document.createElement('div');
+            newRow.className = 'staff-row';
+            newRow.innerHTML = `<span class="staff-name homme">Nouveau</span><span class="badge">00h — 00h</span>`;
+            list.insertBefore(newRow, addBtn);
+            setupRowEditing(newRow);
+            savePlanningToLocal();
+          });
+          list.appendChild(addBtn);
+        }
+      });
+      if (typeof showToast === "function") showToast("✨ Mode édition cuisine actif !");
+    }
+
+    // 4. EXPORTATION DU FICHIER HTML PROPRE
+    function exportHTMLFile() {
+      const cloneDoc = document.documentElement.cloneNode(true);
+      
+      const cloneAdminActions = cloneDoc.querySelector('#admin-actions');
+      if (cloneAdminActions) {
+        cloneAdminActions.innerHTML = `
+          <a href="index.html" class="back-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+            Retour Menu
+          </a>
+          <button id="admin-btn" class="admin-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+            Admin
+          </button>`;
+      }
+      
+      const cloneBody = cloneDoc.querySelector('body');
+      if (cloneBody) cloneBody.classList.remove('admin-edit');
+      
+      cloneDoc.querySelectorAll('.add-row-btn').forEach(btn => btn.remove());
+      cloneDoc.querySelectorAll('.del-row-btn').forEach(btn => btn.remove());
+      
+      cloneDoc.querySelectorAll('.staff-name, .badge').forEach(el => {
+        el.removeAttribute('contenteditable');
+        el.style.border = '';
+        el.style.cursor = '';
+        el.removeAttribute('title');
+      });
+
+      const finalHtml = "<!DOCTYPE html>\n" + cloneDoc.outerHTML;
+      const blob = new Blob([finalHtml], { type: 'text/html;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'cuisine.html';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (typeof showToast === "function") showToast("📥 Fichier cuisine.html exporté avec succès !");
+    }
+  </script>
+</body>
+</html>

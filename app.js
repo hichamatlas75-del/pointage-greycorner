@@ -652,6 +652,115 @@ const TeamService = (() => {
     return false;
   }
 
+  // ─── PLANNING FIXE CUISINE (Hebdomadaire) ───
+  // 0 = Dimanche, 1 = Lundi, 2 = Mardi, 3 = Mercredi, 4 = Jeudi, 5 = Vendredi, 6 = Samedi
+  const PLANNING_CUISINE = {
+    1: { // Lundi
+      KHAOULA: { hP: "06:00", off: false, shift: "06h — 14h" },
+      FATIMA:  { hP: "06:00", off: false, shift: "06h — 14h" },
+      JIHANE:  { hP: "12:00", off: false, shift: "12h — 21h" },
+      IMANE:   { hP: "",      off: true,  shift: "OFF" },
+      ANAS:    { hP: "14:00", off: false, shift: "14h — F.S" },
+      JAWAD:   { hP: "",      off: true,  shift: "OFF" },
+      SAAD:    { hP: "14:00", off: false, shift: "14h — F.S" }
+    },
+    2: { // Mardi
+      KHAOULA: { hP: "",      off: true,  shift: "OFF" },
+      FATIMA:  { hP: "06:00", off: false, shift: "06h — 14h" },
+      JIHANE:  { hP: "15:00", off: false, shift: "15h — F.S" },
+      IMANE:   { hP: "06:00", off: false, shift: "06h — 14h" },
+      ANAS:    { hP: "12:00", off: false, shift: "12h — 21h" },
+      JAWAD:   { hP: "12:00", off: false, shift: "12h — 15h / 17h - F.S" },
+      SAAD:    { hP: "",      off: true,  shift: "OFF" }
+    },
+    3: { // Mercredi
+      KHAOULA: { hP: "06:00", off: false, shift: "06h — 14h" },
+      FATIMA:  { hP: "",      off: true,  shift: "OFF" },
+      JIHANE:  { hP: "14:00", off: false, shift: "14h — F.S" },
+      IMANE:   { hP: "06:00", off: false, shift: "06h — 14h" },
+      ANAS:    { hP: "",      off: true,  shift: "OFF" },
+      JAWAD:   { hP: "15:00", off: false, shift: "15h — F.S" },
+      SAAD:    { hP: "12:00", off: false, shift: "12h — 15h / 17h - F.S" }
+    },
+    4: { // Jeudi
+      KHAOULA: { hP: "06:00", off: false, shift: "06h — 14h" },
+      FATIMA:  { hP: "06:00", off: false, shift: "06h — 14h" },
+      JIHANE:  { hP: "",      off: true,  shift: "OFF" },
+      IMANE:   { hP: "12:00", off: false, shift: "12h — 21h" },
+      ANAS:    { hP: "15:00", off: false, shift: "15h — F.S" },
+      JAWAD:   { hP: "12:00", off: false, shift: "12h — 21h" },
+      SAAD:    { hP: "14:00", off: false, shift: "14h — F.S" }
+    },
+    5: { // Vendredi
+      KHAOULA: { hP: "06:00", off: false, shift: "06h — 14h" },
+      FATIMA:  { hP: "06:00", off: false, shift: "06h — 14h" },
+      JIHANE:  { hP: "12:00", off: false, shift: "12h — 15h / 17h - F.S" },
+      IMANE:   { hP: "12:00", off: false, shift: "12h — 21h" },
+      ANAS:    { hP: "13:00", off: false, shift: "13h — F.S" },
+      JAWAD:   { hP: "14:00", off: false, shift: "14h — F.S" },
+      SAAD:    { hP: "15:00", off: false, shift: "15h — F.S" }
+    },
+    6: { // Samedi
+      KHAOULA: { hP: "06:00", off: false, shift: "06h — 15h" },
+      FATIMA:  { hP: "06:00", off: false, shift: "06h — 15h" },
+      JIHANE:  { hP: "14:00", off: false, shift: "14h — F.S" },
+      IMANE:   { hP: "10:00", off: false, shift: "10h — 18h" },
+      ANAS:    { hP: "14:00", off: false, shift: "14h — F.S" },
+      JAWAD:   { hP: "14:00", off: false, shift: "14h — F.S" },
+      SAAD:    { hP: "13:00", off: false, shift: "13h — F.S" }
+    },
+    0: { // Dimanche
+      KHAOULA: { hP: "06:00", off: false, shift: "06h — 15h" },
+      FATIMA:  { hP: "06:00", off: false, shift: "06h — 15h" },
+      JIHANE:  { hP: "14:00", off: false, shift: "14h — F.S" },
+      IMANE:   { hP: "10:00", off: false, shift: "10h — 18h" },
+      ANAS:    { hP: "14:00", off: false, shift: "14h — F.S" },
+      JAWAD:   { hP: "14:00", off: false, shift: "14h — F.S" },
+      SAAD:    { hP: "14:00", off: false, shift: "14h — 21h" }
+    }
+  };
+
+  function matchCuisineStaffKey(nameOrKey) {
+    if (!nameOrKey) return null;
+    const s = String(nameOrKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (s.includes("KHAOULA") || s.includes("BELQAS")) return "KHAOULA";
+    if (s.includes("FATIMA") || s.includes("ZAIR")) return "FATIMA";
+    if (s.includes("JIHANE") || s.includes("MAJDOUB")) return "JIHANE";
+    if (s.includes("IMANE") || s.includes("MOUJAHID")) return "IMANE";
+    if (s.includes("ANAS") || s.includes("BOURAHMA")) return "ANAS";
+    if (s.includes("JAWAD") || s.includes("JAOUAD") || s.includes("LEMSSIEH") || s.includes("LAMSSIAH")) return "JAWAD";
+    if (s.includes("SAAD") || s.includes("IDRISSI")) return "SAAD";
+    return null;
+  }
+
+  function isCuisineRole(empKey) {
+    if (!empKey) return false;
+    const member = matchCuisineStaffKey(empKey);
+    if (member) return true;
+    const e = equipeMap.get(empKey);
+    if (e && (e.t === "cuisine")) return true;
+    return false;
+  }
+
+  function getCuisinePlanning(empKey, dateISO) {
+    if (!dateISO) return null;
+    const member = matchCuisineStaffKey(empKey);
+    if (!member) return null;
+    const [yy, mm, dd] = String(dateISO).split("-").map(Number);
+    if (!yy || !mm || !dd) return null;
+    const dt = new Date(Date.UTC(yy, mm - 1, dd));
+    const dayOfWeek = dt.getUTCDay();
+    return PLANNING_CUISINE[dayOfWeek]?.[member] || null;
+  }
+
+  function getEffectiveHP(empKey, dateISO, presHP = "") {
+    if (presHP) return presHP;
+    if (isSecuriteRole(empKey)) return "09:00";
+    const plan = getCuisinePlanning(empKey, dateISO);
+    if (plan && !plan.off && plan.hP) return plan.hP;
+    return "";
+  }
+
   function attachListener(onUpdate) {
     if (listenerAttached) return;
     listenerAttached = true;
@@ -666,6 +775,9 @@ const TeamService = (() => {
   return {
     getEquipeList: () => equipeList,
     isSecuriteRole,
+    isCuisineRole,
+    getCuisinePlanning,
+    getEffectiveHP,
     attachListener
   };
 })();
@@ -681,13 +793,10 @@ const HistoryService = (() => {
   let mode = "month"; // "7d" ou "month"
   let currentDate = new Date();
 
-  function calculateLateMinutes(hP, hA, empKey) {
+  function calculateLateMinutes(hP, hA, empKey, dateISO = "") {
     if (empKey === "BOUCHNAK_NAOUAL") return 0;
     if (!hA) return 0;
-    let scheduled = hP;
-    if (!scheduled && TeamService.isSecuriteRole(empKey)) {
-      scheduled = "09:00";
-    }
+    const scheduled = TeamService.getEffectiveHP(empKey, dateISO || TimeService.currentDateStr(), hP);
     if (!scheduled) return 0;
     const p = TimeService.timeToMin(scheduled);
     const a = TimeService.timeToMin(hA);
@@ -829,15 +938,17 @@ const HistoryService = (() => {
       const [, mm, dd] = iso.split("-").map(Number);
       const isMonday = (dt.getDay() === 1);
 
+      const cuisinePlan = TeamService.getCuisinePlanning(staffKey, iso);
+      const isCuisine = TeamService.isCuisineRole(staffKey);
       const hA = pu?.hA || pr?.hA || (StorageService.isPunchedLocal(iso, staffKey) ? StorageService.getPunchedTimeLocal(iso, staffKey) : "");
-      // hP mis à jour en priorité depuis presences (modifié par le gérant), ou pu.hP
-      const hP = pr?.hP || pu?.hP || (isSec ? "09:00" : "");
-      const isOff = pr?.off === true || (isSec && isMonday && !hA);
+      // hP mis à jour en priorité depuis presences (modifié par le gérant), ou pu.hP, ou fallback planning
+      const hP = TeamService.getEffectiveHP(staffKey, iso, pr?.hP || pu?.hP || "");
+      const isOff = pr?.off === true || (isSec && isMonday && !hA) || (!hA && cuisinePlan?.off && pr?.off !== false);
 
       // Calcul DYNAMIQUE prioritaire : si hA et hP existent, recalculer le retard en direct
       let lateMin = 0;
-      if (hA && (hP || isSec)) {
-        lateMin = calculateLateMinutes(hP || "09:00", hA, staffKey);
+      if (hA && hP) {
+        lateMin = calculateLateMinutes(hP, hA, staffKey, iso);
       } else if (pr && typeof pr.retardMin === "number" && pr.retardMin > 0) {
         lateMin = pr.retardMin;
       } else if (pu && typeof pu.retardMin === "number" && pu.retardMin > 0) {
@@ -1044,9 +1155,9 @@ const PunchController = (() => {
       if (existingHA) {
         StorageService.setPunchedLocal(dStr, staffKey, existingHA);
         UIService.toast("Déjà pointé aujourd'hui ✅");
-        const effectiveHP = prVal?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+        const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, prVal?.hP || "");
         const chkHasHP = Boolean(effectiveHP);
-        const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, existingHA, staffKey) : 0;
+        const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, existingHA, staffKey, dStr) : 0;
         UIService.renderPointedBox(existingHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
         HistoryService.loadHistorique(staffKey);
         return;
@@ -1070,10 +1181,10 @@ const PunchController = (() => {
     try {
       const presSnap = await db.ref(`presences/${dStr}/${staffKey}`).once("value");
       const presVal = presSnap.val();
-      const effectiveHP = presVal?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+      const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, presVal?.hP || "");
       if (effectiveHP) {
         hasHP = true;
-        const lm = HistoryService.calculateLateMinutes(effectiveHP, hA, staffKey);
+        const lm = HistoryService.calculateLateMinutes(effectiveHP, hA, staffKey, dStr);
         if (lm > 0) {
           retard = true;
           retardMin = lm;
@@ -1105,9 +1216,9 @@ const PunchController = (() => {
           StorageService.setPunchedLocal(dStr, staffKey, serverHA);
           UIService.toast("Déjà pointé aujourd'hui ✅");
           const prV = prCheck.val();
-          const effectiveHP = prV?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+          const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
           const chkHasHP = Boolean(effectiveHP);
-          const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverHA, staffKey) : 0;
+          const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverHA, staffKey, dStr) : 0;
           UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
           HistoryService.loadHistorique(staffKey);
           return;
@@ -1599,9 +1710,9 @@ const App = (() => {
 
               if (serverTime) {
                 StorageService.setPunchedLocal(dStr, staffKey, serverTime);
-                const effectiveHP = prVal?.hP || (TeamService.isSecuriteRole(staffKey) ? "09:00" : "");
+                const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, prVal?.hP || "");
                 const chkHasHP = Boolean(effectiveHP);
-                const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverTime, staffKey) : 0;
+                const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverTime, staffKey, dStr) : 0;
                 UIService.renderPointedBox(serverTime, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
               } else {
                 GpsService.checkGPS(false);
