@@ -656,6 +656,7 @@ const TeamService = (() => {
   // 0 = Dimanche, 1 = Lundi, 2 = Mardi, 3 = Mercredi, 4 = Jeudi, 5 = Vendredi, 6 = Samedi
   const PLANNING_CUISINE = {
     1: { // Lundi
+      NAOUAL:  { hP: "15:00", off: false, shift: "15h — F.S" },
       KHAOULA: { hP: "07:00", off: false, shift: "07h — 14h" },
       FATIMA:  { hP: "07:00", off: false, shift: "07h — 14h" },
       JIHANE:  { hP: "12:00", off: false, shift: "12h — 21h" },
@@ -665,6 +666,7 @@ const TeamService = (() => {
       SAAD:    { hP: "14:00", off: false, shift: "14h — F.S" }
     },
     2: { // Mardi
+      NAOUAL:  { hP: "15:00", off: false, shift: "15h — F.S" },
       KHAOULA: { hP: "",      off: true,  shift: "OFF" },
       FATIMA:  { hP: "07:00", off: false, shift: "07h — 14h" },
       JIHANE:  { hP: "15:00", off: false, shift: "15h — F.S" },
@@ -674,6 +676,7 @@ const TeamService = (() => {
       SAAD:    { hP: "",      off: true,  shift: "OFF" }
     },
     3: { // Mercredi
+      NAOUAL:  { hP: "",      off: true,  shift: "OFF" },
       KHAOULA: { hP: "07:00", off: false, shift: "07h — 14h" },
       FATIMA:  { hP: "",      off: true,  shift: "OFF" },
       JIHANE:  { hP: "14:00", off: false, shift: "14h — F.S" },
@@ -683,6 +686,7 @@ const TeamService = (() => {
       SAAD:    { hP: "12:00", off: false, shift: "12h — 15h / 17h - F.S" }
     },
     4: { // Jeudi
+      NAOUAL:  { hP: "15:00", off: false, shift: "15h — F.S" },
       KHAOULA: { hP: "07:00", off: false, shift: "07h — 14h" },
       FATIMA:  { hP: "07:00", off: false, shift: "07h — 14h" },
       JIHANE:  { hP: "",      off: true,  shift: "OFF" },
@@ -692,6 +696,7 @@ const TeamService = (() => {
       SAAD:    { hP: "14:00", off: false, shift: "14h — F.S" }
     },
     5: { // Vendredi
+      NAOUAL:  { hP: "15:00", off: false, shift: "15h — F.S" },
       KHAOULA: { hP: "07:00", off: false, shift: "07h — 14h" },
       FATIMA:  { hP: "07:00", off: false, shift: "07h — 14h" },
       JIHANE:  { hP: "12:00", off: false, shift: "12h — 15h / 17h - F.S" },
@@ -701,6 +706,7 @@ const TeamService = (() => {
       SAAD:    { hP: "15:00", off: false, shift: "15h — F.S" }
     },
     6: { // Samedi
+      NAOUAL:  { hP: "15:00", off: false, shift: "15h — F.S" },
       KHAOULA: { hP: "07:00", off: false, shift: "07h — 15h" },
       FATIMA:  { hP: "07:00", off: false, shift: "07h — 15h" },
       JIHANE:  { hP: "14:00", off: false, shift: "14h — F.S" },
@@ -710,6 +716,7 @@ const TeamService = (() => {
       SAAD:    { hP: "13:00", off: false, shift: "13h — F.S" }
     },
     0: { // Dimanche
+      NAOUAL:  { hP: "15:00", off: false, shift: "15h — F.S" },
       KHAOULA: { hP: "07:00", off: false, shift: "07h — 15h" },
       FATIMA:  { hP: "07:00", off: false, shift: "07h — 15h" },
       JIHANE:  { hP: "14:00", off: false, shift: "14h — F.S" },
@@ -723,6 +730,7 @@ const TeamService = (() => {
   function matchCuisineStaffKey(nameOrKey) {
     if (!nameOrKey) return null;
     const s = String(nameOrKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (s.includes("NAOUAL") || s.includes("BOUCHNAK")) return "NAOUAL";
     if (s.includes("KHAOULA") || s.includes("BELQAS")) return "KHAOULA";
     if (s.includes("FATIMA") || s.includes("ZAIR")) return "FATIMA";
     if (s.includes("JIHANE") || s.includes("MAJDOUB")) return "JIHANE";
@@ -867,11 +875,52 @@ const TeamService = (() => {
     return { off: false, hP: "09:00", shift: "09:00" };
   }
 
+  function isSalil(empKey) {
+    if (!empKey) return false;
+    const s = String(empKey).toUpperCase();
+    return s.includes("SALIL") || s.includes("SALIH") || s.includes("HOUDA");
+  }
+
+  function isBenkhada(empKey) {
+    if (!empKey) return false;
+    const s = String(empKey).toUpperCase();
+    return s.includes("BENKHADA") || s.includes("ABDESLAM") || s.includes("ABDESSLAM") || s.includes("ABDELSSAM");
+  }
+
+  function getCaisseAlternance(empKey, dateISO) {
+    if (!dateISO) return null;
+    const [yy, mm, dd] = String(dateISO).split("-").map(Number);
+    if (!yy || !mm || !dd) return null;
+    const isSal = isSalil(empKey);
+    const isBen = isBenkhada(empKey);
+    if (!isSal && !isBen) return null;
+
+    const dAnchor = Date.UTC(2026, 8, 24);
+    const dTarget = Date.UTC(yy, mm - 1, dd);
+    const diffDays = Math.round((dTarget - dAnchor) / 86400000);
+    const mod = ((diffDays % 2) + 2) % 2;
+
+    if (mod === 0) {
+      return isSal
+        ? { hP: "07:30", off: false, shift: "07:30" }
+        : { hP: "15:00", off: false, shift: "15:00" };
+    } else {
+      return isSal
+        ? { hP: "15:00", off: false, shift: "15:00" }
+        : { hP: "07:30", off: false, shift: "07:30" };
+    }
+  }
+
   function getEffectiveHP(empKey, dateISO, presHP = "") {
     if (presHP) return presHP;
     if (isSoumia(empKey)) {
       const plan = getSoumiaPlanning(dateISO);
       if (plan && !plan.off && plan.hP) return plan.hP;
+      return "";
+    }
+    if (isSalil(empKey) || isBenkhada(empKey)) {
+      const plan = getCaisseAlternance(empKey, dateISO);
+      if (plan && plan.hP) return plan.hP;
       return "";
     }
     if (isSecuriteRole(empKey)) return "09:00";
@@ -917,7 +966,6 @@ const HistoryService = (() => {
   let currentDate = new Date();
 
   function calculateLateMinutes(hP, hA, empKey, dateISO = "") {
-    if (empKey === "BOUCHNAK_NAOUAL") return 0;
     if (!hA) return 0;
     const scheduled = TeamService.getEffectiveHP(empKey, dateISO || TimeService.currentDateStr(), hP);
     if (!scheduled) return 0;
