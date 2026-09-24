@@ -815,9 +815,22 @@ const TeamService = (() => {
             equipeList.forEach(emp => {
               if (roleFilter && emp.t !== roleFilter) return;
               const empKey = SecurityService.keyStaff(emp.n);
-              const nameParts = String(emp.n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/\s+/);
-              const inMatin = nameParts.some(p => p.length >= 3 && matin.includes(p));
-              const inSoir  = nameParts.some(p => p.length >= 3 && soir.includes(p));
+              const fullName = String(emp.n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              const words = fullName.split(/[\s_-]+/).filter(w => w.length >= 3 && w !== "el" && w !== "al");
+
+              function checkMatch(shiftText) {
+                if (!shiftText) return false;
+                if (words.some(w => shiftText.includes(w))) return true;
+                if ((fullName.includes("laziz") || fullName.includes("alaoui") || fullName.includes("aziz")) && (shiftText.includes("aziz") || shiftText.includes("laziz"))) return true;
+                if ((fullName.includes("mokhtar") || fullName.includes("ktami")) && shiftText.includes("mokhtar")) return true;
+                if ((fullName.includes("zakaria") || fullName.includes("kafouni")) && (shiftText.includes("zakaria") || shiftText.includes("zakariae"))) return true;
+                if ((fullName.includes("mostafa") || fullName.includes("mustapha") || fullName.includes("elkobbi")) && (shiftText.includes("mostafa") || shiftText.includes("mustapha") || shiftText.includes("mosatafe"))) return true;
+                if ((fullName.includes("anas") || fullName.includes("bourahma")) && (shiftText.includes("anas") || shiftText.includes("anass"))) return true;
+                return false;
+              }
+
+              const inMatin = checkMatch(matin);
+              const inSoir  = checkMatch(soir);
 
               if (inMatin) todaySheetShifts.set(empKey, "07:00");
               else if (inSoir) todaySheetShifts.set(empKey, "14:30");
