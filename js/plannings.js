@@ -231,7 +231,9 @@ const TeamService = (() => {
               const inMatin = checkMatch(matin);
               const inSoir  = checkMatch(soir);
 
-              if (inMatin) todaySheetShifts.set(empKey, "07:00");
+              // Service & Bar : passage de 07:00 à 06:45 à partir du lundi 28 septembre 2026
+              const shiftMatin = (todayISO >= "2026-09-28") ? "06:45" : "07:00";
+              if (inMatin) todaySheetShifts.set(empKey, shiftMatin);
               else if (inSoir) todaySheetShifts.set(empKey, "14:30");
             });
             break;
