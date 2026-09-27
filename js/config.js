@@ -23,7 +23,9 @@ const Config = Object.freeze({
   endpoints: {
     urgentMsgSheet: "https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent",
     gasExecUrl: "https://script.google.com/macros/s/AKfycbyZFLn4Z8KHsB60caPMkdAFTXHkJcd_aP_oxP5cI_nDG7kZf5MzFm-U7vYPcNEUD4HY1Q/exec",
-    secret: "greycorner2026",
+    // SÉCURITÉ : Le secret a été supprimé du code source client.
+    // L'authentification se fait via le token ID Firebase de l'utilisateur connecté.
+    // La fonction getAuthToken() récupère dynamiquement le token à transmettre au GAS.
     empNodeDefault: "pointage"
   },
   timeZone: "GMT",

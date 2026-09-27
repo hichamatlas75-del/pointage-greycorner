@@ -11,6 +11,13 @@
 const UIService = (() => {
   let toastTimer = null;
 
+  // SÉCURITÉ : Échappement des caractères HTML pour prévenir les injections XSS
+  function escapeHtml(str) {
+    if (typeof str !== "string") return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
   function toast(msg) {
     const t = document.getElementById("toast");
     if (!t) return;
@@ -84,8 +91,8 @@ const UIService = (() => {
           <span style="font-size:22px;line-height:1">😊👍</span>
         </div>
         <div class="pointed-msg pointed-msg-ontime">Bravo ! Vous êtes à l'heure 😊👍</div>
-        <div class="pointed-time">${hhmm || "—"}</div>
-        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+        <div class="pointed-time">${escapeHtml(hhmm) || "—"}</div>
+        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)}</div>
       `;
     } else if (hasHP && isLate) {
       if (lateMin <= 10) {
@@ -100,9 +107,9 @@ const UIService = (() => {
           <div class="pointed-check pointed-check-mild-late">
             <span style="font-size:22px;line-height:1">⏰😐</span>
           </div>
-          <div class="pointed-msg pointed-msg-mild-late">Léger retard : +${lateMin} min ⏰😐</div>
-          <div class="pointed-time pointed-time-mild-late">${hhmm || "—"}</div>
-          <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+          <div class="pointed-msg pointed-msg-mild-late">Léger retard : +${escapeHtml(String(lateMin))} min ⏰😐</div>
+          <div class="pointed-time pointed-time-mild-late">${escapeHtml(hhmm) || "—"}</div>
+          <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)}</div>
         `;
       } else {
         // 2b. Retard avéré (> 10 min) : Emoji triste avec pouce à l'envers 😔👎
@@ -116,9 +123,9 @@ const UIService = (() => {
           <div class="pointed-check pointed-check-late">
             <span style="font-size:22px;line-height:1">😔👎</span>
           </div>
-          <div class="pointed-msg pointed-msg-late">Attention : Retard de +${lateMin} min 😔👎</div>
-          <div class="pointed-time pointed-time-late">${hhmm || "—"}</div>
-          <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+          <div class="pointed-msg pointed-msg-late">Attention : Retard de +${escapeHtml(String(lateMin))} min 😔👎</div>
+          <div class="pointed-time pointed-time-late">${escapeHtml(hhmm) || "—"}</div>
+          <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)}</div>
         `;
       }
     } else {
@@ -132,8 +139,8 @@ const UIService = (() => {
       box.innerHTML = `
         <div class="pointed-check">✓</div>
         <div class="label-caps mb-1" style="color:var(--emerald-neon);letter-spacing:.15em">Présence enregistrée</div>
-        <div class="pointed-time">${hhmm || "—"}</div>
-        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${dStr}</div>
+        <div class="pointed-time">${escapeHtml(hhmm) || "—"}</div>
+        <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)}</div>
       `;
     }
     box.style.display = "block";
@@ -184,6 +191,7 @@ const AdminController = (() => {
 
       const left = document.createElement("div");
       left.className = "font-black";
+      // SÉCURITÉ : textContent au lieu de innerHTML pour empêcher l'injection XSS
       left.textContent = emp.n;
 
       const btn = document.createElement("button");

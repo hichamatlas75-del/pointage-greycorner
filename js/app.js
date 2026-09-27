@@ -6,13 +6,30 @@
  */
 
 // ─────────────────────────────────────────────────────────────────────────
+// 0. SÉCURITÉ : Fonction d'échappement HTML anti-XSS (globale)
+// ─────────────────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (typeof str !== "string") return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // 1. PUNCH & POINTAGE CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────
 const PunchController = (() => {
   async function sendToSheetBackground({ date, empNode, empKey, hA, timestamp }) {
+    // SÉCURITÉ : Authentification par token Firebase au lieu d'un secret statique
+    let idToken = "";
+    try {
+      if (auth.currentUser) {
+        idToken = await auth.currentUser.getIdToken(/* forceRefresh */ false);
+      }
+    } catch (e) {}
+
     const params = new URLSearchParams({
       action: "punch",
-      secret: Config.endpoints.secret,
+      idToken,
       date,
       empNode,
       empKey,
@@ -277,7 +294,7 @@ const App = (() => {
 
       const h = document.createElement("div");
       h.className = "drawer-header";
-      h.innerHTML = `<span class="poste-badge">${cat} (${staff.length})</span><span class="gold" style="font-size:11px;opacity:.7">▼</span>`;
+      h.innerHTML = `<span class="poste-badge">${escapeHtml(cat)} (${staff.length})</span><span class="gold" style="font-size:11px;opacity:.7">▼</span>`;
 
       const cont = document.createElement("div");
       cont.className = "hidden grid grid-cols-1 sm:grid-cols-2 gap-2 py-3";
@@ -286,20 +303,24 @@ const App = (() => {
       staff.slice().sort((a, b) => a.n.localeCompare(b.n)).forEach(emp => {
         const photo = StaffPhotoService.getPhotoUrl(emp.n);
         const initials = StaffPhotoService.getInitials(emp.n);
+        // SÉCURITÉ : Échappement des valeurs utilisateur avant insertion HTML
+        const safeName = escapeHtml(emp.n);
+        const safeInitials = escapeHtml(initials);
+        const safeCat = escapeHtml(cat);
 
         const card = document.createElement("div");
         card.className = "staff-card";
         card.innerHTML = `
           <div class="staff-thumb">
             ${photo 
-              ? `<img src="${photo}" class="staff-thumb-img" alt="${emp.n}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="staff-thumb-fallback" style="display:none">${initials}</div>`
-              : `<div class="staff-thumb-fallback">${initials}</div>`
+              ? `<img src="${escapeHtml(photo)}" class="staff-thumb-img" alt="${safeName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                 <div class="staff-thumb-fallback" style="display:none">${safeInitials}</div>`
+              : `<div class="staff-thumb-fallback">${safeInitials}</div>`
             }
           </div>
           <div class="staff-info">
-            <div class="staff-name">${emp.n}</div>
-            <div class="staff-sub">${cat}</div>
+            <div class="staff-name">${safeName}</div>
+            <div class="staff-sub">${safeCat}</div>
           </div>
         `;
         card.onclick = () => {
@@ -461,13 +482,16 @@ const App = (() => {
           const initials = StaffPhotoService.getInitials(selected);
 
           if (avatarContainer) {
+            // SÉCURITÉ : Échappement des valeurs avant injection HTML
+            const safeSelected = escapeHtml(selected);
+            const safeInitials = escapeHtml(initials);
             if (photoUrl) {
               avatarContainer.innerHTML = `
-                <img src="${photoUrl}" alt="${selected}" class="avatar-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                <div class="avatar-inner" style="display:none">${initials}</div>
+                <img src="${escapeHtml(photoUrl)}" alt="${safeSelected}" class="avatar-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <div class="avatar-inner" style="display:none">${safeInitials}</div>
               `;
             } else {
-              avatarContainer.innerHTML = `<div class="avatar-inner">${initials}</div>`;
+              avatarContainer.innerHTML = `<div class="avatar-inner">${safeInitials}</div>`;
             }
           }
 
