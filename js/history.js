@@ -143,7 +143,7 @@ const HistoryService = (() => {
     }
 
     if (loading) loading.textContent = "";
-    list.innerHTML = "";
+    const frag = document.createDocumentFragment();
 
     let countPresent = 0;
     let countLate = 0;
@@ -197,7 +197,7 @@ const HistoryService = (() => {
       let statusHTML = "";
       if (hA) {
         if (isLate) {
-          if (lateMin <= 10) {
+          if (lateMin <= 15) {
             statusHTML = `
               <div class="histo-status histo-retard-mild">
                 <span class="histo-dot" style="background:var(--amber);box-shadow:0 0 6px rgba(245,158,11,.7)"></span>
@@ -241,8 +241,10 @@ const HistoryService = (() => {
         </div>
         ${statusHTML}
       `;
-      list.appendChild(row);
+      frag.appendChild(row);
     });
+
+    list.replaceChildren(frag);
 
     // Mise à jour des KPIs
     const elPresent = document.getElementById("kpiPresentCount");

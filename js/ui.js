@@ -95,8 +95,8 @@ const UIService = (() => {
         <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)}</div>
       `;
     } else if (hasHP && isLate) {
-      if (lateMin <= 10) {
-        // 2a. Léger retard (1 à 10 min) : Emoji spécial sans pouce à l'envers ⏰😐
+      if (lateMin <= 15) {
+        // 2a. Léger retard (1 à 15 min) : Emoji tolérance ⏰😐 (Orange)
         box.className = "pointed-box pointed-mild-late";
         if (status) {
           status.textContent = `Retard +${lateMin} min ⏰😐`;
@@ -112,7 +112,7 @@ const UIService = (() => {
           <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)}</div>
         `;
       } else {
-        // 2b. Retard avéré (> 10 min) : Emoji triste avec pouce à l'envers 😔👎
+        // 2b. Retard avéré (> 15 min) : Emoji alerte 😔👎 (Rouge)
         box.className = "pointed-box pointed-late";
         if (status) {
           status.textContent = `Retard +${lateMin} min 😔👎`;

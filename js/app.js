@@ -159,7 +159,7 @@ const PunchController = (() => {
     StorageService.setPunchedLocal(dStr, staffKey, hA);
     if (hasHP) {
       if (retard) {
-        if (retardMin <= 10) {
+        if (retardMin <= 15) {
           UIService.toast(`Pointage validé : Léger retard +${retardMin} min ⏰😐`);
         } else {
           UIService.toast(`Pointage validé : Retard +${retardMin} min 😔👎`);
@@ -399,8 +399,16 @@ const App = (() => {
       location.reload();
     });
 
-    // Réinitialisation de l'appareil (Code PIN)
+    // Réinitialisation de l'appareil (Code PIN) avec protection anti-brute-force
     document.getElementById("btnResetDevice")?.addEventListener("click", async () => {
+      // 1. Vérification du verrouillage temporel anti-brute-force
+      const lockUntil = Number(localStorage.getItem("gc_pin_locked_until") || 0);
+      if (Date.now() < lockUntil) {
+        const remainingSec = Math.ceil((lockUntil - Date.now()) / 1000);
+        UIService.toast(`Appareil temporairement verrouillé (${remainingSec}s) ⏳`);
+        return;
+      }
+
       const storedHash = StorageService.getDevicePinHash();
       if (!storedHash) {
         const newPin = prompt("Aucun PIN défini sur cet appareil.\nCréez un PIN à 4 chiffres :");
@@ -417,11 +425,24 @@ const App = (() => {
       const isValid = await SecurityService.verifyPin(pin, storedHash);
 
       if (isValid) {
+        localStorage.removeItem("gc_pin_failed_attempts");
+        localStorage.removeItem("gc_pin_locked_until");
         StorageService.resetAll();
         UIService.toast("Appareil réinitialisé avec succès ✅");
         setTimeout(() => location.reload(), 400);
       } else {
-        UIService.toast("Code PIN incorrect ❌");
+        let attempts = Number(localStorage.getItem("gc_pin_failed_attempts") || 0) + 1;
+        localStorage.setItem("gc_pin_failed_attempts", String(attempts));
+
+        if (attempts >= 5) {
+          localStorage.setItem("gc_pin_locked_until", String(Date.now() + 15 * 60 * 1000));
+          UIService.toast("Trop d'échecs : verrouillé 15 minutes ❌");
+        } else if (attempts >= 3) {
+          localStorage.setItem("gc_pin_locked_until", String(Date.now() + 60 * 1000));
+          UIService.toast("Code PIN incorrect : attente 1 minute requise ❌");
+        } else {
+          UIService.toast(`Code PIN incorrect (${attempts}/3) ❌`);
+        }
       }
     });
   }
