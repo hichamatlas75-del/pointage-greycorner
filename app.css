@@ -1060,3 +1060,17 @@ body::before {
 
 .scroll { overflow-y: auto; scrollbar-width: none; }
 .scroll::-webkit-scrollbar { display: none; }
+
+/* Effet haptique visuel (vibration d'écran pour iOS / navigateurs sans vibreur physique) */
+@keyframes hapticShake {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-3px, 1.5px); }
+  40%  { transform: translate(3px, -1.5px); }
+  60%  { transform: translate(-2px, 1px); }
+  80%  { transform: translate(2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+.haptic-shake {
+  animation: hapticShake 0.28s ease-in-out;
+}
+
