@@ -63,6 +63,7 @@ const PunchController = (() => {
     // 1. Vérification locale
     if (StorageService.isPunchedLocal(dStr, staffKey)) {
       const localTime = StorageService.getPunchedTimeLocal(dStr, staffKey);
+      FeedbackService.trigger("success");
       UIService.toast("Déjà pointé aujourd'hui ✅");
       UIService.renderPointedBox(localTime || hA, dStr);
       return;
@@ -80,6 +81,7 @@ const PunchController = (() => {
 
       if (existingHA) {
         StorageService.setPunchedLocal(dStr, staffKey, existingHA);
+        FeedbackService.trigger("success");
         UIService.toast("Déjà pointé aujourd'hui ✅");
         const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, prVal?.hP || "");
         const chkHasHP = Boolean(effectiveHP);
@@ -92,6 +94,7 @@ const PunchController = (() => {
 
     // 3. Vérification GPS
     if (GpsService.getState() !== "ok") {
+      FeedbackService.trigger("error");
       UIService.toast("GPS non validé ❌");
       GpsService.checkGPS(true);
       return;
@@ -139,6 +142,7 @@ const PunchController = (() => {
         const serverHA = pCheck.val()?.hA || prCheck.val()?.hA || null;
         if (serverHA) {
           StorageService.setPunchedLocal(dStr, staffKey, serverHA);
+          FeedbackService.trigger("success");
           UIService.toast("Déjà pointé aujourd'hui ✅");
           const prV = prCheck.val();
           const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
@@ -150,6 +154,7 @@ const PunchController = (() => {
         }
       } catch (errCheck) {}
 
+      FeedbackService.trigger("error");
       UIService.toast("Erreur de connexion Firebase ❌");
       UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
       UIService.showRetryGPS(GpsService.getState() !== "ok");
@@ -157,6 +162,7 @@ const PunchController = (() => {
     }
 
     StorageService.setPunchedLocal(dStr, staffKey, hA);
+    FeedbackService.trigger(retard ? "late" : "success");
     if (hasHP) {
       if (retard) {
         if (retardMin <= 15) {

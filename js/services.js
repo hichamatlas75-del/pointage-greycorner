@@ -281,6 +281,78 @@ const StaffPhotoService = (() => {
 })();
 
 // ─────────────────────────────────────────────────────────────────────────
+// 3.1 FEEDBACK SERVICE (Vibration Haptique + Synthétiseur Audio Web Audio)
+// ─────────────────────────────────────────────────────────────────────────
+const FeedbackService = (() => {
+  let audioCtx = null;
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        audioCtx = new AudioCtx();
+      }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function playTone(freq, duration = 0.2, type = "sine", startTime = 0) {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + startTime);
+      osc.stop(ctx.currentTime + startTime + duration);
+    } catch (e) {}
+  }
+
+  function trigger(pattern = "success") {
+    // 1. Retour haptique tactile pour smartphone
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        if (pattern === "success") {
+          navigator.vibrate([70, 40, 160]);
+        } else if (pattern === "late") {
+          navigator.vibrate([150, 60, 150, 60, 220]);
+        } else if (pattern === "error") {
+          navigator.vibrate([300, 80, 300]);
+        }
+      }
+    } catch (e) {}
+
+    // 2. Retour sonore harmonieux (synthèse Web Audio API sans fichier audio requis)
+    try {
+      if (pattern === "success") {
+        // Mélodie montante de succès (Do - Mi - Sol)
+        playTone(523.25, 0.10, "sine", 0);
+        playTone(659.25, 0.10, "sine", 0.08);
+        playTone(783.99, 0.25, "sine", 0.16);
+      } else if (pattern === "late") {
+        // Tonalité d'alerte ponctuelle (La - Fa)
+        playTone(440, 0.15, "triangle", 0);
+        playTone(349.23, 0.30, "triangle", 0.15);
+      } else if (pattern === "error") {
+        // Tonalité descendante d'erreur
+        playTone(220, 0.30, "sawtooth", 0);
+      }
+    } catch (e) {}
+  }
+
+  return { trigger, getAudioContext };
+})();
+
+
+// ─────────────────────────────────────────────────────────────────────────
 // 4. STORAGE SERVICE (Persistance Locale & Clés Appareil)
 // ─────────────────────────────────────────────────────────────────────────
 const StorageService = (() => {
