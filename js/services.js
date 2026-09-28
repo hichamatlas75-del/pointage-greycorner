@@ -126,12 +126,16 @@ const StaffPhotoService = (() => {
     "BOUCHNAK_NAOUAL": "images/BOUCHNAK_NAOUAL.jpg",
     "BOUCHNAK": "images/BOUCHNAK_NAOUAL.jpg",
     "BOURAHMA_ANAS": "images/BOURAHMA_ANAS.jpg",
-    "BOURAHMA": "images/BOURAHMA_ANAS.jpg",
     "IDRISSI_SAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
     "IDRISSI_OUDGHRI_SAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
     "IDRISSI_OUDGHRISSAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
-    "IDRISSI": "images/IDRISSI_OUDGHRI_SAAD.jpg",
-    "LEMSSIEH_JAWAD": "images/LAMSSIAH_JAOUAD.jpg",
+    "OUDGHRI_SAAD": "images/IDRISSI_OUDGHRI_SAAD.jpg",
+    "SAAD_IDRISSI": "images/IDRISSI_OUDGHRI_SAAD.jpg",
+    "SERGINI_IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "SERGINI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "SERGINI": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "KARIMA_SERGINI": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
     "LAMSSIAH_JAOUAD": "images/LAMSSIAH_JAOUAD.jpg",
     "LEMSSIEH": "images/LAMSSIAH_JAOUAD.jpg",
     "LAMSSIAH": "images/LAMSSIAH_JAOUAD.jpg",
@@ -252,6 +256,14 @@ const StaffPhotoService = (() => {
     if (!name) return null;
     const clean = normalize(name);
 
+    // 1. Détection prioritaire explicite pour Karima et Saad
+    if (clean.includes("KARIMA") || clean.includes("SERGINI")) {
+      return "images/SERGINI_IDRISSI_KARIMA.jpg";
+    }
+    if (clean.includes("SAAD") || clean.includes("OUDGHRI") || clean.includes("OUDGHRISSAAD")) {
+      return "images/IDRISSI_OUDGHRI_SAAD.jpg";
+    }
+
     if (PHOTO_MAP[clean]) return PHOTO_MAP[clean];
 
     const simpleClean = simplify(clean);
@@ -259,15 +271,18 @@ const StaffPhotoService = (() => {
       if (simplify(key) === simpleClean) return url;
     }
 
+    // Correspondance partielle sécurisée (ignore les sous-mots ambigus)
     for (const [key, url] of Object.entries(PHOTO_MAP)) {
+      if (key === "IDRISSI") continue;
       if (clean.includes(key) || key.includes(clean)) return url;
     }
 
-    const words = clean.split("_").filter(w => w.length >= 4);
+    const words = clean.split("_").filter(w => w.length >= 4 && w !== "IDRISSI");
     for (const w of words) {
       if (PHOTO_MAP[w]) return PHOTO_MAP[w];
       const sw = simplify(w);
       for (const [key, url] of Object.entries(PHOTO_MAP)) {
+        if (key === "IDRISSI") continue;
         if (simplify(key).includes(sw) || sw.includes(simplify(key))) {
           return url;
         }
