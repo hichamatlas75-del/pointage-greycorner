@@ -47,8 +47,11 @@ const PunchController = (() => {
   }
 
   async function handlePunch() {
+    FeedbackService.trigger("tap");
+
     const selected = StorageService.getSelectedStaff();
     if (!selected) {
+      FeedbackService.trigger("error");
       UIService.toast("Aucun profil sélectionné ❌");
       return;
     }
@@ -194,6 +197,25 @@ const PunchController = (() => {
 
     const btnRetry = document.getElementById("btnRetryGPS");
     if (btnRetry) btnRetry.addEventListener("click", () => GpsService.checkGPS(true));
+
+    const btnTest = document.getElementById("btnTestFeedback");
+    if (btnTest) {
+      btnTest.addEventListener("click", () => {
+        FeedbackService.trigger("success");
+        UIService.toast("Test Son & Vibreur réussi ! 🔊📳");
+      });
+    }
+
+    const wrap = document.getElementById("btnMainWrap");
+    if (wrap) {
+      wrap.addEventListener("click", (e) => {
+        const b = document.getElementById("btn");
+        if (b && b.disabled) {
+          FeedbackService.trigger("error");
+          UIService.toast("Validation GPS en cours ou hors zone 📍");
+        }
+      });
+    }
   }
 
   return { init };

@@ -281,17 +281,89 @@ const StaffPhotoService = (() => {
 })();
 
 // ─────────────────────────────────────────────────────────────────────────
-// 3.1 FEEDBACK SERVICE (Vibration Haptique + Synthétiseur Audio Web Audio)
+// 3.1 FEEDBACK SERVICE (Double Moteur Audio + Vibration Haptique Universelle)
 // ─────────────────────────────────────────────────────────────────────────
 const FeedbackService = (() => {
   let audioCtx = null;
+  let isUnlocked = false;
+
+  // Synthétiseur de WAV 16-bit PCM en mémoire (compatibilité totale même si WebAudio est bloqué)
+  function createWavDataUri(freq, duration = 0.2, type = "sine") {
+    try {
+      const sampleRate = 22050;
+      const numSamples = Math.floor(sampleRate * duration);
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+
+      function writeStr(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true); // PCM
+      view.setUint16(22, 1, true); // Mono
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, numSamples * 2, true);
+
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.sin(Math.PI * (i / numSamples));
+        let sample = Math.sin(2 * Math.PI * freq * t);
+        if (type === "triangle") {
+          sample = (2 / Math.PI) * Math.asin(Math.max(-1, Math.min(1, sample)));
+        }
+        sample = sample * envelope * 0.75;
+        view.setInt16(44 + i * 2, Math.max(-1, Math.min(1, sample)) * 32767, true);
+      }
+
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      return 'data:audio/wav;base64,' + btoa(binary);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Sons de secours HTML5 Audio pré-générés
+  const HTML5_SOUNDS = {
+    c5: null, e5: null, g5: null,
+    a4: null, f4: null,
+    low: null
+  };
+
+  function initSounds() {
+    if (!HTML5_SOUNDS.c5) {
+      HTML5_SOUNDS.c5 = createWavDataUri(523.25, 0.16, "sine");
+      HTML5_SOUNDS.e5 = createWavDataUri(659.25, 0.16, "sine");
+      HTML5_SOUNDS.g5 = createWavDataUri(783.99, 0.32, "sine");
+      HTML5_SOUNDS.a4 = createWavDataUri(440, 0.20, "triangle");
+      HTML5_SOUNDS.f4 = createWavDataUri(349.23, 0.36, "triangle");
+      HTML5_SOUNDS.low = createWavDataUri(220, 0.38, "triangle");
+    }
+  }
+
+  function playHtml5Sound(dataUri) {
+    if (!dataUri) return;
+    try {
+      const a = new Audio(dataUri);
+      a.volume = 1.0;
+      const prom = a.play();
+      if (prom && typeof prom.catch === "function") prom.catch(() => {});
+    } catch (e) {}
+  }
 
   function getAudioContext() {
     if (!audioCtx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        audioCtx = new AudioCtx();
-      }
+      if (AudioCtx) audioCtx = new AudioCtx();
     }
     if (audioCtx && audioCtx.state === "suspended") {
       audioCtx.resume().catch(() => {});
@@ -299,56 +371,119 @@ const FeedbackService = (() => {
     return audioCtx;
   }
 
-  function playTone(freq, duration = 0.2, type = "sine", startTime = 0) {
+  function unlock() {
+    if (isUnlocked) return;
     try {
       const ctx = getAudioContext();
-      if (!ctx) return;
+      if (ctx) {
+        if (ctx.state === "suspended") ctx.resume();
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        isUnlocked = true;
+      }
+    } catch (e) {}
+    initSounds();
+  }
+
+  // Déverrouillage automatique au moindre contact avec l'écran
+  if (typeof document !== "undefined") {
+    const doUnlock = () => {
+      unlock();
+      document.removeEventListener("pointerdown", doUnlock);
+      document.removeEventListener("touchstart", doUnlock);
+      document.removeEventListener("click", doUnlock);
+    };
+    document.addEventListener("pointerdown", doUnlock, { passive: true });
+    document.addEventListener("touchstart", doUnlock, { passive: true });
+    document.addEventListener("click", doUnlock, { passive: true });
+  }
+
+  function playWebAudioTone(freq, duration = 0.2, type = "sine", delay = 0) {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx || ctx.state === "suspended") return false;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
-      gain.gain.setValueAtTime(0.25, ctx.currentTime + startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+      const startT = ctx.currentTime + delay;
+      osc.frequency.setValueAtTime(freq, startT);
+      gain.gain.setValueAtTime(0.5, startT);
+      gain.gain.linearRampToValueAtTime(0.01, startT + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + startTime);
-      osc.stop(ctx.currentTime + startTime + duration);
-    } catch (e) {}
+      osc.start(startT);
+      osc.stop(startT + duration);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   function trigger(pattern = "success") {
-    // 1. Retour haptique tactile pour smartphone
+    unlock();
+
+    // 1. VIBRATION HAPTIQUE
     try {
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         if (pattern === "success") {
-          navigator.vibrate([70, 40, 160]);
+          navigator.vibrate([80, 50, 180]);
         } else if (pattern === "late") {
-          navigator.vibrate([150, 60, 150, 60, 220]);
+          navigator.vibrate([150, 60, 150, 60, 240]);
         } else if (pattern === "error") {
-          navigator.vibrate([300, 80, 300]);
+          navigator.vibrate([280, 70, 280]);
+        } else if (pattern === "tap") {
+          navigator.vibrate(60);
         }
       }
     } catch (e) {}
 
-    // 2. Retour sonore harmonieux (synthèse Web Audio API sans fichier audio requis)
-    try {
-      if (pattern === "success") {
-        // Mélodie montante de succès (Do - Mi - Sol)
-        playTone(523.25, 0.10, "sine", 0);
-        playTone(659.25, 0.10, "sine", 0.08);
-        playTone(783.99, 0.25, "sine", 0.16);
-      } else if (pattern === "late") {
-        // Tonalité d'alerte ponctuelle (La - Fa)
-        playTone(440, 0.15, "triangle", 0);
-        playTone(349.23, 0.30, "triangle", 0.15);
-      } else if (pattern === "error") {
-        // Tonalité descendante d'erreur
-        playTone(220, 0.30, "sawtooth", 0);
+    // 2. RETOUR HAPTIQUE VISUEL SUR L'ÉCRAN (pour iPhone/iOS et navigateurs sans vibreur)
+    if (typeof document !== "undefined") {
+      const card = document.querySelector(".card");
+      if (card) {
+        card.classList.remove("haptic-shake");
+        void card.offsetWidth;
+        card.classList.add("haptic-shake");
+        setTimeout(() => card.classList.remove("haptic-shake"), 350);
       }
-    } catch (e) {}
+    }
+
+    // 3. RETOUR SONORE (Web Audio API + HTML5 Audio fallback garanti)
+    initSounds();
+
+    if (pattern === "success") {
+      // Accord montant Do5 (523Hz) -> Mi5 (659Hz) -> Sol5 (784Hz)
+      const played = playWebAudioTone(523.25, 0.14, "sine", 0)
+                  && playWebAudioTone(659.25, 0.14, "sine", 0.09)
+                  && playWebAudioTone(783.99, 0.30, "sine", 0.18);
+      if (!played) {
+        playHtml5Sound(HTML5_SOUNDS.c5);
+        setTimeout(() => playHtml5Sound(HTML5_SOUNDS.e5), 90);
+        setTimeout(() => playHtml5Sound(HTML5_SOUNDS.g5), 180);
+      }
+    } else if (pattern === "late") {
+      // La4 (440Hz) -> Fa4 (349Hz)
+      const played = playWebAudioTone(440, 0.18, "triangle", 0)
+                  && playWebAudioTone(349.23, 0.34, "triangle", 0.16);
+      if (!played) {
+        playHtml5Sound(HTML5_SOUNDS.a4);
+        setTimeout(() => playHtml5Sound(HTML5_SOUNDS.f4), 160);
+      }
+    } else if (pattern === "error") {
+      // Grave (220Hz)
+      const played = playWebAudioTone(220, 0.34, "sawtooth", 0);
+      if (!played) {
+        playHtml5Sound(HTML5_SOUNDS.low);
+      }
+    } else if (pattern === "tap") {
+      playWebAudioTone(600, 0.06, "sine", 0);
+    }
   }
 
-  return { trigger, getAudioContext };
+  return { trigger, unlock, getAudioContext };
 })();
 
 
