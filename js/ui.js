@@ -295,7 +295,9 @@ const AdminController = (() => {
         lateMin = pu?.retardMin || pr?.retardMin || 0;
       }
 
-      const motif = (pu?.motif || pr?.motif || motifsMap[staffKey]?.motif || "").trim();
+      const moRaw = motifsMap[staffKey];
+      const moVal = typeof moRaw === "string" ? moRaw : (moRaw?.motif || moRaw?.reason || "");
+      const motif = (pu?.motif || pr?.motif || moVal || "").trim();
 
       if (hA) {
         presentCount++;

@@ -237,7 +237,9 @@ const HistoryService = (() => {
           </div>`;
       }
 
-      const motif = (pu?.motif || pr?.motif || motifsMap?.[iso]?.[staffKey]?.motif || "").trim();
+      const moRaw = motifsMap?.[iso]?.[staffKey];
+      const moVal = typeof moRaw === "string" ? moRaw : (moRaw?.motif || moRaw?.reason || "");
+      const motif = (pu?.motif || pr?.motif || moVal || "").trim();
 
       row.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">

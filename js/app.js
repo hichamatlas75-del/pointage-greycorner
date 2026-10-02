@@ -144,6 +144,7 @@ const PunchController = (() => {
     UIService.toast("Enregistrement en cours… ⏳");
 
     // Schéma exact et strict conforme aux règles de sécurité Firebase Database
+    const cleanMotif = String(motif || "").trim();
     const payload = {
       empKey: staffKey,
       hA: String(hA),
@@ -151,64 +152,88 @@ const PunchController = (() => {
       retardMin: Number(retardMin) || 0,
       timestamp: Number(ts)
     };
+    if (cleanMotif) {
+      payload.motif = cleanMotif;
+    }
 
     try {
       await db.ref(`punches/${dStr}/${staffKey}`).set(payload);
     } catch (e) {
-      console.warn("Firebase Punch write caught, attempting fallback:", e);
+      console.warn("Firebase Punch write caught, attempting payload without motif:", e);
       try {
-        const fallbackPayload = {
+        const payloadNoMotif = {
           empKey: staffKey,
           hA: String(hA),
-          retard: false,
-          retardMin: 0,
+          retard: Boolean(retard),
+          retardMin: Number(retardMin) || 0,
           timestamp: Number(ts)
         };
-        await db.ref(`punches/${dStr}/${staffKey}`).set(fallbackPayload);
-      } catch (errFallback) {
-        console.error("Firebase fallback write also failed:", errFallback);
+        await db.ref(`punches/${dStr}/${staffKey}`).set(payloadNoMotif);
+      } catch (errStd) {
+        console.warn("Firebase standard punch write failed, attempting fallback:", errStd);
         try {
-          const [pCheck, prCheck] = await Promise.all([
-            db.ref(`punches/${dStr}/${staffKey}`).once("value"),
-            db.ref(`presences/${dStr}/${staffKey}`).once("value")
-          ]);
-          const serverHA = pCheck.val()?.hA || prCheck.val()?.hA || null;
-          if (serverHA) {
-            StorageService.setPunchedLocal(dStr, staffKey, serverHA);
-            FeedbackService.trigger("success");
-            UIService.toast("Déjà pointé aujourd'hui ✅");
-            const prV = prCheck.val();
-            const effHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
-            const chkHasHP = Boolean(effHP);
-            const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effHP, serverHA, staffKey, dStr) : 0;
-            UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
-            HistoryService.loadHistorique(staffKey);
-            return;
-          }
-        } catch (errCheck) {}
+          const fallbackPayload = {
+            empKey: staffKey,
+            hA: String(hA),
+            retard: false,
+            retardMin: 0,
+            timestamp: Number(ts)
+          };
+          await db.ref(`punches/${dStr}/${staffKey}`).set(fallbackPayload);
+        } catch (errFallback) {
+          console.error("Firebase fallback write also failed:", errFallback);
+          try {
+            const [pCheck, prCheck] = await Promise.all([
+              db.ref(`punches/${dStr}/${staffKey}`).once("value"),
+              db.ref(`presences/${dStr}/${staffKey}`).once("value")
+            ]);
+            const serverHA = pCheck.val()?.hA || prCheck.val()?.hA || null;
+            if (serverHA) {
+              StorageService.setPunchedLocal(dStr, staffKey, serverHA);
+              FeedbackService.trigger("success");
+              UIService.toast("Déjà pointé aujourd'hui ✅");
+              const prV = prCheck.val();
+              const effHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
+              const chkHasHP = Boolean(effHP);
+              const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effHP, serverHA, staffKey, dStr) : 0;
+              UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
+              HistoryService.loadHistorique(staffKey);
+              return;
+            }
+          } catch (errCheck) {}
 
-        const errDetail = e?.code || e?.message || "Erreur de connexion";
-        FeedbackService.trigger("error");
-        UIService.toast(`Erreur Firebase (${errDetail}) ❌`);
-        UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
-        UIService.showRetryGPS(GpsService.getState() !== "ok");
-        return;
+          const errDetail = e?.code || e?.message || "Erreur de connexion";
+          FeedbackService.trigger("error");
+          UIService.toast(`Erreur Firebase (${errDetail}) ❌`);
+          UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
+          UIService.showRetryGPS(GpsService.getState() !== "ok");
+          return;
+        }
       }
     }
 
-    // Enregistrement du motif dans broadcast/motifs (non bloquant pour le pointage)
-    if (motif) {
+    // Enregistrement multi-points du motif (broadcast/motifs et punches/motif)
+    if (cleanMotif) {
+      // 1. broadcast/motifs/${dStr}/${staffKey}
       try {
         await db.ref(`broadcast/motifs/${dStr}/${staffKey}`).set({
           empKey: staffKey,
-          motif: String(motif).trim(),
+          motif: cleanMotif,
           hA: String(hA),
           retardMin: Number(retardMin) || 0,
           timestamp: Number(ts)
         });
-      } catch (errMotif) {
-        console.warn("Écriture motif broadcast ignorée:", errMotif);
+      } catch (errMotifObj) {
+        console.warn("Écriture motif broadcast objet ignorée, repli chaîne simple:", errMotifObj);
+        try {
+          await db.ref(`broadcast/motifs/${dStr}/${staffKey}`).set(cleanMotif);
+        } catch (errMotifStr) {}
       }
+
+      // 2. punches/${dStr}/${staffKey}/motif
+      try {
+        await db.ref(`punches/${dStr}/${staffKey}/motif`).set(cleanMotif);
+      } catch (errPunchMotif) {}
     }
 
     StorageService.setPunchedLocal(dStr, staffKey, hA);
