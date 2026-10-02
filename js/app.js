@@ -18,7 +18,7 @@ function escapeHtml(str) {
 // 1. PUNCH & POINTAGE CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────
 const PunchController = (() => {
-  async function sendToSheetBackground({ date, empNode, empKey, hA, timestamp }) {
+  async function sendToSheetBackground({ date, empNode, empKey, hA, retard, retardMin, motif, timestamp }) {
     // SÉCURITÉ : Authentification par token Firebase au lieu d'un secret statique
     let idToken = "";
     try {
@@ -34,6 +34,9 @@ const PunchController = (() => {
       empNode,
       empKey,
       hA,
+      retard: String(!!retard),
+      retardMin: String(retardMin || 0),
+      motif: String(motif || "").trim(),
       status: "punch",
       timestamp: String(timestamp)
     });
@@ -104,16 +107,16 @@ const PunchController = (() => {
     }
 
     UIService.setPunchButtonEnabled(false);
-    UIService.toast("Enregistrement en cours… ⏳");
 
     let hasHP = false;
     let retard = false;
     let retardMin = 0;
+    let effectiveHP = "";
 
     try {
       const presSnap = await db.ref(`presences/${dStr}/${staffKey}`).once("value");
       const presVal = presSnap.val();
-      const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, presVal?.hP || "");
+      effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, presVal?.hP || "");
       if (effectiveHP) {
         hasHP = true;
         const lm = HistoryService.calculateLateMinutes(effectiveHP, hA, staffKey, dStr);
@@ -124,7 +127,23 @@ const PunchController = (() => {
       }
     } catch (e) {}
 
-    // Schéma exact conforme aux règles de sécurité Firebase Database
+    // OPTION 2 : Demande d'explication facultative UNIQUEMENT si retard > 15 minutes
+    let motif = "";
+    if (retard && retardMin > 15) {
+      motif = await new Promise(resolve => {
+        UIService.showLateReasonModal({
+          retardMin,
+          effectiveHP,
+          hA,
+          onSubmit: reason => resolve(reason || ""),
+          onSkip: () => resolve("")
+        });
+      });
+    }
+
+    UIService.toast("Enregistrement en cours… ⏳");
+
+    // Schéma conforme aux règles Firebase Database
     const payload = {
       empKey: staffKey,
       hA: String(hA),
@@ -132,9 +151,17 @@ const PunchController = (() => {
       retardMin: Number(retardMin) || 0,
       timestamp: Number(ts)
     };
+    if (motif) {
+      payload.motif = String(motif).trim();
+    }
 
     try {
       await db.ref(`punches/${dStr}/${staffKey}`).set(payload);
+      if (motif) {
+        try {
+          await db.ref(`presences/${dStr}/${staffKey}/motif`).set(String(motif).trim());
+        } catch (errPres) {}
+      }
     } catch (e) {
       console.warn("Firebase Punch write caught, checking remote status:", e);
       try {
@@ -148,9 +175,9 @@ const PunchController = (() => {
           FeedbackService.trigger("success");
           UIService.toast("Déjà pointé aujourd'hui ✅");
           const prV = prCheck.val();
-          const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
-          const chkHasHP = Boolean(effectiveHP);
-          const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effectiveHP, serverHA, staffKey, dStr) : 0;
+          const effHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
+          const chkHasHP = Boolean(effHP);
+          const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effHP, serverHA, staffKey, dStr) : 0;
           UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
           HistoryService.loadHistorique(staffKey);
           return;
@@ -187,6 +214,9 @@ const PunchController = (() => {
       empNode: selected || Config.endpoints.empNodeDefault,
       empKey: staffKey,
       hA,
+      retard,
+      retardMin,
+      motif,
       timestamp: ts
     });
   }

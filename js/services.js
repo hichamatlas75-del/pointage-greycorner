@@ -219,7 +219,11 @@ const StaffPhotoService = (() => {
     "FOUZIA": "images/FOUZIA.jpg",
     "FOUZIA6ZHAR": "images/FOUZIA6ZHAR.jpg",
     "FOUZIA_ZHAR": "images/FOUZIA6ZHAR.jpg",
-    "FOUZIA_EZHAR": "images/FOUZIA6ZHAR.jpg"
+    "FOUZIA_EZHAR": "images/FOUZIA6ZHAR.jpg",
+    "SERGINI_IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "SERGINI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
+    "KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg"
   };
 
   function normalize(str) {

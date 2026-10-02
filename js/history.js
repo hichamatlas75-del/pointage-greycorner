@@ -234,12 +234,19 @@ const HistoryService = (() => {
           </div>`;
       }
 
+      const motif = (pu?.motif || pr?.motif || "").trim();
+
       row.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="histo-day">${jour}</div>
-          <div class="histo-date">${dateFormatted}${isToday ? '&nbsp;<span style="color:var(--gold);font-size:9px">auj.</span>' : ""}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="histo-day">${jour}</div>
+              <div class="histo-date">${dateFormatted}${isToday ? '&nbsp;<span style="color:var(--gold);font-size:9px">auj.</span>' : ""}</div>
+            </div>
+            ${statusHTML}
+          </div>
+          ${motif ? `<div style="font-size:9px;color:#fde68a;background:rgba(245,158,11,0.08);padding:3px 8px;border-radius:6px;border-left:2px solid var(--amber-electric);margin-top:2px">💬 Motif : « ${escapeHtml(motif)} »</div>` : ""}
         </div>
-        ${statusHTML}
       `;
       frag.appendChild(row);
     });

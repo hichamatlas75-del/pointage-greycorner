@@ -126,6 +126,7 @@ const TeamService = (() => {
     if (s.includes("JIHANE") || s.includes("MAJDOUB")) return "JIHANE";
     if (s.includes("IMANE") || s.includes("MOUJAHID")) return "IMANE";
     if (s.includes("ANAS") || s.includes("BOURAHMA")) return "ANAS";
+    if (s.includes("JAWAD") || s.includes("JAOUAD") || s.includes("LEMSSIEH") || s.includes("LAMSSIAH")) return "JAWAD";
     if (s.includes("SAAD") || (s.includes("IDRISSI") && !s.includes("KARIMA") && !s.includes("SERGINI") && (s.includes("OUDGHRI") || s.includes("OUDGHIRI") || s.includes("SAAD")))) return "SAAD";
     return null;
   }

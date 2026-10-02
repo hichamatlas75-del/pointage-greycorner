@@ -186,11 +186,26 @@
           </div>
         </div>
 
-        <!-- 5. Panneau de Supervision Gérant -->
+        <!-- 5. Panneau de Supervision Gérant & RH -->
         <div id="adminWrap" class="admin-wrap">
           <div class="flex items-center justify-between gap-3">
-            <div class="label-caps gold">Supervision gérant</div>
+            <div class="label-caps gold">Supervision RH & Gérant</div>
             <button id="btnCloseAdmin" type="button" class="btn-logout">Fermer</button>
+          </div>
+          <!-- Statistiques du jour RH -->
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <span id="adminStatPresent" class="admin-stat-num" style="color:var(--emerald-neon)">0</span>
+              <span class="admin-stat-lbl">Présents</span>
+            </div>
+            <div class="admin-stat-card">
+              <span id="adminStatLate" class="admin-stat-num" style="color:var(--coral-electric)">0</span>
+              <span class="admin-stat-lbl">Retards</span>
+            </div>
+            <div class="admin-stat-card">
+              <span id="adminStatPending" class="admin-stat-num" style="color:var(--text-muted)">0</span>
+              <span class="admin-stat-lbl">En attente</span>
+            </div>
           </div>
           <div class="admin-list" id="adminList"></div>
           <button id="btnResetAll" type="button" class="btn-reset-all">🔄 Reset global (tous les mobiles)</button>
@@ -198,6 +213,35 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal Explication / Justification Retard (> 15 min) -->
+  <div id="lateModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-badge-retard" id="lateModalBadge">⏰ Retard constaté : +0 min</div>
+        <div class="modal-subtitle" id="lateModalTimes">Heure prévue : -- • Arrivée : --</div>
+      </div>
+      
+      <div class="modal-body">
+        <p class="modal-hint">Vous pouvez expliquer la raison de ce retard à la direction (facultatif) :</p>
+        
+        <!-- Suggestions de motifs rapides -->
+        <div class="modal-pills">
+          <button type="button" class="late-pill-btn" data-reason="Trafic / Embouteillage">🚗 Trafic / Transport</button>
+          <button type="button" class="late-pill-btn" data-reason="Problème de santé / Médical">🏥 Raison médicale</button>
+          <button type="button" class="late-pill-btn" data-reason="Urgence personnelle / Familiale">👨‍👩‍👧 Urgence familiale</button>
+          <button type="button" class="late-pill-btn" data-reason="Panne de véhicule / Imprévu">⚡ Panne / Imprévu</button>
+        </div>
+
+        <textarea id="lateReasonInput" class="inpt late-textarea" rows="2" maxlength="160" placeholder="Autre motif ou précision (facultatif)…"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnSkipLateReason" type="button" class="btn-skip-late">Passer sans motif</button>
+        <button id="btnSubmitLateReason" type="button" class="btn-submit-late">Valider le pointage</button>
+      </div>
     </div>
   </div>
 

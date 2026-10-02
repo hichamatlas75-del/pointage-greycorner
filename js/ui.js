@@ -158,6 +158,69 @@ const UIService = (() => {
     updateNetworkStatus();
   }
 
+  function showLateReasonModal({ retardMin, effectiveHP, hA, onSubmit, onSkip }) {
+    const modal = document.getElementById("lateModal");
+    const badge = document.getElementById("lateModalBadge");
+    const times = document.getElementById("lateModalTimes");
+    const textarea = document.getElementById("lateReasonInput");
+    const btnSkip = document.getElementById("btnSkipLateReason");
+    const btnSubmit = document.getElementById("btnSubmitLateReason");
+    const pills = document.querySelectorAll(".late-pill-btn");
+
+    if (!modal) {
+      if (onSkip) onSkip();
+      return;
+    }
+
+    if (badge) badge.textContent = `⏰ Retard constaté : +${retardMin} min`;
+    if (times) times.textContent = `Heure prévue : ${effectiveHP || "--"} • Arrivée : ${hA || "--"}`;
+    if (textarea) textarea.value = "";
+
+    let selectedPillReason = "";
+    pills.forEach(pill => {
+      pill.classList.remove("active");
+      pill.onclick = () => {
+        if (pill.classList.contains("active")) {
+          pill.classList.remove("active");
+          selectedPillReason = "";
+        } else {
+          pills.forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          selectedPillReason = pill.getAttribute("data-reason") || "";
+        }
+      };
+    });
+
+    function cleanup() {
+      modal.classList.add("hidden");
+      if (btnSkip) btnSkip.onclick = null;
+      if (btnSubmit) btnSubmit.onclick = null;
+      pills.forEach(p => p.onclick = null);
+    }
+
+    if (btnSkip) {
+      btnSkip.onclick = () => {
+        cleanup();
+        if (onSkip) onSkip();
+      };
+    }
+
+    if (btnSubmit) {
+      btnSubmit.onclick = () => {
+        const textReason = textarea ? textarea.value.trim() : "";
+        let finalReason = selectedPillReason;
+        if (textReason) {
+          finalReason = finalReason ? `${finalReason} : ${textReason}` : textReason;
+        }
+        cleanup();
+        if (onSubmit) onSubmit(finalReason);
+      };
+    }
+
+    modal.classList.remove("hidden");
+    if (textarea) setTimeout(() => textarea.focus(), 150);
+  }
+
   return {
     toast,
     updateGpsDot,
@@ -165,7 +228,8 @@ const UIService = (() => {
     showRetryGPS,
     updateGpsUI,
     renderPointedBox,
-    initNetworkListener
+    initNetworkListener,
+    showLateReasonModal
   };
 })();
 
@@ -175,42 +239,127 @@ const UIService = (() => {
 const AdminController = (() => {
   let currentRole = null;
 
-  function openAdmin(silent = false) {
+  async function openAdmin(silent = false) {
     if (currentRole !== "gerant") return;
-    document.getElementById("adminWrap").style.display = "flex";
-    document.getElementById("selection").classList.add("hidden");
-    document.getElementById("action").classList.add("hidden");
-    document.getElementById("planningPanel").style.display = "none";
+    const wrap = document.getElementById("adminWrap");
+    if (!wrap) return;
+    wrap.style.display = "flex";
+    document.getElementById("selection")?.classList.add("hidden");
+    document.getElementById("action")?.classList.add("hidden");
+    const planPanel = document.getElementById("planningPanel");
+    if (planPanel) planPanel.style.display = "none";
 
     const list = document.getElementById("adminList");
-    list.innerHTML = "";
+    if (list) list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:11px">Chargement des présences du jour… ⏳</div>`;
 
-    TeamService.getEquipeList().slice().sort((a, b) => a.n.localeCompare(b.n)).forEach(emp => {
+    const dStr = TimeService.currentDateStr();
+    let punchesMap = {};
+    let presencesMap = {};
+
+    try {
+      const [puSnap, prSnap] = await Promise.all([
+        db.ref("punches/" + dStr).once("value"),
+        db.ref("presences/" + dStr).once("value")
+      ]);
+      punchesMap = puSnap.val() || {};
+      presencesMap = prSnap.val() || {};
+    } catch (e) {
+      console.warn("Erreur chargement données supervision:", e);
+    }
+
+    const equipe = TeamService.getEquipeList().slice().sort((a, b) => a.n.localeCompare(b.n));
+    let presentCount = 0;
+    let lateCount = 0;
+    let pendingCount = 0;
+
+    const frag = document.createDocumentFragment();
+
+    equipe.forEach(emp => {
+      const staffKey = SecurityService.keyStaff(emp.n);
+      const pu = punchesMap[staffKey] || null;
+      const pr = presencesMap[staffKey] || null;
+
+      const hA = pu?.hA || pr?.hA || "";
+      const effectiveHP = TeamService.getEffectiveHP(staffKey, dStr, pr?.hP || pu?.hP || "");
+      let isLate = false;
+      let lateMin = 0;
+
+      if (hA && effectiveHP) {
+        lateMin = HistoryService.calculateLateMinutes(effectiveHP, hA, staffKey, dStr);
+        isLate = lateMin > 0;
+      } else if (pu?.retard || pr?.retard) {
+        isLate = true;
+        lateMin = pu?.retardMin || pr?.retardMin || 0;
+      }
+
+      const motif = (pu?.motif || pr?.motif || "").trim();
+
+      if (hA) {
+        presentCount++;
+        if (isLate) lateCount++;
+      } else {
+        pendingCount++;
+      }
+
       const row = document.createElement("div");
-      row.className = "admin-row";
+      row.className = "admin-staff-row";
 
-      const left = document.createElement("div");
-      left.className = "font-black";
-      // SÉCURITÉ : textContent au lieu de innerHTML pour empêcher l'injection XSS
-      left.textContent = emp.n;
+      // Ligne supérieure : Nom, Poste, Statut, Bouton Reset
+      let statusBadge = "";
+      if (hA) {
+        if (isLate) {
+          if (lateMin <= 15) {
+            statusBadge = `<span class="admin-status-badge admin-status-mild">⏰ +${lateMin}m (${escapeHtml(hA)})</span>`;
+          } else {
+            statusBadge = `<span class="admin-status-badge admin-status-late">😔 +${lateMin}m (${escapeHtml(hA)})</span>`;
+          }
+        } else {
+          statusBadge = `<span class="admin-status-badge admin-status-ontime">✓ À l'heure (${escapeHtml(hA)})</span>`;
+        }
+      } else {
+        statusBadge = `<span class="admin-status-badge admin-status-none">Non pointé</span>`;
+      }
 
-      const btn = document.createElement("button");
-      btn.className = "btn-reset-one";
-      btn.type = "button";
-      btn.textContent = "Reset";
-      btn.onclick = () => {
+      const safeName = escapeHtml(emp.n);
+      const safeRole = escapeHtml(emp.t || "service");
+
+      row.innerHTML = `
+        <div class="admin-staff-top">
+          <div class="admin-staff-name">
+            <span>${safeName}</span>
+            <span class="admin-staff-role">${safeRole}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${statusBadge}
+            <button class="btn-reset-one" type="button" data-staff="${safeName}">Reset</button>
+          </div>
+        </div>
+        ${motif ? `<div class="admin-motif-box">💬 Motif : « ${escapeHtml(motif)} »</div>` : (isLate && lateMin > 15 ? `<div class="admin-motif-box" style="border-color:var(--text-muted);color:var(--text-secondary);background:rgba(255,255,255,0.03)">⚠️ Aucun motif renseigné</div>` : "")}
+      `;
+
+      row.querySelector(".btn-reset-one")?.addEventListener("click", () => {
         if (confirm("Réinitialiser le mobile de " + emp.n + " ?")) {
-          db.ref(`broadcast/resets/${SecurityService.keyStaff(emp.n)}`).set(Date.now());
+          db.ref(`broadcast/resets/${staffKey}`).set(Date.now());
           UIService.toast("Signal reset envoyé ✅");
         }
-      };
+      });
 
-      row.appendChild(left);
-      row.appendChild(btn);
-      list.appendChild(row);
+      frag.appendChild(row);
     });
 
-    if (!silent) UIService.toast("Supervision gérant activée 🛠️");
+    if (list) {
+      list.replaceChildren(frag);
+    }
+
+    // Mise à jour des compteurs statistiques
+    const elPres = document.getElementById("adminStatPresent");
+    const elLate = document.getElementById("adminStatLate");
+    const elPend = document.getElementById("adminStatPending");
+    if (elPres) elPres.textContent = presentCount;
+    if (elLate) elLate.textContent = lateCount;
+    if (elPend) elPend.textContent = pendingCount;
+
+    if (!silent) UIService.toast("Supervision RH & Gérant activée 🛠️");
   }
 
   function init() {
