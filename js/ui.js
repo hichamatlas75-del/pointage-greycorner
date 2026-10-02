@@ -255,14 +255,17 @@ const AdminController = (() => {
     const dStr = TimeService.currentDateStr();
     let punchesMap = {};
     let presencesMap = {};
+    let motifsMap = {};
 
     try {
-      const [puSnap, prSnap] = await Promise.all([
+      const [puSnap, prSnap, moSnap] = await Promise.all([
         db.ref("punches/" + dStr).once("value"),
-        db.ref("presences/" + dStr).once("value")
+        db.ref("presences/" + dStr).once("value"),
+        db.ref("broadcast/motifs/" + dStr).once("value")
       ]);
       punchesMap = puSnap.val() || {};
       presencesMap = prSnap.val() || {};
+      motifsMap = moSnap.val() || {};
     } catch (e) {
       console.warn("Erreur chargement données supervision:", e);
     }
@@ -292,7 +295,7 @@ const AdminController = (() => {
         lateMin = pu?.retardMin || pr?.retardMin || 0;
       }
 
-      const motif = (pu?.motif || pr?.motif || "").trim();
+      const motif = (pu?.motif || pr?.motif || motifsMap[staffKey]?.motif || "").trim();
 
       if (hA) {
         presentCount++;

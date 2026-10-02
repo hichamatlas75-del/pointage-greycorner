@@ -104,6 +104,7 @@ const HistoryService = (() => {
     const isSec = TeamService.isSecuriteRole(staffKey);
     let punchesMap = {};
     let presencesMap = {};
+    let motifsMap = {};
 
     function getStaffRecord(dayMap, key) {
       if (!dayMap || typeof dayMap !== "object") return null;
@@ -120,12 +121,14 @@ const HistoryService = (() => {
     }
 
     try {
-      const [punchRes, presRes] = await Promise.allSettled([
+      const [punchRes, presRes, motifRes] = await Promise.allSettled([
         db.ref("punches").orderByKey().startAt(minDate).endAt(maxDate).once("value"),
-        db.ref("presences").orderByKey().startAt(minDate).endAt(maxDate).once("value")
+        db.ref("presences").orderByKey().startAt(minDate).endAt(maxDate).once("value"),
+        db.ref("broadcast/motifs").orderByKey().startAt(minDate).endAt(maxDate).once("value")
       ]);
       if (punchRes.status === "fulfilled" && punchRes.value) punchesMap = punchRes.value.val() || {};
       if (presRes.status === "fulfilled" && presRes.value) presencesMap = presRes.value.val() || {};
+      if (motifRes.status === "fulfilled" && motifRes.value) motifsMap = motifRes.value.val() || {};
     } catch (e) {
       const snaps = await Promise.all(
         dates.map(async ({ iso }) => {
@@ -234,7 +237,7 @@ const HistoryService = (() => {
           </div>`;
       }
 
-      const motif = (pu?.motif || pr?.motif || "").trim();
+      const motif = (pu?.motif || pr?.motif || motifsMap?.[iso]?.[staffKey]?.motif || "").trim();
 
       row.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">

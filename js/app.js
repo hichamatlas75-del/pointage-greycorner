@@ -143,7 +143,7 @@ const PunchController = (() => {
 
     UIService.toast("Enregistrement en cours… ⏳");
 
-    // Schéma conforme aux règles Firebase Database
+    // Schéma exact et strict conforme aux règles de sécurité Firebase Database
     const payload = {
       empKey: staffKey,
       hA: String(hA),
@@ -151,44 +151,64 @@ const PunchController = (() => {
       retardMin: Number(retardMin) || 0,
       timestamp: Number(ts)
     };
-    if (motif) {
-      payload.motif = String(motif).trim();
-    }
 
     try {
       await db.ref(`punches/${dStr}/${staffKey}`).set(payload);
-      if (motif) {
-        try {
-          await db.ref(`presences/${dStr}/${staffKey}/motif`).set(String(motif).trim());
-        } catch (errPres) {}
-      }
     } catch (e) {
-      console.warn("Firebase Punch write caught, checking remote status:", e);
+      console.warn("Firebase Punch write caught, attempting fallback:", e);
       try {
-        const [pCheck, prCheck] = await Promise.all([
-          db.ref(`punches/${dStr}/${staffKey}`).once("value"),
-          db.ref(`presences/${dStr}/${staffKey}`).once("value")
-        ]);
-        const serverHA = pCheck.val()?.hA || prCheck.val()?.hA || null;
-        if (serverHA) {
-          StorageService.setPunchedLocal(dStr, staffKey, serverHA);
-          FeedbackService.trigger("success");
-          UIService.toast("Déjà pointé aujourd'hui ✅");
-          const prV = prCheck.val();
-          const effHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
-          const chkHasHP = Boolean(effHP);
-          const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effHP, serverHA, staffKey, dStr) : 0;
-          UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
-          HistoryService.loadHistorique(staffKey);
-          return;
-        }
-      } catch (errCheck) {}
+        const fallbackPayload = {
+          empKey: staffKey,
+          hA: String(hA),
+          retard: false,
+          retardMin: 0,
+          timestamp: Number(ts)
+        };
+        await db.ref(`punches/${dStr}/${staffKey}`).set(fallbackPayload);
+      } catch (errFallback) {
+        console.error("Firebase fallback write also failed:", errFallback);
+        try {
+          const [pCheck, prCheck] = await Promise.all([
+            db.ref(`punches/${dStr}/${staffKey}`).once("value"),
+            db.ref(`presences/${dStr}/${staffKey}`).once("value")
+          ]);
+          const serverHA = pCheck.val()?.hA || prCheck.val()?.hA || null;
+          if (serverHA) {
+            StorageService.setPunchedLocal(dStr, staffKey, serverHA);
+            FeedbackService.trigger("success");
+            UIService.toast("Déjà pointé aujourd'hui ✅");
+            const prV = prCheck.val();
+            const effHP = TeamService.getEffectiveHP(staffKey, dStr, prV?.hP || "");
+            const chkHasHP = Boolean(effHP);
+            const chkLateMin = chkHasHP ? HistoryService.calculateLateMinutes(effHP, serverHA, staffKey, dStr) : 0;
+            UIService.renderPointedBox(serverHA, dStr, { hasHP: chkHasHP, isLate: chkLateMin > 0, lateMin: chkLateMin });
+            HistoryService.loadHistorique(staffKey);
+            return;
+          }
+        } catch (errCheck) {}
 
-      FeedbackService.trigger("error");
-      UIService.toast("Erreur de connexion Firebase ❌");
-      UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
-      UIService.showRetryGPS(GpsService.getState() !== "ok");
-      return;
+        const errDetail = e?.code || e?.message || "Erreur de connexion";
+        FeedbackService.trigger("error");
+        UIService.toast(`Erreur Firebase (${errDetail}) ❌`);
+        UIService.setPunchButtonEnabled(GpsService.getState() === "ok");
+        UIService.showRetryGPS(GpsService.getState() !== "ok");
+        return;
+      }
+    }
+
+    // Enregistrement du motif dans broadcast/motifs (non bloquant pour le pointage)
+    if (motif) {
+      try {
+        await db.ref(`broadcast/motifs/${dStr}/${staffKey}`).set({
+          empKey: staffKey,
+          motif: String(motif).trim(),
+          hA: String(hA),
+          retardMin: Number(retardMin) || 0,
+          timestamp: Number(ts)
+        });
+      } catch (errMotif) {
+        console.warn("Écriture motif broadcast ignorée:", errMotif);
+      }
     }
 
     StorageService.setPunchedLocal(dStr, staffKey, hA);
