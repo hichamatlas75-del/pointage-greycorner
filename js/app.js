@@ -214,6 +214,7 @@ const PunchController = (() => {
 
     // Enregistrement multi-points du motif (broadcast/motifs et punches/motif)
     if (cleanMotif) {
+      let motifSaved = false;
       // 1. broadcast/motifs/${dStr}/${staffKey}
       try {
         await db.ref(`broadcast/motifs/${dStr}/${staffKey}`).set({
@@ -223,17 +224,25 @@ const PunchController = (() => {
           retardMin: Number(retardMin) || 0,
           timestamp: Number(ts)
         });
+        motifSaved = true;
       } catch (errMotifObj) {
         console.warn("Écriture motif broadcast objet ignorée, repli chaîne simple:", errMotifObj);
         try {
           await db.ref(`broadcast/motifs/${dStr}/${staffKey}`).set(cleanMotif);
+          motifSaved = true;
         } catch (errMotifStr) {}
       }
 
       // 2. punches/${dStr}/${staffKey}/motif
       try {
         await db.ref(`punches/${dStr}/${staffKey}/motif`).set(cleanMotif);
+        motifSaved = true;
       } catch (errPunchMotif) {}
+
+      if (!motifSaved) {
+        console.error("Motif NON enregistré : règles Firebase à publier (broadcast/motifs).");
+        UIService.toast("⚠️ Motif non transmis au gérant (règles Firebase)");
+      }
     }
 
     StorageService.setPunchedLocal(dStr, staffKey, hA);
