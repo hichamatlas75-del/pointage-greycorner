@@ -260,7 +260,15 @@ const AdvanceService = {
   },
 
   /**
-   * Met à jour l'état visuel du bouton et du message d'ouverture (règle du 2 au 15 inclus)
+   * Vérifie si le collaborateur a déjà une avance VALIDEE (accordée) sur le mois actif
+   * @returns {Object|null}
+   */
+  getValidatedRequest() {
+    return this._currentRequests.find((r) => r.statut === "VALIDEE") || null;
+  },
+
+  /**
+   * Met à jour l'état visuel du bouton et du message d'ouverture (règle du 2 au 15 inclus + 1 seule avance accordée/mois)
    */
   updateButtonState() {
     const btn = document.getElementById("btnOpenAdvanceModal");
@@ -269,7 +277,35 @@ const AdvanceService = {
 
     const windowOpen = this.isRequestWindowOpen();
     const pendingReq = this.getPendingRequest();
+    const validatedReq = this.getValidatedRequest();
 
+    // 1. Si une avance a déjà été accordée (VALIDEE) ce mois-ci : bouton grisé et bloqué jusqu'au mois prochain
+    if (validatedReq) {
+      btn.disabled = true;
+      btn.classList.remove("advance-btn-active");
+      btn.classList.add("advance-btn-locked");
+      btn.innerHTML = `🔒 Avance déjà accordée pour ce mois`;
+      if (hint) {
+        hint.textContent = `ℹ️ Une seule avance est autorisée par mois. Prochaine demande possible le mois prochain.`;
+        hint.style.display = "block";
+      }
+      return;
+    }
+
+    // 2. Si une demande est en cours de validation (EN_ATTENTE) : bouton grisé
+    if (pendingReq) {
+      btn.disabled = true;
+      btn.classList.remove("advance-btn-active");
+      btn.classList.add("advance-btn-locked");
+      btn.innerHTML = `⏳ Demande d'avance en cours de validation`;
+      if (hint) {
+        hint.textContent = `Une demande est déjà en attente de traitement pour ce mois.`;
+        hint.style.display = "block";
+      }
+      return;
+    }
+
+    // 3. Si hors période (du 16 au 1er du mois suivant) : bouton grisé
     if (!windowOpen) {
       btn.disabled = true;
       btn.classList.remove("advance-btn-active");
@@ -283,24 +319,13 @@ const AdvanceService = {
       return;
     }
 
-    // Période ouverte (entre le 2 et le 15 inclus)
-    if (pendingReq) {
-      btn.disabled = true;
-      btn.classList.remove("advance-btn-active");
-      btn.classList.add("advance-btn-locked");
-      btn.innerHTML = `⏳ Demande d'avance en cours de validation`;
-      if (hint) {
-        hint.textContent = `Une demande est déjà en attente de traitement pour ce mois.`;
-        hint.style.display = "block";
-      }
-    } else {
-      btn.disabled = false;
-      btn.classList.remove("advance-btn-locked");
-      btn.classList.add("advance-btn-active");
-      btn.innerHTML = `💰 Demander une avance sur salaire`;
-      if (hint) {
-        hint.style.display = "none";
-      }
+    // 4. Période ouverte et aucune demande en cours ni validée
+    btn.disabled = false;
+    btn.classList.remove("advance-btn-locked");
+    btn.classList.add("advance-btn-active");
+    btn.innerHTML = `💰 Demander une avance sur salaire`;
+    if (hint) {
+      hint.style.display = "none";
     }
   },
 
@@ -370,9 +395,33 @@ const AdvanceService = {
   },
 
   /**
-   * Ouvre la modale de demande d'avance après contrôle de la fenêtre (2 au 15)
+   * Ouvre la modale de demande d'avance après contrôle de la fenêtre (2 au 15) et d'absence d'avance déjà accordée
    */
   openModal() {
+    if (this.getValidatedRequest()) {
+      this.updateButtonState();
+      if (typeof UIService !== "undefined") {
+        UIService.showPopup(
+          "🔒",
+          "Avance déjà accordée",
+          "Vous avez déjà bénéficié d'une avance sur salaire ce mois-ci. Une nouvelle demande ne sera possible que le mois prochain."
+        );
+      }
+      return;
+    }
+
+    if (this.getPendingRequest()) {
+      this.updateButtonState();
+      if (typeof UIService !== "undefined") {
+        UIService.showPopup(
+          "⏳",
+          "Demande déjà en cours",
+          "Vous avez déjà une demande d'avance en attente de validation pour ce mois."
+        );
+      }
+      return;
+    }
+
     const jour = TimeService.getTrustedDate().getDate();
     if (!this.TEST_FORCE_OPEN && (jour < 2 || jour > 15)) {
       this.updateButtonState();
@@ -381,17 +430,6 @@ const AdvanceService = {
           "🔒",
           "Demandes closes",
           `Les demandes d'avances sont autorisées uniquement entre le 2 et le 15 de chaque mois.\n${this.getNextOpeningMessage()}`
-        );
-      }
-      return;
-    }
-
-    if (this.getPendingRequest()) {
-      if (typeof UIService !== "undefined") {
-        UIService.showPopup(
-          "⏳",
-          "Demande déjà en cours",
-          "Vous avez déjà une demande d'avance en attente de validation pour ce mois."
         );
       }
       return;
@@ -460,7 +498,14 @@ const AdvanceService = {
       return;
     }
 
-    // 2. Empêcher les doublons si une demande est déjà EN_ATTENTE
+    // 2. Empêcher toute nouvelle demande si une avance est déjà EN_ATTENTE ou VALIDEE ce mois-ci
+    if (this.getValidatedRequest()) {
+      this._showFormError("🔒 Vous avez déjà obtenu une avance sur salaire ce mois-ci.");
+      this.updateButtonState();
+      setTimeout(() => this.closeModal(), 1400);
+      return;
+    }
+
     if (this.getPendingRequest()) {
       this._showFormError("Une demande d'avance est déjà en attente pour ce mois.");
       return;
@@ -495,15 +540,16 @@ const AdvanceService = {
         ? TimeService.currentDateStr()
         : new Date().toISOString().slice(0, 10);
 
-      // Vérification serveur anti-doublon avant écriture
+      // Vérification serveur anti-doublon avant écriture (bloque si EN_ATTENTE ou VALIDEE existe déjà)
       const snap = await db.ref(`avances/${monthKey}`).once("value");
       const existingData = snap.val() || {};
-      const alreadyPending = Object.values(existingData).some(
-        (r) => r && r.empKey === this._empKey && r.statut === "EN_ATTENTE"
+      const alreadyActiveOrGranted = Object.values(existingData).some(
+        (r) => r && r.empKey === this._empKey && (r.statut === "EN_ATTENTE" || r.statut === "VALIDEE")
       );
 
-      if (alreadyPending) {
-        this._showFormError("Une demande est déjà en cours de validation pour ce mois.");
+      if (alreadyActiveOrGranted) {
+        this._showFormError("🔒 Une avance a déjà été accordée ou est en cours de validation pour ce mois.");
+        this.updateButtonState();
         return;
       }
 
