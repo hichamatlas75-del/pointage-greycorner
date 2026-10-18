@@ -117,6 +117,15 @@
             </div>
           </div>
 
+          <!-- Badge de suivi d'avance sous le profil & Bouton de demande d'avance (ouvert du 2 au 15) -->
+          <div id="advanceStatusBadge" class="advance-status-wrap" style="display:none"></div>
+          <div id="advanceActionContainer" class="advance-action-wrap">
+            <button id="btnOpenAdvanceModal" type="button" class="btn-advance-request advance-btn-active">
+              💰 Demander une avance sur salaire
+            </button>
+            <div id="advanceWindowHint" class="advance-window-hint" style="display:none"></div>
+          </div>
+
           <div id="pointage-zone" class="text-center space-y-4">
             <div style="display:flex;justify-content:center">
               <div class="gps-pill" id="gpsPill">
@@ -245,6 +254,39 @@
     </div>
   </div>
 
+  <!-- Modal Demande d'Avance sur Salaire (Ouverte du 2 au 15 du mois) -->
+  <div id="advanceModal" class="advance-modal-overlay">
+    <div class="advance-modal-card">
+      <div class="advance-modal-header">
+        <div class="advance-modal-badge">💰 Demande d'Avance sur Salaire</div>
+        <div id="advanceModalEmpName" class="advance-modal-empname">--</div>
+        <div class="advance-modal-sub">Période autorisée : du 2 au 15 de chaque mois</div>
+      </div>
+
+      <div class="advance-modal-body">
+        <label class="advance-field-label">Montants rapides</label>
+        <div class="advance-quick-grid">
+          <button type="button" class="advance-quick-btn" data-amount="200">200 DH</button>
+          <button type="button" class="advance-quick-btn" data-amount="500">500 DH</button>
+          <button type="button" class="advance-quick-btn" data-amount="1000">1 000 DH</button>
+        </div>
+
+        <label for="advanceAmountInput" class="advance-field-label" style="margin-top:12px">Montant souhaité (en DH)</label>
+        <input id="advanceAmountInput" class="inpt advance-number-input" type="number" min="50" step="50" inputmode="numeric" placeholder="Ex: 350 (min. 50 DH)" />
+
+        <label for="advanceMotifInput" class="advance-field-label" style="margin-top:12px">Motif (optionnel)</label>
+        <input id="advanceMotifInput" class="inpt" type="text" maxlength="160" placeholder="Précision éventuelle (facultatif)…" />
+
+        <div id="advanceFormError" class="advance-form-error" style="display:none"></div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:16px">
+        <button id="btnCancelAdvance" type="button" class="btn-skip-late">Annuler</button>
+        <button id="btnConfirmAdvance" type="button" class="btn-submit-late">Confirmer la demande</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <!-- Firebase SDK v8 -->
@@ -258,6 +300,7 @@
   <script src="js/plannings.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/history.js"></script>
+  <script src="js/advance-service.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

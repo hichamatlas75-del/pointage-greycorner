@@ -564,11 +564,15 @@ const App = (() => {
     HistoryService.initControls();
     PunchController.init();
     AdminController.init();
+    if (typeof AdvanceService !== "undefined") {
+      AdvanceService.init();
+    }
     setupEventHandlers();
 
     auth.onAuthStateChanged(async user => {
       if (!user) {
         AdminController.setRole(null);
+        if (typeof AdvanceService !== "undefined") AdvanceService.detachListener();
         showLoginUI();
         showPinBlockIfNeeded();
         return;
@@ -580,6 +584,7 @@ const App = (() => {
       if (role !== "gerant" && role !== "equipe") {
         await auth.signOut();
         AdminController.setRole(null);
+        if (typeof AdvanceService !== "undefined") AdvanceService.detachListener();
         showLoginUI();
         showPinBlockIfNeeded();
         return;
@@ -658,7 +663,13 @@ const App = (() => {
             });
           }
           HistoryService.loadHistorique(staffKey);
+          if (typeof AdvanceService !== "undefined") {
+            AdvanceService.bindEmployee(staffKey, selected, staffObj);
+          }
         } else {
+          if (typeof AdvanceService !== "undefined") {
+            AdvanceService.detachListener();
+          }
           document.getElementById("selection").classList.remove("hidden");
           document.getElementById("action").classList.add("hidden");
           document.getElementById("planningPanel").style.display = "block";
