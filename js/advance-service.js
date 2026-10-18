@@ -5,6 +5,9 @@
 "use strict";
 
 const AdvanceService = {
+  // Mode test temporaire : true = ouvre les demandes même hors de la période du 2 au 15
+  TEST_FORCE_OPEN: true,
+
   _empKey: null,
   _nomComplet: null,
   _cin: null,
@@ -51,10 +54,11 @@ const AdvanceService = {
   },
 
   /**
-   * Vérifie si la période de demande est ouverte (du 2 au 15 inclus)
+   * Vérifie si la période de demande est ouverte (du 2 au 15 inclus, ou forcée en mode test)
    * @returns {boolean}
    */
   isRequestWindowOpen() {
+    if (this.TEST_FORCE_OPEN) return true;
     const jour = this.getTrustedDayOfMonth();
     return jour >= 2 && jour <= 15;
   },
@@ -370,7 +374,7 @@ const AdvanceService = {
    */
   openModal() {
     const jour = TimeService.getTrustedDate().getDate();
-    if (jour < 2 || jour > 15) {
+    if (!this.TEST_FORCE_OPEN && (jour < 2 || jour > 15)) {
       this.updateButtonState();
       if (typeof UIService !== "undefined") {
         UIService.showPopup(
@@ -444,7 +448,7 @@ const AdvanceService = {
 
     // 1. SÉCURITÉ ANTI-FRAUDE : Vérification stricte via TimeService.getTrustedDate().getDate()
     const jour = TimeService.getTrustedDate().getDate();
-    if (jour < 2 || jour > 15) {
+    if (!this.TEST_FORCE_OPEN && (jour < 2 || jour > 15)) {
       this._showFormError("🔒 Période fermée : les demandes sont autorisées uniquement du 2 au 15 du mois.");
       this.updateButtonState();
       setTimeout(() => this.closeModal(), 1400);
