@@ -538,7 +538,7 @@ const StorageService = (() => {
 })();
 
 // ─────────────────────────────────────────────────────────────────────────
-// 5. GPS SERVICE (Géolocalisation & Vérification de Rayon)
+// 5. GPS SERVICE (Géolocalisation Sécurisée & Vérification de Rayon & Anti-Triche)
 // ─────────────────────────────────────────────────────────────────────────
 const GpsService = (() => {
   let state = "idle";
@@ -551,6 +551,143 @@ const GpsService = (() => {
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  // Détection des positions fictives / Mock Locations typiques sous Android
+  function detectMockLocation(coords) {
+    const lat = coords.latitude;
+    const lon = coords.longitude;
+    const acc = coords.accuracy;
+
+    // 1. Précision 0 ou sub-métrique impossible sur puce GPS mobile physique
+    if (typeof acc === "number" && (acc <= 0 || acc < 1.0)) {
+      return { isFake: true, reason: "Précision anormale (0m)" };
+    }
+
+    // 2. Coordonnées collées artificiellement au micro-degré près sur le repère théorique
+    const distCenter = getDistanceMeters(Config.geo.cafeLat, Config.geo.cafeLon, lat, lon);
+    if (distCenter < 0.6 && Math.abs(lat - Config.geo.cafeLat) < 0.000005 && Math.abs(lon - Config.geo.cafeLon) < 0.000005) {
+      return { isFake: true, reason: "Position exacte simulée" };
+    }
+
+    return { isFake: false };
+  }
+
+  // Évaluation d'une position GPS avec application des filtres de sécurité
+  function evaluatePosition(pos) {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const accuracy = pos.coords.accuracy;
+    const distance = getDistanceMeters(Config.geo.cafeLat, Config.geo.cafeLon, lat, lon);
+    const maxRadius = Config.geo.maxRadiusMeters || 60;
+    const maxAcc = Config.geo.maxAccuracyMeters || 40;
+
+    // A. Détection Fake GPS
+    const mock = detectMockLocation(pos.coords);
+    if (mock.isFake) {
+      return {
+        ok: false,
+        state: "bad",
+        text: "Position simulée interdite (Fake GPS) ❌",
+        textColor: "var(--red)",
+        dotState: "bad",
+        canPunch: false,
+        showRetry: true,
+        position: { lat, lon, accuracy, distance, timestamp: Date.now(), isFake: true }
+      };
+    }
+
+    // B. Précision du signal GPS (rejette les approximations réseau 4G)
+    if (typeof accuracy === "number" && accuracy > maxAcc) {
+      return {
+        ok: false,
+        state: "bad",
+        text: "Signal GPS imprécis (±" + Math.round(accuracy) + "m > " + maxAcc + "m). Sortez à ciel ouvert 📡",
+        textColor: "var(--red)",
+        dotState: "bad",
+        canPunch: false,
+        showRetry: true,
+        position: { lat, lon, accuracy, distance, timestamp: Date.now(), lowAccuracy: true }
+      };
+    }
+
+    // C. Périmètre autorisé (Rayon du café)
+    if (distance <= maxRadius) {
+      return {
+        ok: true,
+        state: "ok",
+        text: "Position validée (" + Math.round(distance) + "m) ✓",
+        textColor: "var(--green)",
+        dotState: "ok",
+        canPunch: true,
+        showRetry: false,
+        position: { lat, lon, accuracy, distance, timestamp: Date.now() }
+      };
+    } else {
+      return {
+        ok: false,
+        state: "bad",
+        text: "Hors zone · " + Math.round(distance) + "m (max " + maxRadius + "m)",
+        textColor: "var(--red)",
+        dotState: "bad",
+        canPunch: false,
+        showRetry: true,
+        position: { lat, lon, accuracy, distance, timestamp: Date.now() }
+      };
+    }
+  }
+
+  // Récupération brute de la position via le navigateur
+  function fetchRawPosition() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        return reject({ code: 0, message: "GPS non supporté" });
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve(pos),
+        err => reject(err),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    });
+  }
+
+  /**
+   * Vérification en direct (utilisée à l'ouverture ou au clic sur le bouton Pointer)
+   * Force un contrôle frais si la dernière position a plus de 25 secondes
+   */
+  async function verifyLivePosition(forceRefresh = false) {
+    if (!forceRefresh && lastPosition && state === "ok" && (Date.now() - (lastPosition.timestamp || 0) < 25000)) {
+      return { ok: true, state: "ok", position: lastPosition };
+    }
+
+    try {
+      const pos = await fetchRawPosition();
+      const evalRes = evaluatePosition(pos);
+      state = evalRes.state;
+      lastPosition = evalRes.position;
+      if (typeof UIService !== "undefined") {
+        UIService.updateGpsUI(evalRes);
+      }
+      return evalRes;
+    } catch (err) {
+      const code = err?.code;
+      state = (code === 1) ? "denied" : "error";
+      const text = (code === 1) ? "GPS refusé — autorisez la position" : (code === 3) ? "Signal GPS trop lent" : "Erreur signal GPS";
+      const res = {
+        ok: false,
+        state,
+        text,
+        textColor: "var(--red)",
+        dotState: state,
+        canPunch: false,
+        showRetry: true,
+        position: null
+      };
+      if (typeof UIService !== "undefined") {
+        UIService.updateGpsUI(res);
+      }
+      return res;
+    }
   }
 
   async function checkGPS(force = false) {
@@ -568,7 +705,7 @@ const GpsService = (() => {
       return;
     }
 
-    const lockKey = `${dStr}__${staffKey}`;
+    const lockKey = dStr + "__" + staffKey;
     if (!force && lastCheckedKey === lockKey && (state === "ok" || state === "bad" || state === "denied" || state === "error")) {
       return;
     }
@@ -585,74 +722,14 @@ const GpsService = (() => {
       });
     }
 
-    if (!navigator.geolocation) {
-      state = "error";
-      if (typeof UIService !== "undefined") {
-        UIService.updateGpsUI({
-          text: "GPS non supporté",
-          textColor: "var(--red)",
-          dotState: "error",
-          canPunch: false,
-          showRetry: false
-        });
-      }
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        const accuracy = pos.coords.accuracy;
-        lastPosition = { lat, lon, accuracy };
-
-        const distance = getDistanceMeters(Config.geo.cafeLat, Config.geo.cafeLon, lat, lon);
-
-        if (distance <= Config.geo.maxRadiusMeters) {
-          state = "ok";
-          if (typeof UIService !== "undefined") {
-            UIService.updateGpsUI({
-              text: "Position validée ✓",
-              textColor: "var(--green)",
-              dotState: "ok",
-              canPunch: true,
-              showRetry: false
-            });
-          }
-        } else {
-          state = "bad";
-          if (typeof UIService !== "undefined") {
-            UIService.updateGpsUI({
-              text: `Hors zone · ${Math.round(distance)}m`,
-              textColor: "var(--red)",
-              dotState: "bad",
-              canPunch: false,
-              showRetry: true
-            });
-          }
-        }
-      },
-      err => {
-        const code = err?.code;
-        state = (code === 1) ? "denied" : "error";
-        const text = (code === 1) ? "GPS refusé — autorisez la position" : (code === 3) ? "GPS trop lent" : "Erreur signal GPS";
-        if (typeof UIService !== "undefined") {
-          UIService.updateGpsUI({
-            text,
-            textColor: "var(--red)",
-            dotState: state,
-            canPunch: false,
-            showRetry: true
-          });
-        }
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
+    await verifyLivePosition(true);
   }
 
   return {
     checkGPS,
+    verifyLivePosition,
     getState: () => state,
-    getLastPosition: () => lastPosition
+    getLastPosition: () => lastPosition,
+    getDistanceMeters
   };
 })();

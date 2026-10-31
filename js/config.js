@@ -18,7 +18,8 @@ const Config = Object.freeze({
   geo: {
     cafeLat: 34.0343959,
     cafeLon: -5.0155941,
-    maxRadiusMeters: 200
+    maxRadiusMeters: 60, // Réduit de 200m à 60m (zone stricte Grey Corner et terrasse)
+    maxAccuracyMeters: 40 // Seuil de précision max en mètres (rejette les approximations réseau)
   },
   endpoints: {
     urgentMsgSheet: "https://docs.google.com/spreadsheets/d/1boSKTYt4TQW00j02eBCWPzDHngFZmSqPGBvDL1wsq64/gviz/tq?tqx=out:json&sheet=Messages_Urgent",

@@ -98,11 +98,12 @@ const PunchController = (() => {
       }
     } catch (e) {}
 
-    // 3. Vérification GPS
-    if (GpsService.getState() !== "ok") {
+    // 3. Contrôle GPS EN DIRECT (Anti-Triche & Vérification immédiate sur place)
+    UIService.toast("Vérification GPS en direct… 🛰️");
+    const liveGps = await GpsService.verifyLivePosition(true);
+    if (!liveGps || !liveGps.ok) {
       FeedbackService.trigger("error");
-      UIService.toast("GPS non validé ❌");
-      GpsService.checkGPS(true);
+      UIService.toast(liveGps?.text || "Position GPS non validée (hors zone) ❌");
       return;
     }
 
@@ -154,6 +155,13 @@ const PunchController = (() => {
     };
     if (cleanMotif) {
       payload.motif = cleanMotif;
+    }
+    const pos = liveGps?.position || GpsService.getLastPosition();
+    if (pos && typeof pos.lat === "number" && typeof pos.lon === "number") {
+      payload.lat = Math.round(pos.lat * 1e6) / 1e6;
+      payload.lon = Math.round(pos.lon * 1e6) / 1e6;
+      payload.dist = Math.round(pos.distance || 0);
+      payload.acc = Math.round(pos.accuracy || 0);
     }
 
     try {
