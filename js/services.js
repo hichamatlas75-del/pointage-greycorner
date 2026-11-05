@@ -220,6 +220,14 @@ const StaffPhotoService = (() => {
     "FOUZIA6ZHAR": "images/FOUZIA6ZHAR.jpg",
     "FOUZIA_ZHAR": "images/FOUZIA6ZHAR.jpg",
     "FOUZIA_EZHAR": "images/FOUZIA6ZHAR.jpg",
+    "EL_AZHARY_NAJIA": "images/EL_AZHARY.jpg",
+    "ELAZHARY_NAJIA": "images/EL_AZHARY.jpg",
+    "AZHARY_NAJIA": "images/EL_AZHARY.jpg",
+    "EL_AZHARY": "images/EL_AZHARY.jpg",
+    "ELAZHARY": "images/EL_AZHARY.jpg",
+    "AZHARY": "images/EL_AZHARY.jpg",
+    "NAJIA_EL_AZHARY": "images/EL_AZHARY.jpg",
+    "NAJIA": "images/EL_AZHARY.jpg",
     "SERGINI_IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
     "SERGINI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
     "IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
@@ -266,6 +274,9 @@ const StaffPhotoService = (() => {
     }
     if (clean.includes("SAAD") || clean.includes("OUDGHRI") || clean.includes("OUDGHRISSAAD")) {
       return "images/IDRISSI_OUDGHRI_SAAD.jpg";
+    }
+    if (clean.includes("AZHARY") || clean.includes("NAJIA")) {
+      return "images/EL_AZHARY.jpg";
     }
 
     if (PHOTO_MAP[clean]) return PHOTO_MAP[clean];
