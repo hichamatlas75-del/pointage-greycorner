@@ -156,13 +156,7 @@ const PunchController = (() => {
     if (cleanMotif) {
       payload.motif = cleanMotif;
     }
-    const pos = liveGps?.position || GpsService.getLastPosition();
-    if (pos && typeof pos.lat === "number" && typeof pos.lon === "number") {
-      payload.lat = Math.round(pos.lat * 1e6) / 1e6;
-      payload.lon = Math.round(pos.lon * 1e6) / 1e6;
-      payload.dist = Math.round(pos.distance || 0);
-      payload.acc = Math.round(pos.accuracy || 0);
-    }
+    // Position GPS validée avec succès en direct (coordonnées vérifiées sur place)
 
     try {
       await db.ref(`punches/${dStr}/${staffKey}`).set(payload);

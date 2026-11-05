@@ -11,7 +11,9 @@ const TeamService = (() => {
   let listenerAttached = false;
 
   function normalizeSnapshot(val) {
-    if (!val) return [];
+    if (!val) {
+      return [{ n: "EL AZHARY NAJIA", t: "menage" }];
+    }
     const arr = Array.isArray(val)
       ? val.filter(Boolean)
       : Object.keys(val).sort((a, b) => Number(a) - Number(b)).map(k => val[k]).filter(Boolean);
@@ -26,6 +28,11 @@ const TeamService = (() => {
       if (seen.has(full)) continue;
       seen.add(full);
       out.push({ n: full, t: poste });
+    }
+    // Intégration systématique de EL AZHARY NAJIA dans la catégorie ménage
+    if (!seen.has("EL AZHARY NAJIA")) {
+      out.push({ n: "EL AZHARY NAJIA", t: "menage" });
+      seen.add("EL AZHARY NAJIA");
     }
     return out;
   }
@@ -304,6 +311,153 @@ const TeamService = (() => {
     }
   }
 
+  // ─── PLANNING FIXE MÉNAGE (Alternance 2 semaines S1 / S2) ───
+  const MENAGE_PLANNING_DATA = {
+    S1: {
+      title: "Semaine 01",
+      schedules: [
+        { day: "lundi", matin: { staff: "FOUZIA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } },
+        { day: "mardi", matin: { staff: "fatimzahra" }, soir: { staff: "fatimzahra / FOUZIA" } },
+        { day: "mercredi", matin: { staff: "HAKIMA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } },
+        { day: "jeudi", matin: { staff: "Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
+        { day: "vendredi", matin: { staff: "Hakima / FOUZIA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } },
+        { day: "samedi", matin: { staff: "Khalissa / fatimzahra / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
+        { day: "dimanche", matin: { staff: "Hakima / FOUZIA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } }
+      ]
+    },
+    S2: {
+      title: "Semaine 02",
+      schedules: [
+        { day: "lundi", matin: { staff: "FATIMZAHRA" }, soir: { staff: "Hakima / FOUZIA" } },
+        { day: "mardi", matin: { staff: "FOUZIA" }, soir: { staff: "FATIMZAHRA / Khalissa / Najia" } },
+        { day: "mercredi", matin: { staff: "Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
+        { day: "jeudi", matin: { staff: "Hakima" }, soir: { staff: "FATIMZAHRA / Khalissa / Najia" } },
+        { day: "vendredi", matin: { staff: "FATIMZAHRA / Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
+        { day: "samedi", matin: { staff: "Hakima / FOUZIA" }, soir: { staff: "FATIMZAHRA / Khalissa / Najia" } },
+        { day: "dimanche", matin: { staff: "FATIMZAHRA / Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } }
+      ]
+    }
+  };
+
+  function getMenageWeekKey(dateISO) {
+    if (!dateISO) dateISO = TimeService.currentDateStr();
+    const [yy, mm, dd] = String(dateISO).split("-").map(Number);
+    if (!yy || !mm || !dd) return "S2";
+    const cur = new Date(Date.UTC(yy, mm - 1, dd));
+    const dayOfWeek = cur.getUTCDay();
+    const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+    const curMonday = new Date(cur);
+    curMonday.setUTCDate(cur.getUTCDate() + diffToMonday);
+
+    // Calibration : Semaine du Lundi 5 Octobre 2026 = Semaine 02 (S2)
+    const anchorMonday = new Date(Date.UTC(2026, 9, 5));
+    const diffWeeks = Math.round((curMonday - anchorMonday) / (7 * 86400000));
+    const mod = ((diffWeeks % 2) + 2) % 2;
+    return (mod === 0) ? "S2" : "S1";
+  }
+
+  function isNajia(empKey) {
+    if (!empKey) return false;
+    const s = String(empKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.includes("NAJIA") || s.includes("AZHARY") || s.includes("ELAZHARY");
+  }
+
+  function isMenageRole(empKey) {
+    if (!empKey) return false;
+    if (isNajia(empKey)) return true;
+    const e = equipeMap.get(empKey);
+    if (e && (e.t === "menage" || e.t === "ménage")) return true;
+    const selected = StorageService.getSelectedStaff();
+    if (selected) {
+      const s = equipeList.find(x => SecurityService.keyStaff(x.n) === empKey || x.n === selected);
+      if (s && (s.t === "menage" || s.t === "ménage")) return true;
+    }
+    const clean = String(empKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return clean.includes("SBAI") || clean.includes("HAKIMA") ||
+           clean.includes("FOUZIA") || clean.includes("EZHAR") || clean.includes("ZHAR") ||
+           clean.includes("KHALISSA") || clean.includes("EDRISSIA") ||
+           clean.includes("FATIMZAHRA") || clean.includes("OUAZZANI") ||
+           clean.includes("ELGORRAMY");
+  }
+
+  function getMenagePlanningInfo(empKey, dateISO, currentHA = "") {
+    if (!dateISO || !empKey) return null;
+    const [yy, mm, dd] = String(dateISO).split("-").map(Number);
+    if (!yy || !mm || !dd) return null;
+    const dt = new Date(Date.UTC(yy, mm - 1, dd));
+    const dayOfWeek = dt.getUTCDay();
+
+    const DAYS_MAP = { 1: "lundi", 2: "mardi", 3: "mercredi", 4: "jeudi", 5: "vendredi", 6: "samedi", 0: "dimanche" };
+    const dayName = DAYS_MAP[dayOfWeek];
+    if (!dayName) return null;
+
+    const isWeekend = (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0);
+    const matinTime = "06:30";
+    const soirTime = isWeekend ? "14:00" : "12:00";
+
+    const weekKey = getMenageWeekKey(dateISO);
+    const weekData = MENAGE_PLANNING_DATA[weekKey];
+    const daySchedule = weekData?.schedules?.find(s => s.day === dayName);
+
+    const cleanKey = String(empKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    function matchShift(shiftText) {
+      if (!shiftText) return false;
+      const st = shiftText.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (isNajia(cleanKey) && (st.includes("NAJIA") || st.includes("AZHARY") || st.includes("EDRISSIA") || st.includes("KHALISSA"))) return true;
+      if (cleanKey.includes("HAKIMA") && st.includes("HAKIMA")) return true;
+      if ((cleanKey.includes("FOUZIA") || cleanKey.includes("EZHAR") || cleanKey.includes("ZHAR")) && st.includes("FOUZIA")) return true;
+      if ((cleanKey.includes("FATIMZAHRA") || cleanKey.includes("OUAZZANI")) && (st.includes("FATIM") || st.includes("ZAHRA"))) return true;
+      if ((cleanKey.includes("KHALISSA") || cleanKey.includes("EDRISSIA")) && (st.includes("KHALISSA") || st.includes("EDRISSIA"))) return true;
+      return false;
+    }
+
+    let inMatin = false;
+    let inSoir = false;
+
+    if (daySchedule) {
+      inMatin = matchShift(daySchedule.matin?.staff);
+      inSoir = matchShift(daySchedule.soir?.staff);
+    }
+
+    // Pointage auto selon planning : adaptation automatique selon heure de pointage
+    if (!inMatin && !inSoir) {
+      const timeCheck = currentHA || TimeService.currentTimeHHMM();
+      const minCheck = TimeService.timeToMin(timeCheck) || 0;
+      if (minCheck > 0 && minCheck < 690) {
+        inMatin = true;
+      } else {
+        inSoir = true;
+      }
+    }
+
+    let shiftLabel = "Repos (OFF)";
+    let hP = null;
+    const off = !inMatin && !inSoir;
+
+    if (inMatin && inSoir) {
+      shiftLabel = `Double (${matinTime} + ${soirTime})`;
+      hP = matinTime;
+    } else if (inMatin) {
+      shiftLabel = `Matin (${matinTime})`;
+      hP = matinTime;
+    } else if (inSoir) {
+      shiftLabel = `Soir (${soirTime})`;
+      hP = soirTime;
+    }
+
+    return {
+      week: weekKey,
+      day: dayName,
+      inMatin,
+      inSoir,
+      off,
+      hA: hP,
+      hP,
+      shift: shiftLabel
+    };
+  }
+
   function getEffectiveHP(empKey, dateISO, presHP = "") {
     if (presHP) return presHP;
     if (isSoumia(empKey)) {
@@ -320,6 +474,11 @@ const TeamService = (() => {
     const plan = getCuisinePlanning(empKey, dateISO);
     if (plan && !plan.off && plan.hP) return plan.hP;
     if (todaySheetShifts.has(empKey)) return todaySheetShifts.get(empKey);
+    if (isMenageRole(empKey)) {
+      const menagePlan = getMenagePlanningInfo(empKey, dateISO);
+      if (menagePlan && !menagePlan.off && menagePlan.hP) return menagePlan.hP;
+      return "";
+    }
     return "";
   }
 
@@ -340,6 +499,10 @@ const TeamService = (() => {
     getEquipeList: () => equipeList,
     isSecuriteRole,
     isCuisineRole,
+    isMenageRole,
+    isNajia,
+    getMenagePlanningInfo,
+    getMenageWeekKey,
     getCuisinePlanning,
     getEffectiveHP,
     syncTodayGoogleSheets,

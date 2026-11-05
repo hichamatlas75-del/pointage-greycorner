@@ -268,15 +268,15 @@ const StaffPhotoService = (() => {
     if (!name) return null;
     const clean = normalize(name);
 
-    // 1. Détection prioritaire explicite pour Karima et Saad
+    // 1. Détection prioritaire explicite pour Karima, Saad et Najia
+    if (clean.includes("NAJIA") || clean.includes("AZHARY") || clean.includes("ELAZHARY")) {
+      return "images/EL_AZHARY.jpg";
+    }
     if (clean.includes("KARIMA") || clean.includes("SERGINI")) {
       return "images/SERGINI_IDRISSI_KARIMA.jpg";
     }
     if (clean.includes("SAAD") || clean.includes("OUDGHRI") || clean.includes("OUDGHRISSAAD")) {
       return "images/IDRISSI_OUDGHRI_SAAD.jpg";
-    }
-    if (clean.includes("AZHARY") || clean.includes("NAJIA")) {
-      return "images/EL_AZHARY.jpg";
     }
 
     if (PHOTO_MAP[clean]) return PHOTO_MAP[clean];

@@ -161,9 +161,10 @@ const HistoryService = (() => {
       const isMonday = (dt.getDay() === 1);
 
       const cuisinePlan = TeamService.getCuisinePlanning(staffKey, iso);
+      const menagePlan = TeamService.getMenagePlanningInfo ? TeamService.getMenagePlanningInfo(staffKey, iso) : null;
       const hA = pu?.hA || pr?.hA || (StorageService.isPunchedLocal(iso, staffKey) ? StorageService.getPunchedTimeLocal(iso, staffKey) : "");
       const hP = TeamService.getEffectiveHP(staffKey, iso, pr?.hP || pu?.hP || "");
-      const isOff = pr?.off === true || (isSec && isMonday && !hA) || (!hA && cuisinePlan?.off && pr?.off !== false);
+      const isOff = pr?.off === true || (isSec && isMonday && !hA) || (!hA && cuisinePlan?.off && pr?.off !== false) || (!hA && menagePlan?.off && pr?.off !== false);
 
       let lateMin = 0;
       if (hA && hP) {
