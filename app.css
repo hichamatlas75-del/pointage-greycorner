@@ -1,39 +1,53 @@
 /* ==========================================================================
-   GREY CORNER • THEME DESIGN 2 : MODERN MIDNIGHT NAVY & ELECTRIC AMBER
-   ========================================================================== */
-
-/* ==========================================================================
-   GREY CORNER • CHARTE GRAPHIQUE THÈME 2 : NÉO-BISTROT SLATE & ÉMERAUDE BOTANIQUE
+   GREY CORNER • CHARTE SIGNATURE : GRIS MINÉRAL & OR CHAMPAGNE
    ========================================================================== */
 
 :root {
-  --bg-deep: #070f12;
-  --bg-main: #0c181c;
-  --bg-card: rgba(16, 32, 38, 0.85);
-  --bg-card-hover: rgba(22, 44, 52, 0.90);
-  --bg-card-glass: rgba(13, 27, 32, 0.94);
+  --bg-deep: #dde3eb;
+  --bg-main: #edf1f6;
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-card-hover: rgba(241, 245, 249, 0.96);
+  --bg-card-glass: rgba(255, 255, 255, 0.96);
   
-  --stroke-subtle: rgba(16, 185, 129, 0.16);
-  --stroke-bright: rgba(16, 185, 129, 0.32);
-  --stroke-glow: rgba(0, 229, 153, 0.38);
+  --stroke-subtle: rgba(148, 163, 184, 0.28);
+  --stroke-bright: rgba(100, 116, 139, 0.38);
+  --stroke-glow: rgba(217, 119, 6, 0.28);
 
-  --text-primary: #f8fafc;
-  --text-secondary: #9ca3af;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #64748b;
 
-  --amber-electric: #f59e0b;
-  --amber-glow: rgba(245, 158, 11, 0.28);
-  --cyan-neon: #00e599;
-  --cyan-glow: rgba(0, 229, 153, 0.30);
+  --amber-electric: #d97706;
+  --amber-glow: rgba(217, 119, 6, 0.25);
+  --cyan-neon: #0284c7;
+  --cyan-glow: rgba(2, 132, 199, 0.25);
   --emerald-neon: #10b981;
-  --emerald-glow: rgba(16, 185, 129, 0.32);
-  --coral-electric: #f43f5e;
-  --coral-glow: rgba(244, 63, 94, 0.25);
-  --indigo-soft: #34d399;
-  --indigo-glow: rgba(52, 211, 153, 0.20);
+  --emerald-glow: rgba(16, 185, 129, 0.28);
+  --coral-electric: #ef4444;
+  --coral-glow: rgba(239, 68, 68, 0.25);
+  --indigo-soft: #6366f1;
+  --indigo-glow: rgba(99, 102, 241, 0.20);
 
-  --shadow-lg: 0 24px 60px rgba(2, 8, 10, 0.88);
-  --shadow-glow: 0 0 50px rgba(0, 229, 153, 0.10);
+  --shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 35px rgba(217, 119, 6, 0.08);
+}
+
+/* Variante Thème 2 : Gris Zinc & Ardoise Architectural */
+body.theme-zinc {
+  --bg-deep: #252d38;
+  --bg-main: #333d4b;
+  --bg-card: rgba(30, 41, 59, 0.92);
+  --bg-card-hover: rgba(40, 53, 74, 0.95);
+  --bg-card-glass: rgba(24, 33, 47, 0.96);
+  --stroke-subtle: rgba(148, 163, 184, 0.20);
+  --stroke-bright: rgba(203, 213, 225, 0.35);
+  --stroke-glow: rgba(245, 158, 11, 0.25);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --amber-electric: #f59e0b;
+  --shadow-lg: 0 24px 60px rgba(10, 15, 25, 0.65);
+  --shadow-glow: 0 0 40px rgba(245, 158, 11, 0.10);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -50,13 +64,21 @@ html, body {
   overflow-y: auto;
   overflow-x: hidden;
   background:
-    radial-gradient(750px 450px at 50% -5%, rgba(0, 229, 153, 0.14), transparent 55%),
-    radial-gradient(850px 550px at 85% 105%, rgba(16, 185, 129, 0.10), transparent 60%),
-    radial-gradient(650px 380px at -10% 50%, rgba(6, 95, 70, 0.15), transparent 55%),
-    linear-gradient(165deg, var(--bg-deep) 0%, var(--bg-main) 50%, #0d1e22 100%);
+    radial-gradient(750px 450px at 50% -5%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(850px 550px at 85% 105%, rgba(203, 213, 225, 0.60), transparent 60%),
+    radial-gradient(650px 380px at -10% 50%, rgba(226, 232, 240, 0.70), transparent 55%),
+    linear-gradient(165deg, var(--bg-deep) 0%, var(--bg-main) 50%, #cbd5e1 100%);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text-primary);
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.theme-zinc {
+  background:
+    radial-gradient(750px 450px at 50% -5%, rgba(148, 163, 184, 0.15), transparent 55%),
+    radial-gradient(850px 550px at 85% 105%, rgba(100, 116, 139, 0.15), transparent 60%),
+    linear-gradient(165deg, #252d38 0%, #333d4b 50%, #1e2530 100%);
 }
 
 body::before {
@@ -81,7 +103,7 @@ body::before {
   padding: 22px 20px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, rgba(16, 32, 38, 0.90), rgba(10, 21, 26, 0.96));
+  background: var(--bg-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--stroke-bright);
@@ -99,7 +121,7 @@ body::before {
   position: absolute;
   top: -1px; left: 15%; right: 15%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyan-neon), var(--emerald-neon), transparent);
+  background: linear-gradient(90deg, transparent, var(--amber-electric), #f59e0b, transparent);
   border-radius: 999px;
   pointer-events: none;
   z-index: 2;
@@ -156,7 +178,7 @@ body::before {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 14px;
-  background: rgba(16, 185, 129, 0.07);
+  background: var(--bg-card-hover);
   border: 1px solid var(--stroke-subtle);
   border-radius: 20px;
 }
@@ -260,21 +282,21 @@ body::before {
 .btn-base:active { transform: scale(.975); }
 
 .btn-planning {
-  background: linear-gradient(135deg, #065f46, #047857 60%, #064e3b);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
   color: #fff;
-  border: 1px solid rgba(52, 211, 153, 0.40);
-  box-shadow: 0 12px 30px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.20);
 }
 .btn-menu {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card-hover);
   border: 1px solid var(--stroke-subtle);
   color: var(--text-primary);
 }
 .btn-connexion {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.20), rgba(0, 229, 153, 0.08));
-  border: 1px solid rgba(16, 185, 129, 0.45);
-  color: #34d399;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+  background: linear-gradient(135deg, #d97706, #b45309);
+  border: 1px solid rgba(217, 119, 6, 0.50);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.22);
 }
 
 .home-box {
@@ -342,8 +364,9 @@ body::before {
    TIROIRS D'ÉQUIPE (COLLABORATEURS)
 ───────────────────────────────────────── */
 .drawer-header {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-card-hover);
   border: 1px solid var(--stroke-subtle);
+  color: var(--text-primary);
   border-radius: 18px;
   padding: 14px 16px;
   margin-top: 8px;
@@ -374,8 +397,9 @@ body::before {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 18px;
-  background: rgba(19, 36, 42, 0.72);
+  background: var(--bg-card-glass);
   border: 1px solid var(--stroke-subtle);
+  color: var(--text-primary);
   transition: .18s cubic-bezier(.34, 1.56, .64, 1);
   cursor: pointer;
   user-select: none;
@@ -585,9 +609,9 @@ body::before {
   position: relative;
   overflow: hidden;
   transition: .3s cubic-bezier(.34, 1.56, .64, 1);
-  background: linear-gradient(135deg, #00e599 0%, #059669 45%, #10b981 100%);
-  color: #041c15;
-  box-shadow: 0 16px 40px rgba(0, 229, 153, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.40);
+  background: linear-gradient(135deg, #10b981 0%, #059669 45%, #047857 100%);
+  color: #ffffff;
+  box-shadow: 0 14px 35px rgba(16, 185, 129, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 .btn-main::before {
@@ -725,10 +749,10 @@ body::before {
 }
 
 .btn-planning-inner {
-  background: linear-gradient(135deg, #065f46, #047857 60%, #064e3b);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
   color: #fff;
-  border: 1px solid rgba(52, 211, 153, 0.40);
-  box-shadow: 0 12px 30px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.20);
   width: 100%;
   border-radius: 20px;
   padding: 15px 18px;
@@ -1753,4 +1777,34 @@ body::before {
 .btn-pwa-close:hover {
   background: rgba(255, 255, 255, 0.15);
   color: var(--text-primary);
+}
+
+/* ==========================================================================
+   SÉLECTEUR DE VARIANTE DE THÈME (GRIS MINÉRAL LUMINEUX / GRIS ZINC ARDOISE)
+   ========================================================================== */
+.theme-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 10px 0;
+}
+.theme-toggle-btn {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke-subtle);
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.theme-toggle-btn.active {
+  background: var(--text-primary);
+  color: var(--bg-card);
+  border-color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
