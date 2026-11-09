@@ -5,7 +5,7 @@
  * =========================================================================
  */
 
-const CACHE_NAME = "greycorner-pwa-v1.3.0-grey";
+const CACHE_NAME = "greycorner-pwa-v1.4.0-logo";
 
 const PRECACHE_ASSETS = [
   "./",

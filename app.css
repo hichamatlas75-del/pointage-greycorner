@@ -155,11 +155,21 @@ body::before {
   padding: 4px 0 6px;
 }
 .logo-img {
-  height: 48px;
+  height: 60px;
+  width: auto;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   cursor: pointer;
-  transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), filter .3s;
-  filter: drop-shadow(0 4px 18px rgba(0, 240, 255, 0.20));
+  transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), box-shadow .3s;
   user-select: none;
+}
+body.theme-zinc .logo-img {
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 .logo-img:active { transform: scale(.95); }
 
