@@ -458,35 +458,6 @@ const App = (() => {
   }
 
   function setupEventHandlers() {
-    // Sélecteur de Nuance de Thème Gris (Minéral Lumineux vs Zinc Ardoise)
-    const btnLuminous = document.getElementById("btnThemeLuminous");
-    const btnZinc = document.getElementById("btnThemeZinc");
-
-    function applyThemeVariant(variant) {
-      if (variant === "zinc") {
-        document.body.classList.add("theme-zinc");
-        btnZinc?.classList.add("active");
-        btnLuminous?.classList.remove("active");
-        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#252d38");
-      } else {
-        document.body.classList.remove("theme-zinc");
-        btnLuminous?.classList.add("active");
-        btnZinc?.classList.remove("active");
-        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#dde3eb");
-      }
-      try { localStorage.setItem("gc_theme_variant", variant); } catch (e) {}
-    }
-
-    try {
-      const savedVariant = localStorage.getItem("gc_theme_variant") || "zinc";
-      applyThemeVariant(savedVariant);
-    } catch (e) {
-      applyThemeVariant("zinc");
-    }
-
-    btnLuminous?.addEventListener("click", () => applyThemeVariant("luminous"));
-    btnZinc?.addEventListener("click", () => applyThemeVariant("zinc"));
-
     // Toggle formulaire de login
     document.getElementById("btnShowLogin")?.addEventListener("click", () => {
       document.getElementById("loginWrap")?.classList.toggle("hidden");
