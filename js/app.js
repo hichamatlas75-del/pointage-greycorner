@@ -341,29 +341,28 @@ const App = (() => {
   async function loadHomeAndBanner() {
     const { type, msg } = await fetchSheetMessage();
 
-    const homeBox = document.getElementById("homeMsg");
-    const homeContent = document.getElementById("homeMsgContent");
     const bannerWrap = document.getElementById("banner-wrap");
     const banner = document.getElementById("banner");
+    const bannerTitle = document.getElementById("bannerTitle");
+    const bannerContent = document.getElementById("bannerContent");
 
     if (!msg) {
-      if (homeBox) homeBox.classList.add("hidden");
       if (bannerWrap) bannerWrap.style.display = "none";
       return;
     }
 
     const isUrgent = (type === "URGENT" || msg.toUpperCase().includes("URGENT"));
 
-    if (homeBox && homeContent) {
-      homeContent.textContent = msg;
-      homeBox.classList.remove("hidden", "msg-urgent", "msg-info");
-      homeBox.classList.add(isUrgent ? "msg-urgent" : "msg-info");
-    }
-
     if (bannerWrap && banner) {
       bannerWrap.style.display = "flex";
-      banner.textContent = msg;
       banner.className = "banner " + (isUrgent ? "msg-urgent" : "msg-info");
+      if (bannerTitle) {
+        bannerTitle.textContent = isUrgent ? "🚨 Note urgente" : "📢 Note de service";
+        bannerTitle.style.color = isUrgent ? "var(--coral-electric)" : "var(--cyan-neon)";
+      }
+      if (bannerContent) {
+        bannerContent.textContent = msg;
+      }
     }
   }
 
