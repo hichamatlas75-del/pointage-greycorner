@@ -5,6 +5,11 @@
  * =========================================================================
  */
 
+// Compatibilité Node.js pour l'exécution des tests automatisés
+if (typeof Config === "undefined" && typeof require !== "undefined") {
+  global.Config = require("./config.js").Config;
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // 1. TIME SERVICE (Anti-fraude Horodatage Serveur GMT)
 // ─────────────────────────────────────────────────────────────────────────

@@ -7,6 +7,20 @@
   <meta name="description" content="Grey Corner - Application de pointage et gestion des présences" />
   <title>Grey Corner • Pointage & Présences</title>
 
+  <!-- PWA & Métadonnées Apple iOS (iPhone / iPad) -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pointage GC" />
+  <meta name="application-name" content="Pointage GC" />
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="images/icon-512.png" />
+  <link rel="shortcut icon" href="images/apple-touch-icon.png" />
+
+
   <!-- Tailwind CSS & Google Fonts -->
   <link rel="stylesheet" href="css/tailwind-compiled.css" />
   <!-- Google Fonts : Plus Jakarta Sans -->
@@ -58,6 +72,12 @@
         <button id="btnShowLogin" type="button" class="btn-base btn-connexion">
           🔐 Connexion
         </button>
+
+        <!-- Bouton d'installation PWA (iOS / Android) -->
+        <button id="btnPwaInstall" type="button" class="btn-base btn-install-pwa hidden">
+          📲 Installer l'application (iOS / Mobile)
+        </button>
+
 
         <div id="homeMsg" class="hidden home-box">
           <div class="label-caps mb-2">Note de service</div>
@@ -302,5 +322,50 @@
   <script src="js/history.js"></script>
   <script src="js/advance-service.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- Modal d'Installation PWA sur iOS (iPhone / iPad) -->
+  <div id="iosInstallModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-badge-pwa">📲 Installation sur iPhone / iPad</div>
+        <div class="modal-subtitle">Ajouter Pointage Grey Corner à votre écran d'accueil</div>
+      </div>
+      
+      <div class="modal-body space-y-3">
+        <div class="pwa-step-item">
+          <span class="pwa-step-num">1</span>
+          <div class="pwa-step-text">
+            Dans Safari, touchez le bouton de <strong>Partage</strong> en bas de l'écran 
+            <span class="pwa-step-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="pwa-step-item">
+          <span class="pwa-step-num">2</span>
+          <div class="pwa-step-text">
+            Faites défiler le menu et touchez <strong>« Sur l'écran d'accueil »</strong> 
+            <span class="pwa-step-icon">➕</span>
+          </div>
+        </div>
+        <div class="pwa-step-item">
+          <span class="pwa-step-num">3</span>
+          <div class="pwa-step-text">
+            Touchez <strong>« Ajouter »</strong> en haut à droite.
+          </div>
+        </div>
+        <div class="pwa-note">
+          ✨ L'application fonctionnera en plein écran natif, exactement comme une application iOS installée depuis l'App Store !
+        </div>
+      </div>
+
+      <div class="modal-actions mt-4">
+        <button id="btnCloseIosInstall" type="button" class="btn-submit-late">J'ai compris 👍</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/pwa.js"></script>
+
 </body>
 </html>
