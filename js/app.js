@@ -458,17 +458,22 @@ const App = (() => {
   }
 
   function setupEventHandlers() {
-    // Toggle formulaire de login
+    // Toggle formulaire de login avec focus ergonomique
     document.getElementById("btnShowLogin")?.addEventListener("click", () => {
-      document.getElementById("loginWrap")?.classList.toggle("hidden");
+      const wrap = document.getElementById("loginWrap");
+      if (!wrap) return;
+      const isHidden = wrap.classList.toggle("hidden");
       showPinBlockIfNeeded();
+      if (!isHidden) {
+        setTimeout(() => document.getElementById("loginEmail")?.focus(), 80);
+      }
     });
 
     document.getElementById("loginPass")?.addEventListener("keydown", e => {
       if (e.key === "Enter") document.getElementById("btnLogin")?.click();
     });
 
-    // Soumission connexion
+    // Soumission connexion avec gestion d'erreurs enrichie et déblocage garanti
     document.addEventListener("click", async e => {
       const btn = e.target.closest("#btnLogin");
       if (!btn) return;
@@ -485,31 +490,58 @@ const App = (() => {
       }
 
       if (!StorageService.hasDevicePin() && !/^\d{4}$/.test(pin)) {
-        if (msgEl) msgEl.textContent = "PIN requis (4 chiffres).";
+        if (msgEl) msgEl.textContent = "PIN requis (4 chiffres) pour initialiser cet appareil.";
+        const pb = document.getElementById("pinBlock");
+        if (pb) pb.classList.remove("hidden");
+        document.getElementById("loginPin")?.focus();
         return;
       }
 
       btn.disabled = true;
+      const prevText = btn.textContent;
+      btn.textContent = "Connexion en cours…";
+
       try {
         const res = await auth.signInWithEmailAndPassword(email, pass);
-        const userSnap = await db.ref("users/" + res.user.uid).once("value");
-        const role = userSnap.val();
+        let role = null;
+        try {
+          const userSnap = await db.ref("users/" + res.user.uid).once("value");
+          role = userSnap.val();
+        } catch (dbErr) {
+          console.warn("[Auth] Lecture rôle users échouée:", dbErr);
+        }
 
         if (role !== "gerant" && role !== "equipe") {
           await auth.signOut();
-          if (msgEl) msgEl.textContent = "Compte non autorisé.";
+          if (msgEl) msgEl.textContent = "Compte non autorisé (accès restreint Gérant/Équipe).";
           btn.disabled = false;
+          btn.textContent = prevText;
           return;
         }
 
-        if (!StorageService.hasDevicePin()) {
+        if (!StorageService.hasDevicePin() && /^\d{4}$/.test(pin)) {
           const hashed = await SecurityService.hashPin(pin);
           StorageService.setDevicePinHash(hashed);
         }
         location.reload();
       } catch (err) {
-        if (msgEl) msgEl.textContent = err?.message || "Erreur d'authentification.";
+        console.error("[Auth] Erreur login:", err);
+        let errorMsg = "Erreur de connexion.";
+        if (err?.code === "auth/invalid-credential" || err?.code === "auth/wrong-password" || err?.code === "auth/user-not-found") {
+          errorMsg = "Email ou mot de passe incorrect ❌";
+        } else if (err?.code === "auth/invalid-email") {
+          errorMsg = "Format d'email invalide ❌";
+        } else if (err?.code === "auth/too-many-requests") {
+          errorMsg = "Trop de tentatives. Veuillez patienter 1 minute ⏳";
+        } else if (err?.code === "auth/network-request-failed") {
+          errorMsg = "Connexion réseau impossible. Vérifiez votre connexion Internet 📡";
+        } else if (err?.message) {
+          errorMsg = err.message;
+        }
+        if (msgEl) msgEl.textContent = errorMsg;
+      } finally {
         btn.disabled = false;
+        btn.textContent = prevText;
       }
     });
 
@@ -521,6 +553,17 @@ const App = (() => {
 
     // Réinitialisation de l'appareil (Code PIN) avec protection anti-brute-force
     document.getElementById("btnResetDevice")?.addEventListener("click", async () => {
+      // 0. Si le gérant est connecté, déblocage direct sans blocage PIN
+      const currentRole = AdminController.getRole ? AdminController.getRole() : null;
+      if (currentRole === "gerant") {
+        if (confirm("Réinitialiser cet appareil et débloquer la sélection de l'équipe ?")) {
+          StorageService.clearSelectedStaff();
+          UIService.toast("Appareil réinitialisé (Gérant) ✅");
+          setTimeout(() => location.reload(), 300);
+          return;
+        }
+      }
+
       // 1. Vérification du verrouillage temporel anti-brute-force
       const lockUntil = Number(localStorage.getItem("gc_pin_locked_until") || 0);
       if (Date.now() < lockUntil) {
@@ -565,6 +608,14 @@ const App = (() => {
         }
       }
     });
+
+    // Changement direct de collaborateur pour Gérant
+    document.getElementById("btnSwitchStaff")?.addEventListener("click", () => {
+      if (confirm("Changer de profil collaborateur ?")) {
+        StorageService.clearSelectedStaff();
+        location.reload();
+      }
+    });
   }
 
   function init() {
@@ -578,33 +629,45 @@ const App = (() => {
     setupEventHandlers();
 
     auth.onAuthStateChanged(async user => {
-      if (!user) {
-        AdminController.setRole(null);
-        if (typeof AdvanceService !== "undefined") AdvanceService.detachListener();
-        showLoginUI();
+      try {
+        if (!user) {
+          AdminController.setRole(null);
+          if (typeof AdvanceService !== "undefined") AdvanceService.detachListener();
+          showLoginUI();
+          showPinBlockIfNeeded();
+          return;
+        }
+
+        let role = null;
+        try {
+          const snap = await db.ref("users/" + user.uid).once("value");
+          role = snap.val();
+        } catch (snapErr) {
+          console.warn("[Auth] Erreur lecture rôle snapshot:", snapErr);
+        }
+
+        if (role !== "gerant" && role !== "equipe") {
+          await auth.signOut();
+          AdminController.setRole(null);
+          if (typeof AdvanceService !== "undefined") AdvanceService.detachListener();
+          showLoginUI();
+          showPinBlockIfNeeded();
+          return;
+        }
+
+        AdminController.setRole(role);
+        showLoggedUI(role);
         showPinBlockIfNeeded();
-        return;
-      }
+        AdminController.attachBroadcastListener();
 
-      const snap = await db.ref("users/" + user.uid).once("value");
-      const role = snap.val();
-
-      if (role !== "gerant" && role !== "equipe") {
-        await auth.signOut();
-        AdminController.setRole(null);
-        if (typeof AdvanceService !== "undefined") AdvanceService.detachListener();
-        showLoginUI();
-        showPinBlockIfNeeded();
-        return;
-      }
-
-      AdminController.setRole(role);
-      showLoggedUI(role);
-      showPinBlockIfNeeded();
-      AdminController.attachBroadcastListener();
-
-      TeamService.attachListener(equipeList => {
-        const selected = StorageService.getSelectedStaff();
+        TeamService.attachListener(equipeList => {
+          const selected = StorageService.getSelectedStaff();
+          const btnSwitch = document.getElementById("btnSwitchStaff");
+          if (role === "gerant" && selected) {
+            btnSwitch?.classList.remove("hidden");
+          } else {
+            btnSwitch?.classList.add("hidden");
+          }
         if (selected) {
           const staffKey = SecurityService.keyStaff(selected);
           const exists = equipeList.some(e => SecurityService.keyStaff(e.n) === staffKey);
@@ -690,6 +753,11 @@ const App = (() => {
           renderStaffSelectionList(equipeList);
         }
       });
+    } catch (globalAuthErr) {
+      console.error("[Auth] Erreur critique onAuthStateChanged:", globalAuthErr);
+      showLoginUI();
+      showPinBlockIfNeeded();
+    }
     });
   }
 

@@ -5,7 +5,7 @@
  * =========================================================================
  */
 
-const CACHE_NAME = "greycorner-pwa-v1.6.0-zinc-only";
+const CACHE_NAME = "greycorner-pwa-v1.7.0-auth-direct";
 
 const PRECACHE_ASSETS = [
   "./",
@@ -58,16 +58,22 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // 1. NE PAS METTRE EN CACHE : Requêtes Firebase, Google Sheets, Google Apps Script et WebSocket
+  // 1. NE PAS INTERCEPTER : Tout ce qui n'est pas sur le même domaine (Firebase, Google, Cloudflare, Sheets)
+  // ou toute méthode non-GET (POST, PUT, etc.) doit passer directement par le réseau natif
   if (
+    url.origin !== self.location.origin ||
+    url.hostname.includes("firebaseapp.com") ||
     url.hostname.includes("firebasedatabase.app") ||
     url.hostname.includes("firebaseio.com") ||
     url.hostname.includes("googleapis.com") ||
+    url.hostname.includes("google.com") ||
+    url.hostname.includes("gstatic.com") ||
     url.hostname.includes("docs.google.com") ||
     url.hostname.includes("script.google.com") ||
+    url.hostname.includes("pages.dev") ||
     req.method !== "GET"
   ) {
-    return; // Laisser passer directement au réseau
+    return; // Laisser passer directement au réseau natif sans interférence SW
   }
 
   // 2. Stratégie Network-First avec repli sur Cache pour le code applicatif (HTML, JS, CSS)
