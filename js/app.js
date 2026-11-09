@@ -478,10 +478,10 @@ const App = (() => {
     }
 
     try {
-      const savedVariant = localStorage.getItem("gc_theme_variant") || "luminous";
+      const savedVariant = localStorage.getItem("gc_theme_variant") || "zinc";
       applyThemeVariant(savedVariant);
     } catch (e) {
-      applyThemeVariant("luminous");
+      applyThemeVariant("zinc");
     }
 
     btnLuminous?.addEventListener("click", () => applyThemeVariant("luminous"));
