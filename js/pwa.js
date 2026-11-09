@@ -16,13 +16,52 @@ const PwaService = (() => {
     );
   }
 
-  // Détection du mode standalone (déjà lancé depuis l'écran d'accueil comme une app native)
+  // Détection du mode standalone (déjà installé comme app PWA ou fermé manuellement)
   function isStandalone() {
-    return (
+    // 1. Détection via paramètre URL de démarrage PWA
+    const hasPwaParam = window.location.search.includes("mode=pwa");
+    if (hasPwaParam) {
+      try { localStorage.setItem("gc_pwa_installed", "1"); } catch (e) {}
+    }
+
+    // 2. Détection via stockage persistant (déjà installé ou déjà fermé par l'utilisateur)
+    try {
+      if (localStorage.getItem("gc_pwa_installed") === "1") return true;
+      if (localStorage.getItem("gc_pwa_dismissed") === "1") return true;
+    } catch (e) {}
+
+    // 3. Détection native WebKit iOS & Android Display Mode
+    const isStandaloneMode = (
       window.navigator.standalone === true ||
       window.matchMedia("(display-mode: standalone)").matches ||
-      window.matchMedia("(display-mode: fullscreen)").matches
+      window.matchMedia("(display-mode: fullscreen)").matches ||
+      window.matchMedia("(display-mode: minimal-ui)").matches ||
+      document.referrer.includes("android-app://") ||
+      hasPwaParam
     );
+
+    if (isStandaloneMode) {
+      try { localStorage.setItem("gc_pwa_installed", "1"); } catch (e) {}
+      return true;
+    }
+
+    return false;
+  }
+
+  function hideBanner() {
+    const banner = document.getElementById("pwaInstallBanner");
+    if (banner) {
+      banner.classList.add("hidden");
+      banner.style.display = "none";
+    }
+  }
+
+  function showBanner() {
+    const banner = document.getElementById("pwaInstallBanner");
+    if (banner) {
+      banner.classList.remove("hidden");
+      banner.style.display = "flex";
+    }
   }
 
   function init() {
@@ -40,10 +79,13 @@ const PwaService = (() => {
       });
     }
 
-    const btnInstall = document.getElementById("btnPwaInstall");
+    const banner = document.getElementById("pwaInstallBanner");
+    const btnAction = document.getElementById("btnPwaInstallAction");
+    const btnDismiss = document.getElementById("btnPwaDismiss");
     const iosModal = document.getElementById("iosInstallModal");
     const btnCloseIos = document.getElementById("btnCloseIosInstall");
 
+    // Écouteur fermeture modal iOS
     if (btnCloseIos && iosModal) {
       btnCloseIos.addEventListener("click", () => {
         iosModal.classList.add("hidden");
@@ -55,18 +97,25 @@ const PwaService = (() => {
       });
     }
 
-    // Si l'application tourne déjà en mode standalone PWA, ne pas afficher le bouton d'installation
+    // Écouteur pour fermer la bannière (l'utilisateur ne sera plus dérangé)
+    if (btnDismiss) {
+      btnDismiss.addEventListener("click", () => {
+        try { localStorage.setItem("gc_pwa_dismissed", "1"); } catch (e) {}
+        hideBanner();
+      });
+    }
+
+    // Si déjà installé ou en mode standalone, ne JAMAIS afficher la bannière
     if (isStandalone()) {
-      if (btnInstall) btnInstall.classList.add("hidden");
+      hideBanner();
       return;
     }
 
     // 2. Gestion spécifique pour iOS Safari
     if (isIos()) {
-      if (btnInstall) {
-        btnInstall.classList.remove("hidden");
-        btnInstall.innerHTML = "📲 Installer sur iPhone (iOS)";
-        btnInstall.addEventListener("click", () => {
+      showBanner();
+      if (btnAction) {
+        btnAction.addEventListener("click", () => {
           if (iosModal) iosModal.classList.remove("hidden");
         });
       }
@@ -77,15 +126,23 @@ const PwaService = (() => {
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      if (btnInstall) {
-        btnInstall.classList.remove("hidden");
-        btnInstall.innerHTML = "📲 Installer l'application";
-        btnInstall.addEventListener("click", async () => {
+
+      // Vérifier encore une fois si l'utilisateur l'a fermé
+      if (isStandalone()) {
+        hideBanner();
+        return;
+      }
+
+      showBanner();
+
+      if (btnAction) {
+        btnAction.addEventListener("click", async () => {
           if (!deferredPrompt) return;
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
           if (outcome === "accepted") {
-            btnInstall.classList.add("hidden");
+            try { localStorage.setItem("gc_pwa_installed", "1"); } catch (e) {}
+            hideBanner();
           }
           deferredPrompt = null;
         });
@@ -94,7 +151,8 @@ const PwaService = (() => {
 
     window.addEventListener("appinstalled", () => {
       deferredPrompt = null;
-      if (btnInstall) btnInstall.classList.add("hidden");
+      try { localStorage.setItem("gc_pwa_installed", "1"); } catch (e) {}
+      hideBanner();
       console.log("[PWA] Application installée avec succès !");
     });
   }
@@ -102,7 +160,9 @@ const PwaService = (() => {
   return {
     init,
     isIos,
-    isStandalone
+    isStandalone,
+    hideBanner,
+    showBanner
   };
 })();
 

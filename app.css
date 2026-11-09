@@ -34,6 +34,12 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Règle de masquage absolue prioritaire sur tous les layouts (flex, grid, block) */
+.hidden {
+  display: none !important;
+}
+
+
 html, body {
   height: 100%;
   margin: 0;
@@ -1639,4 +1645,108 @@ body::before {
   border-radius: 12px;
   padding: 9px 12px;
   margin-top: 10px;
+}
+
+
+/* ==========================================================================
+   BANNIÈRE PWA COMPACTE & DISCRÈTE (NON-INTRUSIVE)
+   ========================================================================== */
+.pwa-install-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.08), rgba(255, 183, 3, 0.08));
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-radius: 18px;
+  padding: 10px 14px;
+  margin: 6px 0 2px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  animation: fadeInPwa 0.35s ease-out;
+}
+
+@keyframes fadeInPwa {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pwa-banner-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pwa-banner-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pwa-banner-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pwa-banner-sub {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--cyan-neon);
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-pwa-action {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 240, 255, 0.35));
+  border: 1px solid var(--cyan-neon);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pwa-action:hover {
+  background: var(--cyan-neon);
+  color: #070c18;
+}
+
+.btn-pwa-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pwa-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
 }

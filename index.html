@@ -73,10 +73,20 @@
           🔐 Connexion
         </button>
 
-        <!-- Bouton d'installation PWA (iOS / Android) -->
-        <button id="btnPwaInstall" type="button" class="btn-base btn-install-pwa hidden">
-          📲 Installer l'application (iOS / Mobile)
-        </button>
+        <!-- Bannière discrète d'installation PWA (iOS / Android) -->
+        <div id="pwaInstallBanner" class="pwa-install-banner hidden">
+          <div class="pwa-banner-content">
+            <span class="pwa-banner-icon">📲</span>
+            <div class="pwa-banner-text">
+              <span class="pwa-banner-title">Installer sur l'écran d'accueil</span>
+              <span class="pwa-banner-sub">Accès 1-clic plein écran</span>
+            </div>
+          </div>
+          <div class="pwa-banner-actions">
+            <button id="btnPwaInstallAction" type="button" class="btn-pwa-action">Installer</button>
+            <button id="btnPwaDismiss" type="button" class="btn-pwa-close" title="Ne plus afficher" aria-label="Fermer">✕</button>
+          </div>
+        </div>
 
 
         <div id="homeMsg" class="hidden home-box">

@@ -4,7 +4,7 @@
   "short_name": "Pointage GC",
   "description": "Application de pointage géolocalisé et gestion des présences Grey Corner",
   "id": "pointage-greycorner",
-  "start_url": "./index.html",
+  "start_url": "./index.html?mode=pwa",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
