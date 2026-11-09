@@ -83,6 +83,13 @@ const PunchController = (() => {
       ]);
       const pVal = punchSnap.val();
       const prVal = presSnap.val();
+      if (typeof isExplicitMaladie === "function" && (isExplicitMaladie(prVal) || isExplicitMaladie(pVal))) {
+        FeedbackService.trigger("error");
+        UIService.toast("Arrêt Maladie déclaré aujourd'hui 🩺");
+        UIService.renderMaladieBox(dStr);
+        return;
+      }
+
       const existingHA = pVal?.hA || prVal?.hA || null;
 
       if (existingHA) {
@@ -649,6 +656,12 @@ const App = (() => {
             ]).then(([pRes, prRes]) => {
               const pVal = pRes.status === "fulfilled" ? pRes.value?.val() : null;
               const prVal = prRes.status === "fulfilled" ? prRes.value?.val() : null;
+              // Détection & blocage prioritaire si arrêt maladie validé par RH
+              if (typeof isExplicitMaladie === "function" && (isExplicitMaladie(prVal) || isExplicitMaladie(pVal))) {
+                UIService.renderMaladieBox(dStr);
+                return;
+              }
+
               const serverTime = pVal?.hA || prVal?.hA || null;
 
               if (serverTime) {

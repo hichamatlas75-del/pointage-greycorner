@@ -33,10 +33,42 @@ const Config = Object.freeze({
   categories: ["service", "bar", "cuisine", "caisse", "menage", "securite", "economat"]
 });
 
-// Initialisation Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(Config.firebase);
+/**
+ * Détection standardisée des arrêts maladie (M) validés par la direction RH
+ * @param {Object} rec Enregistrement de présence ou de pointage
+ * @returns {boolean} true si arrêt maladie validé
+ */
+function isExplicitMaladie(rec) {
+  if (!rec || typeof rec !== "object") return false;
+  if (rec.maladie === true || rec.maladie === "true" || rec.maladie === 1) return true;
+  const statut = String(rec.statut || "").trim().toUpperCase();
+  if (statut === "MALADIE" || statut === "ARRÊT MALADIE" || statut === "ARRET MALADIE" || statut === "M") return true;
+  const type = String(rec.type || "").trim().toUpperCase();
+  if (type === "MALADIE" || type === "M") return true;
+  const motif = String(rec.motif || "").trim().toUpperCase();
+  if (motif.startsWith("MALADIE") || motif.startsWith("ARRÊT MALADIE") || motif.startsWith("ARRET MALADIE")) return true;
+  return false;
 }
-const db = firebase.database();
-const auth = firebase.auth();
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+// Initialisation Firebase (Navigateur & Compatibilité Node.js pour tests)
+let db = null;
+let auth = null;
+
+if (typeof firebase !== "undefined" && firebase.apps) {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(Config.firebase);
+  }
+  db = firebase.database();
+  auth = firebase.auth();
+  if (auth && auth.setPersistence && firebase.auth.Auth) {
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+  }
+}
+
+// Export CommonJS pour les tests unitaires automatisés
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    Config,
+    isExplicitMaladie
+  };
+}

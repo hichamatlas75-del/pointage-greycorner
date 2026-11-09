@@ -221,6 +221,41 @@ const UIService = (() => {
     if (textarea) setTimeout(() => textarea.focus(), 150);
   }
 
+  function renderMaladieBox(dStr) {
+    const zone = document.getElementById("pointage-zone");
+    if (!zone) return;
+    const status = document.getElementById("status");
+
+    const wrap = document.getElementById("btnMainWrap");
+    if (wrap) wrap.style.display = "none";
+    showRetryGPS(false);
+    setPunchButtonEnabled(false);
+
+    let box = document.getElementById("pointedBox");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "pointedBox";
+      zone.appendChild(box);
+    }
+
+    box.className = "pointed-box pointed-maladie";
+    if (status) {
+      status.textContent = "Arrêt Maladie 🩺";
+      status.style.color = "var(--gold)";
+    }
+    updateGpsDot("ok");
+    box.innerHTML = `
+      <div class="pointed-check" style="background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.4);color:var(--gold);width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px auto">
+        <span style="font-size:24px;line-height:1">🩺</span>
+      </div>
+      <div class="pointed-msg" style="color:var(--gold);font-weight:700;font-size:13px;line-height:1.4">
+        🩺 Vous êtes déclaré(e) en Arrêt Maladie aujourd'hui. Reposez-vous bien !
+      </div>
+      <div class="label-caps mt-2" style="font-size:9.5px;color:var(--text-secondary)">${escapeHtml(dStr)} • Certificat médical RH validé</div>
+    `;
+    box.style.display = "block";
+  }
+
   return {
     toast,
     updateGpsDot,
@@ -229,6 +264,7 @@ const UIService = (() => {
     updateGpsUI,
     renderPointedBox,
     initNetworkListener,
+    renderMaladieBox,
     showLateReasonModal
   };
 })();

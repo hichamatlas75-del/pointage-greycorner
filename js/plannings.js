@@ -12,7 +12,7 @@ const TeamService = (() => {
 
   function normalizeSnapshot(val) {
     if (!val) {
-      return [{ n: "EL AZHARY NAJIA", t: "menage" }];
+      return [];
     }
     const arr = Array.isArray(val)
       ? val.filter(Boolean)
@@ -24,15 +24,20 @@ const TeamService = (() => {
       const prenom = SecurityService.normalizeText(x.prenom);
       const poste = SecurityService.normalizeRole(x.poste);
       if (!nom || !prenom) continue;
+
+      const normNom = nom.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const normPrenom = prenom.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      // Exclusion stricte des collaborateurs retirés (Najia El Azhary, Anissa/Souad El Gorramy)
+      if (normNom.includes("AZHARY") || normPrenom.includes("NAJIA") ||
+          normNom.includes("ELGORRAMY") || normPrenom.includes("ANISSA") || normPrenom.includes("SOUAD")) {
+        continue;
+      }
+
       const full = `${nom} ${prenom}`;
       if (seen.has(full)) continue;
       seen.add(full);
       out.push({ n: full, t: poste });
-    }
-    // Intégration systématique de EL AZHARY NAJIA dans la catégorie ménage
-    if (!seen.has("EL AZHARY NAJIA")) {
-      out.push({ n: "EL AZHARY NAJIA", t: "menage" });
-      seen.add("EL AZHARY NAJIA");
     }
     return out;
   }
@@ -316,25 +321,25 @@ const TeamService = (() => {
     S1: {
       title: "Semaine 01",
       schedules: [
-        { day: "lundi", matin: { staff: "FOUZIA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } },
-        { day: "mardi", matin: { staff: "fatimzahra" }, soir: { staff: "fatimzahra / FOUZIA" } },
-        { day: "mercredi", matin: { staff: "HAKIMA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } },
-        { day: "jeudi", matin: { staff: "Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
-        { day: "vendredi", matin: { staff: "Hakima / FOUZIA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } },
-        { day: "samedi", matin: { staff: "Khalissa / fatimzahra / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
-        { day: "dimanche", matin: { staff: "Hakima / FOUZIA" }, soir: { staff: "Khalissa / fatimzahra / Najia" } }
+        { day: "lundi", matin: { staff: "Fouzia" }, soir: { staff: "Hakima" } },
+        { day: "mardi", matin: { staff: "Hakima" }, soir: { staff: "Fouzia" } },
+        { day: "mercredi", matin: { staff: "Hakima" }, soir: { staff: "Fouzia" } },
+        { day: "jeudi", matin: { staff: "Fouzia" }, soir: { staff: "Hakima" } },
+        { day: "vendredi", matin: { staff: "Hakima / Fouzia" }, soir: { staff: "Hakima / Fouzia" } },
+        { day: "samedi", matin: { staff: "Hakima" }, soir: { staff: "Fouzia" } },
+        { day: "dimanche", matin: { staff: "Hakima / Fouzia" }, soir: { staff: "Hakima / Fouzia" } }
       ]
     },
     S2: {
       title: "Semaine 02",
       schedules: [
-        { day: "lundi", matin: { staff: "FATIMZAHRA" }, soir: { staff: "Hakima / FOUZIA" } },
-        { day: "mardi", matin: { staff: "FOUZIA" }, soir: { staff: "FATIMZAHRA / Khalissa / Najia" } },
-        { day: "mercredi", matin: { staff: "Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
-        { day: "jeudi", matin: { staff: "Hakima" }, soir: { staff: "FATIMZAHRA / Khalissa / Najia" } },
-        { day: "vendredi", matin: { staff: "FATIMZAHRA / Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } },
-        { day: "samedi", matin: { staff: "Hakima / FOUZIA" }, soir: { staff: "FATIMZAHRA / Khalissa / Najia" } },
-        { day: "dimanche", matin: { staff: "FATIMZAHRA / Khalissa / Najia" }, soir: { staff: "Hakima / FOUZIA" } }
+        { day: "lundi", matin: { staff: "Hakima" }, soir: { staff: "Fouzia" } },
+        { day: "mardi", matin: { staff: "Fouzia" }, soir: { staff: "Hakima" } },
+        { day: "mercredi", matin: { staff: "Hakima" }, soir: { staff: "Fouzia" } },
+        { day: "jeudi", matin: { staff: "Fouzia" }, soir: { staff: "Hakima" } },
+        { day: "vendredi", matin: { staff: "Hakima / Fouzia" }, soir: { staff: "Hakima / Fouzia" } },
+        { day: "samedi", matin: { staff: "Hakima / Fouzia" }, soir: { staff: "Hakima / Fouzia" } },
+        { day: "dimanche", matin: { staff: "Hakima / Fouzia" }, soir: { staff: "Hakima / Fouzia" } }
       ]
     }
   };
@@ -357,14 +362,13 @@ const TeamService = (() => {
   }
 
   function isNajia(empKey) {
-    if (!empKey) return false;
-    const s = String(empKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return s.includes("NAJIA") || s.includes("AZHARY") || s.includes("ELAZHARY");
+    return false;
   }
 
   function isMenageRole(empKey) {
     if (!empKey) return false;
-    if (isNajia(empKey)) return true;
+    const clean = String(empKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (clean.includes("NAJIA") || clean.includes("AZHARY") || clean.includes("ELAZHARY")) return false;
     const e = equipeMap.get(empKey);
     if (e && (e.t === "menage" || e.t === "ménage")) return true;
     const selected = StorageService.getSelectedStaff();
@@ -372,12 +376,8 @@ const TeamService = (() => {
       const s = equipeList.find(x => SecurityService.keyStaff(x.n) === empKey || x.n === selected);
       if (s && (s.t === "menage" || s.t === "ménage")) return true;
     }
-    const clean = String(empKey).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     return clean.includes("SBAI") || clean.includes("HAKIMA") ||
-           clean.includes("FOUZIA") || clean.includes("EZHAR") || clean.includes("ZHAR") ||
-           clean.includes("KHALISSA") || clean.includes("EDRISSIA") ||
-           clean.includes("FATIMZAHRA") || clean.includes("OUAZZANI") ||
-           clean.includes("ELGORRAMY");
+           clean.includes("FOUZIA") || clean.includes("EZHAR") || clean.includes("ZHAR");
   }
 
   function getMenagePlanningInfo(empKey, dateISO, currentHA = "") {
@@ -404,11 +404,8 @@ const TeamService = (() => {
     function matchShift(shiftText) {
       if (!shiftText) return false;
       const st = shiftText.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (isNajia(cleanKey) && (st.includes("NAJIA") || st.includes("AZHARY") || st.includes("EDRISSIA") || st.includes("KHALISSA"))) return true;
       if (cleanKey.includes("HAKIMA") && st.includes("HAKIMA")) return true;
       if ((cleanKey.includes("FOUZIA") || cleanKey.includes("EZHAR") || cleanKey.includes("ZHAR")) && st.includes("FOUZIA")) return true;
-      if ((cleanKey.includes("FATIMZAHRA") || cleanKey.includes("OUAZZANI")) && (st.includes("FATIM") || st.includes("ZAHRA"))) return true;
-      if ((cleanKey.includes("KHALISSA") || cleanKey.includes("EDRISSIA")) && (st.includes("KHALISSA") || st.includes("EDRISSIA"))) return true;
       return false;
     }
 
@@ -486,13 +483,15 @@ const TeamService = (() => {
     if (listenerAttached) return;
     listenerAttached = true;
     syncTodayGoogleSheets();
-    db.ref("settings/equipe").on("value", snap => {
-      equipeList = normalizeSnapshot(snap.val());
-      equipeMap = new Map();
-      equipeList.forEach(e => equipeMap.set(SecurityService.keyStaff(e.n), e));
-      syncTodayGoogleSheets();
-      if (onUpdate) onUpdate(equipeList);
-    });
+    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+      db.ref("settings/equipe").on("value", snap => {
+        equipeList = normalizeSnapshot(snap.val());
+        equipeMap = new Map();
+        equipeList.forEach(e => equipeMap.set(SecurityService.keyStaff(e.n), e));
+        syncTodayGoogleSheets();
+        if (onUpdate) onUpdate(equipeList);
+      });
+    }
   }
 
   return {
@@ -509,3 +508,8 @@ const TeamService = (() => {
     attachListener
   };
 })();
+
+// Export CommonJS pour les tests unitaires automatisés
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { TeamService };
+}

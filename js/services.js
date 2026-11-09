@@ -12,9 +12,11 @@ const TimeService = (() => {
   let serverOffset = 0;
 
   // Écoute continue du décalage d'horloge serveur Firebase
-  db.ref(".info/serverTimeOffset").on("value", snap => {
-    serverOffset = Number(snap.val() || 0);
-  });
+  if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+    db.ref(".info/serverTimeOffset").on("value", snap => {
+      serverOffset = Number(snap.val() || 0);
+    });
+  }
 
   function getTrustedDate() {
     return new Date(Date.now() + serverOffset);
@@ -86,6 +88,10 @@ const SecurityService = (() => {
     return String(name || "").trim().replace(/\s+/g, "_").toUpperCase();
   }
 
+  function makeEmpId(name) {
+    return keyStaff(name);
+  }
+
   // Hashage SHA-256 avec sel pour le code PIN
   async function hashPin(pin) {
     if (!pin) return "";
@@ -108,6 +114,7 @@ const SecurityService = (() => {
     normalizeText,
     normalizeRole,
     keyStaff,
+    makeEmpId,
     hashPin,
     verifyPin
   };
@@ -194,9 +201,6 @@ const StaffPhotoService = (() => {
     "EL_MOBARAKI_MOHAMED": "images/EL_MOBARAKI_MOHAMED.jpg",
     "ELMOBARAKI_MOHAMED": "images/EL_MOBARAKI_MOHAMED.jpg",
     "MOBARAKI": "images/EL_MOBARAKI_MOHAMED.jpg",
-    "ELGORRAMY_SOUAD": "images/ELGORRAMY_SOUAD.jpg",
-    "EL_GORRAMY_SOUAD": "images/ELGORRAMY_SOUAD.jpg",
-    "GORRAMY": "images/ELGORRAMY_SOUAD.jpg",
     "CHKAIRI_YOUSSEF": "images/CHKAIRI_YOUSSEF.jpg",
     "CH_KAIRI_YOUSSEF": "images/CHKAIRI_YOUSSEF.jpg",
     "CHKAIRI": "images/CHKAIRI_YOUSSEF.jpg",
@@ -220,14 +224,6 @@ const StaffPhotoService = (() => {
     "FOUZIA6ZHAR": "images/FOUZIA6ZHAR.jpg",
     "FOUZIA_ZHAR": "images/FOUZIA6ZHAR.jpg",
     "FOUZIA_EZHAR": "images/FOUZIA6ZHAR.jpg",
-    "EL_AZHARY_NAJIA": "images/EL_AZHARY.jpg",
-    "ELAZHARY_NAJIA": "images/EL_AZHARY.jpg",
-    "AZHARY_NAJIA": "images/EL_AZHARY.jpg",
-    "EL_AZHARY": "images/EL_AZHARY.jpg",
-    "ELAZHARY": "images/EL_AZHARY.jpg",
-    "AZHARY": "images/EL_AZHARY.jpg",
-    "NAJIA_EL_AZHARY": "images/EL_AZHARY.jpg",
-    "NAJIA": "images/EL_AZHARY.jpg",
     "SERGINI_IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
     "SERGINI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
     "IDRISSI_KARIMA": "images/SERGINI_IDRISSI_KARIMA.jpg",
@@ -268,10 +264,7 @@ const StaffPhotoService = (() => {
     if (!name) return null;
     const clean = normalize(name);
 
-    // 1. Détection prioritaire explicite pour Karima, Saad et Najia
-    if (clean.includes("NAJIA") || clean.includes("AZHARY") || clean.includes("ELAZHARY")) {
-      return "images/EL_AZHARY.jpg";
-    }
+    // 1. Détection prioritaire explicite pour Karima et Saad
     if (clean.includes("KARIMA") || clean.includes("SERGINI")) {
       return "images/SERGINI_IDRISSI_KARIMA.jpg";
     }
@@ -528,23 +521,31 @@ const StorageService = (() => {
     punchTime: (d, k) => `gc_punch_time__${d}__${k}`
   };
 
+  const _storage = (typeof localStorage !== "undefined") ? localStorage : {
+    _data: {},
+    getItem(k) { return this._data[k] || null; },
+    setItem(k, v) { this._data[k] = String(v); },
+    removeItem(k) { delete this._data[k]; },
+    clear() { this._data = {}; }
+  };
+
   return {
-    getSelectedStaff: () => localStorage.getItem(KEYS.staffName) || null,
-    setSelectedStaff: (name) => localStorage.setItem(KEYS.staffName, name),
-    clearSelectedStaff: () => localStorage.removeItem(KEYS.staffName),
+    getSelectedStaff: () => _storage.getItem(KEYS.staffName) || null,
+    setSelectedStaff: (name) => _storage.setItem(KEYS.staffName, name),
+    clearSelectedStaff: () => _storage.removeItem(KEYS.staffName),
 
-    getDevicePinHash: () => localStorage.getItem(KEYS.devicePin) || "",
-    setDevicePinHash: (hash) => localStorage.setItem(KEYS.devicePin, hash),
-    hasDevicePin: () => !!localStorage.getItem(KEYS.devicePin),
+    getDevicePinHash: () => _storage.getItem(KEYS.devicePin) || "",
+    setDevicePinHash: (hash) => _storage.setItem(KEYS.devicePin, hash),
+    hasDevicePin: () => !!_storage.getItem(KEYS.devicePin),
 
-    isPunchedLocal: (d, k) => localStorage.getItem(KEYS.punchDone(d, k)) === "1",
-    getPunchedTimeLocal: (d, k) => localStorage.getItem(KEYS.punchTime(d, k)) || "",
+    isPunchedLocal: (d, k) => _storage.getItem(KEYS.punchDone(d, k)) === "1",
+    getPunchedTimeLocal: (d, k) => _storage.getItem(KEYS.punchTime(d, k)) || "",
     setPunchedLocal: (d, k, hhmm) => {
-      localStorage.setItem(KEYS.punchDone(d, k), "1");
-      if (hhmm) localStorage.setItem(KEYS.punchTime(d, k), hhmm);
+      _storage.setItem(KEYS.punchDone(d, k), "1");
+      if (hhmm) _storage.setItem(KEYS.punchTime(d, k), hhmm);
     },
 
-    resetAll: () => localStorage.clear()
+    resetAll: () => _storage.clear()
   };
 })();
 
@@ -741,6 +742,20 @@ const GpsService = (() => {
     verifyLivePosition,
     getState: () => state,
     getLastPosition: () => lastPosition,
-    getDistanceMeters
+    getDistanceMeters,
+    evaluatePosition,
+    detectMockLocation
   };
 })();
+
+// Export CommonJS pour les tests unitaires automatisés
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    TimeService,
+    SecurityService,
+    StaffPhotoService,
+    FeedbackService,
+    StorageService,
+    GpsService
+  };
+}

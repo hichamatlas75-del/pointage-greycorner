@@ -15,17 +15,27 @@ const HistoryService = (() => {
 
   function calculateLateMinutes(hP, hA, empKey, dateISO = "") {
     if (!hA) return 0;
-    const scheduled = TeamService.getEffectiveHP(empKey, dateISO || TimeService.currentDateStr(), hP);
+    const scheduled = (typeof TeamService !== "undefined" && TeamService.getEffectiveHP)
+      ? TeamService.getEffectiveHP(empKey, dateISO || (typeof TimeService !== "undefined" ? TimeService.currentDateStr() : ""), hP)
+      : hP;
     if (!scheduled) return 0;
-    const p = TimeService.timeToMin(scheduled);
-    const a = TimeService.timeToMin(hA);
+    const toMin = (typeof TimeService !== "undefined" && TimeService.timeToMin)
+      ? TimeService.timeToMin
+      : (t) => {
+          if (!t || typeof t !== "string" || !t.includes(":")) return null;
+          const [h, m] = t.split(":").map(Number);
+          if (Number.isNaN(h) || Number.isNaN(m)) return null;
+          return h * 60 + m;
+        };
+    const p = toMin(scheduled);
+    const a = toMin(hA);
     if (p === null || a === null) return 0;
     return Math.max(0, a - p);
   }
 
   function getLast7Dates() {
     const dates = [];
-    const todayStr = TimeService.currentDateStr();
+    const todayStr = (typeof TimeService !== "undefined") ? TimeService.currentDateStr() : new Date().toISOString().slice(0, 10);
     const [y, m, d] = todayStr.split("-").map(Number);
     const base = new Date(y, m - 1, d);
     for (let i = 0; i < 7; i++) {
@@ -39,7 +49,7 @@ const HistoryService = (() => {
 
   function getMonthDates(year, month) {
     const dates = [];
-    const todayStr = TimeService.currentDateStr();
+    const todayStr = (typeof TimeService !== "undefined") ? TimeService.currentDateStr() : new Date().toISOString().slice(0, 10);
     const [todayY, todayM, todayD] = todayStr.split("-").map(Number);
     const isCurrentMonth = (year === todayY && month === (todayM - 1));
 
@@ -56,10 +66,12 @@ const HistoryService = (() => {
 
   async function loadHistorique(staffKey) {
     if (!staffKey) {
-      const sel = StorageService.getSelectedStaff();
-      if (sel) staffKey = SecurityService.keyStaff(sel);
+      const sel = (typeof StorageService !== "undefined") ? StorageService.getSelectedStaff() : null;
+      if (sel && typeof SecurityService !== "undefined") staffKey = SecurityService.keyStaff(sel);
     }
     if (!staffKey) return;
+
+    if (typeof document === "undefined") return;
 
     const wrap = document.getElementById("histoWrap");
     const list = document.getElementById("histoList");
@@ -164,7 +176,8 @@ const HistoryService = (() => {
       const menagePlan = TeamService.getMenagePlanningInfo ? TeamService.getMenagePlanningInfo(staffKey, iso) : null;
       const hA = pu?.hA || pr?.hA || (StorageService.isPunchedLocal(iso, staffKey) ? StorageService.getPunchedTimeLocal(iso, staffKey) : "");
       const hP = TeamService.getEffectiveHP(staffKey, iso, pr?.hP || pu?.hP || "");
-      const isOff = pr?.off === true || (isSec && isMonday && !hA) || (!hA && cuisinePlan?.off && pr?.off !== false) || (!hA && menagePlan?.off && pr?.off !== false);
+      const isMaladie = (typeof isExplicitMaladie === "function") && (isExplicitMaladie(pr) || isExplicitMaladie(pu));
+      const isOff = !isMaladie && (pr?.off === true || (isSec && isMonday && !hA) || (!hA && cuisinePlan?.off && pr?.off !== false) || (!hA && menagePlan?.off && pr?.off !== false));
 
       let lateMin = 0;
       if (hA && hP) {
@@ -187,6 +200,11 @@ const HistoryService = (() => {
         if (isToday) {
           StorageService.setPunchedLocal(todayStr, staffKey, hA);
           UIService.renderPointedBox(hA, todayStr, { hasHP: Boolean(hP || isSec), isLate, lateMin });
+        }
+      } else if (isMaladie) {
+        countOff++;
+        if (isToday && typeof UIService !== "undefined" && typeof UIService.renderMaladieBox === "function") {
+          UIService.renderMaladieBox(todayStr);
         }
       } else if (isOff) {
         countOff++;
@@ -224,6 +242,13 @@ const HistoryService = (() => {
               ${(hP || isSec) ? `<span class="histo-ontime-badge">À l'heure 😊👍</span>` : ""}
             </div>`;
         }
+      } else if (isMaladie) {
+        // Badge spécifique Arrêt Maladie (M) validé par direction RH
+        statusHTML = `
+          <div class="histo-status">
+            <span class="histo-dot" style="background:#eab308;box-shadow:0 0 6px rgba(234,179,8,.7)"></span>
+            <span class="histo-off-badge" style="border-color:rgba(234,179,8,.4);color:#fef08a;background:rgba(234,179,8,0.15)">🩺 Arrêt Maladie (M)</span>
+          </div>`;
       } else if (isOff) {
         statusHTML = `
           <div class="histo-status">
@@ -271,6 +296,8 @@ const HistoryService = (() => {
   }
 
   function initControls() {
+    if (typeof document === "undefined") return;
+
     const btnPrev = document.getElementById("btnHistoPrev");
     const btnNext = document.getElementById("btnHistoNext");
     const tab7d   = document.getElementById("btnTab7d");
@@ -326,3 +353,8 @@ const HistoryService = (() => {
     initControls
   };
 })();
+
+// Export CommonJS pour les tests unitaires automatisés
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { HistoryService };
+}
