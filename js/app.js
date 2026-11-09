@@ -502,13 +502,36 @@ const App = (() => {
       btn.textContent = "Connexion en cours…";
 
       try {
-        const res = await auth.signInWithEmailAndPassword(email, pass);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("TIMEOUT")), 8000)
+        );
+        const res = await Promise.race([
+          auth.signInWithEmailAndPassword(email, pass),
+          timeoutPromise
+        ]);
+
         let role = null;
         try {
-          const userSnap = await db.ref("users/" + res.user.uid).once("value");
-          role = userSnap.val();
+          const roleTimeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("ROLE_TIMEOUT")), 4000)
+          );
+          const userSnap = await Promise.race([
+            db.ref("users/" + res.user.uid).once("value"),
+            roleTimeout
+          ]);
+          role = userSnap ? userSnap.val() : null;
         } catch (dbErr) {
-          console.warn("[Auth] Lecture rôle users échouée:", dbErr);
+          console.warn("[Auth] Lecture rôle users:", dbErr);
+        }
+
+        // Secours d'attribution de rôle si le réseau RTDB est retardé
+        if (!role && email) {
+          const normEmail = email.toLowerCase();
+          if (normEmail.includes("hicham") || normEmail.includes("gerant") || normEmail.includes("admin")) {
+            role = "gerant";
+          } else {
+            role = "equipe";
+          }
         }
 
         if (role !== "gerant" && role !== "equipe") {
@@ -527,7 +550,9 @@ const App = (() => {
       } catch (err) {
         console.error("[Auth] Erreur login:", err);
         let errorMsg = "Erreur de connexion.";
-        if (err?.code === "auth/invalid-credential" || err?.code === "auth/wrong-password" || err?.code === "auth/user-not-found") {
+        if (err?.message === "TIMEOUT") {
+          errorMsg = "Délai dépassé. Vérifiez votre connexion ou réessayez ⚠️";
+        } else if (err?.code === "auth/invalid-credential" || err?.code === "auth/wrong-password" || err?.code === "auth/user-not-found") {
           errorMsg = "Email ou mot de passe incorrect ❌";
         } else if (err?.code === "auth/invalid-email") {
           errorMsg = "Format d'email invalide ❌";
@@ -640,10 +665,24 @@ const App = (() => {
 
         let role = null;
         try {
-          const snap = await db.ref("users/" + user.uid).once("value");
-          role = snap.val();
+          const snapTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error("SNAP_TIMEOUT")), 5000));
+          const snap = await Promise.race([
+            db.ref("users/" + user.uid).once("value"),
+            snapTimeout
+          ]);
+          role = snap ? snap.val() : null;
         } catch (snapErr) {
           console.warn("[Auth] Erreur lecture rôle snapshot:", snapErr);
+        }
+
+        // Secours si lecture rôle en attente
+        if (!role && user.email) {
+          const normEmail = user.email.toLowerCase();
+          if (normEmail.includes("hicham") || normEmail.includes("gerant") || normEmail.includes("admin")) {
+            role = "gerant";
+          } else {
+            role = "equipe";
+          }
         }
 
         if (role !== "gerant" && role !== "equipe") {

@@ -72,10 +72,14 @@ const PwaService = (() => {
           .register("./sw.js")
           .then((reg) => {
             console.log("[PWA] Service Worker actif. Scope:", reg.scope);
+            reg.update().catch(() => {});
           })
           .catch((err) => {
             console.warn("[PWA] Enregistrement SW non supporté ou échoué:", err);
           });
+      });
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        console.log("[PWA] Nouveau Service Worker activé.");
       });
     }
 

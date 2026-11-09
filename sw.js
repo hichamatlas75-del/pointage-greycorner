@@ -5,7 +5,7 @@
  * =========================================================================
  */
 
-const CACHE_NAME = "greycorner-pwa-v1.7.0-auth-direct";
+const CACHE_NAME = "greycorner-pwa-v1.8.0-fb8-stable";
 
 const PRECACHE_ASSETS = [
   "./",
